@@ -1,0 +1,7 @@
+{
+  "id": "com.rodrigo.iptv.service",
+  "description": "Proxy HTTP local para o app IPTV",
+  "services": [
+    { "name": "com.rodrigo.iptv.service" }
+  ]
+}

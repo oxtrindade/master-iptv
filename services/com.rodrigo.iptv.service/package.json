@@ -1,0 +1,6 @@
+{
+  "name": "com.rodrigo.iptv.service",
+  "version": "1.0.0",
+  "description": "Proxy HTTP local (contorna CORS) para o app IPTV",
+  "main": "service.js"
+}
