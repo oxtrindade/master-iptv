@@ -5,8 +5,6 @@ on:
     branches: [main]
     tags: ['v*']
   workflow_dispatch:
-    release:
-    types: [published]
 
 permissions:
   contents: write
@@ -27,6 +25,7 @@ jobs:
         with:
           name: ipk
           path: dist/*
+      # só em tags v*: cria a Release com o .ipk, o repo.json, a descrição e o ícone
       - name: Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
@@ -36,3 +35,52 @@ jobs:
             dist/repo.json
             dist/description.html
             dist/app-icon-large.png
+
+  # APK do Android (celular e Android TV). Roda depois do job acima para não disputar a criação da Release.
+  android:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Copiar o app web para dentro do APK
+        run: node scripts/build-android-assets.js
+      - name: Chave de assinatura (segredos do repositório)
+        env:
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+        run: |
+          if [ -n "$KS_B64" ]; then
+            echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
+            echo "KS_FILE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+          else
+            echo "::warning::Sem segredo ANDROID_KEYSTORE_B64: o APK sai com chave de teste e não atualiza por cima do anterior."
+          fi
+      - name: Compilar o APK
+        env:
+          KS_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KS_ALIAS: master-iptv
+        run: gradle -p android assembleRelease --no-daemon
+      - name: Nomear o APK
+        run: |
+          VERSION=$(node -p "require('./app/appinfo.json').version")
+          mkdir -p dist
+          cp android/app/build/outputs/apk/release/*.apk "dist/master-iptv-$VERSION.apk"
+          ls -la dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apk
+          path: dist/*.apk
+      - name: Anexar o APK na Release (só em tags v*)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.apk
