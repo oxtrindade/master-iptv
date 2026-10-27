@@ -1,4 +1,4 @@
-# Master IPTV para LG webOS
+# Master IPTV para LG webOS e Android
 
 App web (HTML/JS) com **TV ao vivo, filmes e séries**, navegação por controle remoto (D-pad e Magic Remote).
 
