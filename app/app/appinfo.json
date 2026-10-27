@@ -1,0 +1,14 @@
+{
+  "id": "com.rodrigo.iptv",
+  "version": "1.5.2",
+  "vendor": "Rodrigo",
+  "type": "web",
+  "main": "index.html",
+  "title": "Master IPTV",
+  "icon": "icon.png",
+  "largeIcon": "largeIcon.png",
+  "bgColor": "#0b101a",
+  "iconColor": "#3ab4e0",
+  "resolution": "1920x1080",
+  "disableBackHistoryAPI": true
+}
