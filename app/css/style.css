@@ -341,11 +341,11 @@ body.portrait .avatar { width: 30px; height: 30px; font-size: 15px; }
 body.portrait .clock { font-size: 16px; margin-left: 8px; }
 body.portrait .page { top: 60px; }
 body.portrait .hub-tiles { display: block; padding: 12px 14px 0; }
-body.portrait .hubtile { text-align: left; display: block; width: 100%; height: 92px; margin: 0 0 10px; padding: 16px 18px; border-radius: 18px; }
-body.portrait .hubico { float: left; width: 60px; height: 60px; margin-right: 16px; border-radius: 18px; }
-body.portrait .hubico svg { width: 34px; height: 34px; }
-body.portrait .hubname { margin-top: 6px; font-size: 24px; line-height: 1.15; white-space: nowrap; }
-body.portrait .hubsub { margin-top: 2px; font-size: 14px; }
+body.portrait .hubtile { text-align: left; display: block; width: 100%; height: 150px; margin: 0 0 12px; padding: 30px 24px; border-radius: 22px; }
+body.portrait .hubico { float: left; width: 88px; height: 88px; margin-right: 22px; border-radius: 24px; }
+body.portrait .hubico svg { width: 50px; height: 50px; }
+body.portrait .hubname { margin-top: 14px; font-size: 32px; line-height: 1.15; white-space: nowrap; }
+body.portrait .hubsub { margin-top: 4px; font-size: 16px; }
 body.portrait .hub-links { padding: 4px 14px 0; }
 body.portrait .btn { height: 42px; line-height: 42px; padding: 0 16px; font-size: 16px; margin: 4px 6px 4px 0; border-radius: 21px; }
 body.portrait .btn .ico { margin-right: 6px; }
@@ -360,24 +360,24 @@ body.portrait .ls { font-size: 12px; }
 body.portrait .ctile { width: 130px; margin-right: 10px; }
 body.portrait .cthumb { width: 130px; height: 74px; }
 body.portrait .rate { font-size: 12px; }
-body.portrait .page.lists { display: block; overflow: hidden; }
-body.portrait .cats { display: block; width: 100%; height: 50px; padding: 8px 10px; white-space: nowrap; overflow-x: auto; overflow-y: hidden; }
+body.portrait .page.lists { display: flex; overflow: hidden; }
+body.portrait .cats { display: block; width: 118px; height: 100%; padding: 8px 6px 30px 8px; overflow-x: hidden; overflow-y: auto; }
 body.portrait .cats::-webkit-scrollbar { display: none; }
-body.portrait .cat { display: inline-block; margin: 0 6px 0 0; padding: 7px 14px; font-size: 15px; white-space: nowrap; border-radius: 16px; background: #141d2f; }
-body.portrait .cat.on { background: #1f3a5a; }
-body.portrait .content { height: calc(100% - 50px); padding: 8px 12px 24px 12px; }
+body.portrait .cat { display: -webkit-box; margin: 0 0 4px 0; padding: 8px 8px; font-size: 13px; line-height: 1.2; border-radius: 10px; word-break: break-word; }
+body.portrait .cat.on { background: #172238; }
+body.portrait .content { height: 100%; min-width: 0; padding: 8px 10px 24px 8px; }
 body.portrait .input { height: 42px; font-size: 16px; padding: 0 18px; margin-bottom: 8px; border-radius: 21px; }
 body.portrait .row { width: 100%; height: 64px; margin: 0 0 6px 0; padding: 0 10px; border-radius: 12px; }
-body.portrait .row .num { width: 26px; font-size: 12px; }
-body.portrait .row .logo { width: 56px; height: 38px; margin-right: 10px; }
-body.portrait .row .logo img { max-width: 56px; max-height: 38px; }
-body.portrait .row .name { font-size: 16px; }
-body.portrait .row .epg { font-size: 12px; min-height: 16px; margin-top: 1px; }
+body.portrait .row .num { display: none; }
+body.portrait .row .logo { width: 48px; height: 36px; margin-right: 9px; }
+body.portrait .row .logo img { max-width: 48px; max-height: 36px; }
+body.portrait .row .name { font-size: 14px; }
+body.portrait .row .epg { font-size: 11px; min-height: 16px; margin-top: 1px; }
 body.portrait .row .epgbar { margin-top: 3px; }
 body.portrait .row .favmark { width: 22px; }
-body.portrait .card { width: 140px; margin: 0 12px 16px 0; }
+body.portrait .card { width: 108px; margin: 0 9px 14px 0; }
 body.portrait .card:nth-child(3n) { margin-right: 0; }
-body.portrait .card .poster { width: 140px; height: 210px; }
+body.portrait .card .poster { width: 108px; height: 162px; }
 body.portrait .card .title { font-size: 13px; height: 34px; margin-top: 5px; }
 body.portrait .card .badge { font-size: 11px; }
 body.portrait .hlist > .card { width: 110px; margin: 0 10px 0 0; }

@@ -100,6 +100,22 @@ public class MainActivity extends Activity {
             return tv;
         }
 
+        /** Player aberto: trava deitado (tela cheia). Fechado: volta a seguir a rotação do celular. */
+        @JavascriptInterface
+        public void setFullscreen(final boolean on) {
+            if (tv) {
+                return;
+            }
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    setRequestedOrientation(on
+                            ? android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+                            : android.content.pm.ActivityInfo.SCREEN_ORIENTATION_USER);
+                }
+            });
+        }
+
         @JavascriptInterface
         public void exit() {
             runOnUiThread(new Runnable() {

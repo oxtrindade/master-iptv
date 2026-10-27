@@ -812,7 +812,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.5.2']
+      ['Versão do app', '1.5.3']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
@@ -1006,11 +1006,17 @@
 
   /* ---------- player ---------- */
 
+  /* app Android no celular: o player abre em tela cheia (deitado) e, ao sair, volta à orientação do aparelho */
+  function nativeFull(on) {
+    try { if (window.NativeApp && window.NativeApp.setFullscreen) { window.NativeApp.setFullscreen(!!on); } } catch (e) {}
+  }
+
   function startPlay(ctx, fromStart) {
     S.ctx = ctx;
     S.resumeFocus = Nav.current();
     S.resumeScope = Nav.getScope();
     S.mode = 'player';
+    nativeFull(true);
     S.lastSave = Date.now();
     $('player').classList.remove('hidden');
     playCurrent(!!fromStart);
@@ -1284,6 +1290,7 @@
     $('player').classList.add('hidden');
     $('buffer').classList.add('hidden');
     $('osd').classList.add('hidden');
+    nativeFull(false);
     S.ctx = null;
     S.mode = S.detail ? 'detail' : 'browse';
     Nav.setScope(S.detail ? $('detail') : $('app'));

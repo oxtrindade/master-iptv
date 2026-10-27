@@ -190,7 +190,7 @@ Promise.all([listen(api), listen(px)]).then(function () {
       return waitFor(function () { return $('.settings .sgroup'); }, 'config');
     }).then(function () {
       var txt = $('.settings').textContent;
-      assert.ok(/127\.0\.0\.1/.test(txt) && /joao/.test(txt) && /1\.5\.2/.test(txt));
+      assert.ok(/127\.0\.0\.1/.test(txt) && /joao/.test(txt) && /1\.5\.3/.test(txt));
       assert.strictEqual($$('.swrow').length, 3, 'três chaves');
       step('configurações');
       // ocultar SD / HD: a categoria "Filmes e séries 24h" tem Cine HD, Cine SD e Cine FHD
