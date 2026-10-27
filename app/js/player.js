@@ -108,10 +108,6 @@ var Player = (function () {
     v.addEventListener('play', function () { if (cb.onState) { cb.onState(true); } });
     v.addEventListener('error', function () { next('native-error'); });
     v.addEventListener('loadedmetadata', tracksChanged);
-    function reportSize() { if (cb.onResize && v.videoWidth) { cb.onResize(v.videoWidth, v.videoHeight); } }
-    v.addEventListener('loadedmetadata', reportSize);
-    v.addEventListener('resize', reportSize);
-    v.addEventListener('playing', reportSize);
     try { if (v.audioTracks && v.audioTracks.addEventListener) { v.audioTracks.addEventListener('addtrack', tracksChanged); } } catch (e1) {}
     try { if (v.textTracks && v.textTracks.addEventListener) { v.textTracks.addEventListener('addtrack', tracksChanged); } } catch (e2) {}
   }

@@ -21,13 +21,6 @@ Promise.all([listen(api), listen(px)]).then(function () {
     beforeParse: function (w) {
       w.Element.prototype.getBoundingClientRect = function () { return { left: 0, top: 0, right: 100, bottom: 50, width: 100, height: 50 }; };
       w.HTMLMediaElement.prototype.play = function () { return Promise.resolve(); };
-      // jsdom com file:// tem origem opaca (sem localStorage): usa um armazenamento em memória
-      var mem = {};
-      Object.defineProperty(w, 'localStorage', { configurable: true, value: {
-        getItem: function (k) { return Object.prototype.hasOwnProperty.call(mem, k) ? mem[k] : null; },
-        setItem: function (k, v) { mem[k] = String(v); },
-        removeItem: function (k) { delete mem[k]; }
-      } });
       w.HTMLMediaElement.prototype.pause = function () {};
       w.HTMLMediaElement.prototype.load = function () {};
       w.PalmServiceBridge = function () {
@@ -59,15 +52,7 @@ Promise.all([listen(api), listen(px)]).then(function () {
     Object.defineProperty(video, 'currentTime', { get: function () { return vt; }, set: function (v) { vt = v; }, configurable: true });
     Object.defineProperty(video, 'duration', { get: function () { return vd; }, configurable: true });
 
-    return waitFor(function () { return $('.login') && w.Weather; }, 'login').then(function () {
-      // clima falso (a rede real não é usada nos testes)
-      var wxCalls = [];
-      w.Weather.init(function (u) {
-        wxCalls.push(u);
-        if (/geocoding/.test(u)) { return Promise.resolve(JSON.stringify({ results: [{ name: 'Campinas', admin1: 'São Paulo', country_code: 'BR', latitude: -22.9, longitude: -47.06 }] })); }
-        return Promise.resolve(JSON.stringify({ current: { temperature_2m: 24.4, apparent_temperature: 25, weather_code: 2, is_day: 1 },
-          daily: { temperature_2m_min: [17.2], temperature_2m_max: [28.6] } }));
-      });
+    return waitFor(function () { return $('.login'); }, 'login').then(function () {
       var inputs = $$('.login input');
       assert.strictEqual(inputs.length, 3);
       inputs[0].value = base; inputs[1].value = 'joao'; inputs[2].value = 'errada';
@@ -85,19 +70,10 @@ Promise.all([listen(api), listen(px)]).then(function () {
       assert.ok($('.hubtile.focus'), 'foco no primeiro item do menu');
       assert.ok(!$('.side'), 'sem barra lateral');
       step('menu inicial: TV ao vivo / Filmes / Séries');
-      return waitFor(function () { return $('.wx-t') && /24°/.test($('.wx-t').textContent); }, 'clima');
-    }).then(function () {
-      assert.ok(/Taubaté/.test($('.wx-c').textContent), 'cidade padrão');
-      assert.ok(/17° \/ 29°/.test($('.wx-r').textContent) && /Parcialmente/.test($('.wx-r').textContent), $('.wx-r').textContent);
-      step('clima na home (24°, mín/máx, cidade)');
       go('live');
-      return waitFor(function () { return $$('.cat').length === 4 && $$('.row').length === 1; }, 'ao vivo');
+      return waitFor(function () { return $$('.cat').length === 3 && $$('.row').length === 1; }, 'ao vivo');
     }).then(function () {
       assert.strictEqual($$('.card').length, 0, 'ao vivo só tem canais');
-      return waitFor(function () { return /Jornal da Noite/.test($('.row .epg').textContent); }, 'epg na lista');
-    }).then(function () {
-      assert.ok($('.row .epgbar.on'), 'barra de progresso do programa');
-      step('EPG do canal aparece na lista');
       assert.ok(/TV ao vivo/.test($('.sectitle').textContent));
       $$('.cat')[2].click();
       return waitFor(function () { return $$('.row').length === 2; }, 'cat esportes');
@@ -187,57 +163,12 @@ Promise.all([listen(api), listen(px)]).then(function () {
     }).then(function () {
       step('favoritos');
       go('settings');
-      return waitFor(function () { return $('.settings .sgroup'); }, 'config');
+      return waitFor(function () { return $('.settings h1'); }, 'config');
     }).then(function () {
       var txt = $('.settings').textContent;
-      assert.ok(/127\.0\.0\.1/.test(txt) && /joao/.test(txt) && /1\.5\.1/.test(txt));
-      assert.strictEqual($$('.swrow').length, 3, 'três chaves');
+      assert.ok(/127\.0\.0\.1/.test(txt) && /joao/.test(txt));
       step('configurações');
-      // ocultar SD / HD: a categoria "Filmes e séries 24h" tem Cine HD, Cine SD e Cine FHD
-      $$('.swrow')[1].click(); // SD
-      assert.ok($$('.sw')[1].classList.contains('on'));
-      $$('.swrow')[2].click(); // HD
-      $('.backbtn').click();
-      go('live');
-      return waitFor(function () { return $$('.cat').length === 4; }, 'ao vivo de novo');
-    }).then(function () {
-      $$('.cat')[3].click();
-      return waitFor(function () { return $$('.row').length === 1; }, 'só o FHD sobra');
-    }).then(function () {
-      assert.ok(/Cine FHD/.test($('.row .name').textContent), 'FHD não é ocultado');
-      step('ocultar canais SD e HD (FHD continua)');
-      $('.backbtn').click();
-      go('settings');
-      return waitFor(function () { return $('.settings .sgroup'); }, 'config 2');
-    }).then(function () {
-      $$('.swrow')[1].click(); $$('.swrow')[2].click(); // desliga os dois
-      // cidade do clima
-      $('#city').value = 'Campinas';
-      $('#city').focus();
-      key(13);
-      return waitFor(function () { return $$('.cityres .btn').length === 1; }, 'resultado da cidade');
-    }).then(function () {
-      assert.ok(/Campinas — São Paulo/.test($('.cityres .btn').textContent));
-      $('.cityres .btn').click();
-      assert.ok(/Campinas/.test($('.settings').textContent), 'cidade atualizada');
-      $('.backbtn').click();
-      return waitFor(function () { return $('.wx-c') && /Campinas/.test($('.wx-c').textContent); }, 'clima da nova cidade');
-    }).then(function () {
-      step('cidade do clima editável nas configurações');
-      go('settings');
-      return waitFor(function () { return $('.settings .sgroup'); }, 'config 3');
-    }).then(function () {
-      // editar servidor: abre o login já preenchido, com Cancelar
-      $$('.settings .btn')[0].click();
-      return waitFor(function () { return $('.login'); }, 'editar servidor');
-    }).then(function () {
-      assert.strictEqual($$('.login input')[1].value, 'joao');
-      assert.strictEqual($$('.login .btn').length, 2, 'Entrar + Cancelar');
-      $$('.login .btn')[1].click(); // Cancelar
-      return waitFor(function () { return $('.settings .sgroup'); }, 'volta às configurações');
-    }).then(function () {
-      step('editar servidor (preenchido, com cancelar)');
-      $$('.settings .btn')[1].click(); // Trocar conta / Sair
+      $$('.settings .btn')[0].click(); // Sair
       return waitFor(function () { return $('.login'); }, 'logout');
     }).then(function () {
       assert.strictEqual($$('.login input')[1].value, 'joao', 'logout mantém usuário');

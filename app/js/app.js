@@ -20,7 +20,7 @@
     mode: 'login', section: 'home', backTo: 'home', searchSec: null, hubFocus: null,
     cats: [], catId: null, items: [], shown: 0, loadToken: 0, homeToken: 0,
     favs: store.get('fav', {}), resume: store.get('resume', {}), last: store.get('last', {}),
-    cont: store.get('cont', {}), recent: store.get('recent', []), opts: store.get('opts', {}), wxEl: null,
+    cont: store.get('cont', {}), recent: store.get('recent', []),
     ctx: null, detail: null, lastFocus: null, resumeFocus: null, resumeScope: null,
     exitArmed: false, tracksOpen: false, tracksScope: null, pref: store.get('trackpref', {}), prefApplied: {}, lastSave: 0, osdTimer: null, digits: '', digitTimer: null, seekCount: 0, seekAt: 0,
     headEl: null, query: '', pageEl: null, mainEl: null, catsEl: null, contentEl: null, listHost: null, clockEl: null
@@ -47,13 +47,6 @@
     ff: '<path d="M13 6l6 6-6 6M5 6l6 6-6 6"/>',
     chup: '<path d="M5 15l7-7 7 7"/>',
     chdn: '<path d="M5 9l7 7 7-7"/>',
-    sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2.5V5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/>',
-    cloud: '<path d="M7 18a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 10.5 3.8 3.8 0 0 1 17.5 18z"/>',
-    cloudsun: '<circle cx="8" cy="8" r="3"/><path d="M8 1.5V3M1.5 8H3M3.4 3.4l1 1M12.6 3.4l-1 1"/><path d="M9 20a3.8 3.8 0 0 1-.3-7.6A5 5 0 0 1 18.5 13.5 3.3 3.3 0 0 1 18 20z"/>',
-    rain: '<path d="M7 14.5a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 7 3.8 3.8 0 0 1 17.5 14.5z"/><path d="M8 17.5l-1 3M12.5 17.5l-1 3M17 17.5l-1 3"/>',
-    snow: '<path d="M7 14.5a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 7 3.8 3.8 0 0 1 17.5 14.5z"/><path d="M8 18v.01M12 20v.01M16 18v.01M10 21.5v.01M14 21.5v.01"/>',
-    storm: '<path d="M7 14.5a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 7 3.8 3.8 0 0 1 17.5 14.5z"/><path d="M12.5 14l-2.5 4h3.5l-2 4"/>',
-    fog: '<path d="M4 8h16M3 12h18M5 16h14M8 20h8"/>',
     check: '<path d="M5 12.5l5 5 9-10.5"/>',
     cc: '<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10.5 10.3a2.4 2.4 0 1 0 0 3.4M17 10.3a2.4 2.4 0 1 0 0 3.4"/>'
   };
@@ -113,21 +106,6 @@
   function bgUrl(u) { return 'url(' + JSON.stringify(u) + ')'; }
   function initial(it) { return (it.name || '?').charAt(0).toUpperCase(); }
   function metaLine(parts) { return parts.filter(function (x) { return x; }).join('  ·  '); }
-  function opt(k) { return !!S.opts[k]; }
-  function setOpt(k, v) { S.opts[k] = !!v; store.set('opts', S.opts); }
-
-  // filtro de canais por qualidade no nome (FHD/UHD não são afetados)
-  var RE_SD = /(^|[^A-Za-z0-9])SD($|[^A-Za-z0-9])/i, RE_HD = /(^|[^A-Za-z0-9])HD($|[^A-Za-z0-9])/i;
-  function filterLive(items) {
-    if (!opt('hideSD') && !opt('hideHD')) { return items; }
-    return items.filter(function (it) {
-      if (it.type !== 'live') { return true; }
-      if (opt('hideSD') && RE_SD.test(it.name)) { return false; }
-      if (opt('hideHD') && RE_HD.test(it.name)) { return false; }
-      return true;
-    });
-  }
-
   function typeLabel(t) { return { live: 'CANAL', movie: 'FILME', series: 'SÉRIE' }[t] || ''; }
 
   function imgEl(src, parent) {
@@ -139,36 +117,6 @@
 
   function updateClock() { if (S.clockEl) { S.clockEl.textContent = hhmm(new Date()); } }
   setInterval(updateClock, 20000);
-
-  /* ---------- clima ---------- */
-
-  var DEFAULT_CITY = { name: 'Taubaté', admin: 'São Paulo', lat: -23.03, lon: -45.56 };
-  function getCity() { var c = store.get('city', null); return c && c.name ? c : DEFAULT_CITY; }
-  function cityLabel(c) { return c.name + (c.admin ? ' — ' + c.admin : ''); }
-
-  function paintWx(d) {
-    var el = S.wxEl;
-    if (!el || !document.body.contains(el)) { return; }
-    el.innerHTML = '';
-    el.appendChild(icon(Weather.kind(d.code, d.day), 40));
-    el.appendChild(h('div', { cls: 'wx-t', text: Math.round(d.temp) + '°' }));
-    el.appendChild(h('div', { cls: 'wx-s' }, [
-      h('div', { cls: 'wx-c', text: getCity().name }),
-      h('div', { cls: 'wx-r', text: Weather.text(d.code) + ' · ' + Math.round(d.min) + '° / ' + Math.round(d.max) + '°' })
-    ]));
-  }
-
-  function loadWeather() {
-    var city = getCity(), key = city.lat + ',' + city.lon, c = store.get('wx', null);
-    if (c && c.key === key) {
-      paintWx(c.data);
-      if (Date.now() - c.at < 1800000) { return; }
-    }
-    Weather.forecast(city).then(function (d) {
-      store.set('wx', { key: key, at: Date.now(), data: d });
-      paintWx(d);
-    }, function () {});
-  }
 
   /* ---------- itens "enxutos" para salvar no histórico ---------- */
 
@@ -244,10 +192,10 @@
 
   /* ---------- login ---------- */
 
-  function showLogin(msg, canCancel) {
+  function showLogin(msg) {
     S.mode = 'login';
     closeDetailQuiet();
-    var cfg = (canCancel ? S.cfg : null) || S.draft || S.cfg || store.get('draft', null) || store.get('cfg', null) || {};
+    var cfg = S.draft || S.cfg || store.get('draft', null) || store.get('cfg', null) || {};
 
     var err = h('div', { cls: 'err', text: msg || '' });
     var iServer = h('input', { cls: 'f input', type: 'text', placeholder: 'http://exemplo.com:8080' });
@@ -273,7 +221,6 @@
       h('div', { cls: 'lbl', text: 'Usuário' }), iUser,
       h('div', { cls: 'lbl', text: 'Senha' }), iPass,
       btn,
-      canCancel ? h('button', { cls: 'f btn', text: 'Cancelar', on: { click: function () { showBrowse(); selectSection('settings'); } } }) : null,
       err
     ]));
     Nav.setScope(app);
@@ -281,7 +228,7 @@
     Nav.focus(first);
   }
 
-  function connect(cfg, o) {
+  function connect(cfg) {
     // guarda o que foi digitado: se falhar, o login volta preenchido para editar
     S.draft = cfg;
     store.set('draft', cfg);
@@ -297,9 +244,7 @@
       S.cfg = cfg;
       store.set('cfg', cfg);
       loading(false);
-      epgCache = {};
       showBrowse();
-      if (o && o.boot && opt('autoplay')) { autoOpenLast(); }
     }).then(null, function (e) {
       loading(false);
       S.provider = null;
@@ -345,9 +290,6 @@
       var usub = info.exp ? 'até ' + info.exp.toLocaleDateString('pt-BR') : 'conta ativa';
       hd.className = 'sechead hub';
       hd.appendChild(h('div', { cls: 'brand' }, [h('div', { cls: 'logo-mark' }, [icon('play', 26)]), 'MASTER IPTV']));
-      S.wxEl = h('div', { cls: 'wx' });
-      hd.appendChild(S.wxEl);
-      loadWeather();
       hd.appendChild(h('div', { cls: 'acct' }, [h('div', { cls: 'usub', text: usub }), S.clockEl]));
       hd.appendChild(h('div', { cls: 'avatar', text: letter }));
       updateClock();
@@ -459,7 +401,6 @@
 
   function showItems(items, opts) {
     opts = opts || {};
-    items = filterLive(items);
     S.items = items;
     S.shown = 0;
     S.cardMode = !!opts.cards || S.section !== 'live';
@@ -487,68 +428,13 @@
   function markFav(el, it) { el._item = it; if (S.favs[fk(it)]) { el.classList.add('isfav'); } }
   function ratingBadge(it) { return it.rating ? h('div', { cls: 'rate' }, [icon('starfill', 16), String(it.rating)]) : null; }
 
-  /* EPG: programa atual de cada canal da lista, buscado aos poucos (3 por vez) e guardado por 5 min */
-  var epgCache = {}, epgQ = [], epgBusy = 0;
-
-  function currentProg(list) {
-    var now = Date.now(), cur = null, nxt = null, i;
-    for (i = 0; i < list.length; i++) {
-      if (list[i].start <= now && list[i].stop > now) { cur = list[i]; nxt = list[i + 1] || null; break; }
-    }
-    return { cur: cur, nxt: nxt };
-  }
-
-  function paintEpg(row, cur) {
-    var t = row.querySelector('.epg'), bar = row.querySelector('.epgbar');
-    if (!t || !cur) { return; }
-    t.textContent = hhmm(new Date(cur.start)) + '  ' + cur.title;
-    var span = cur.stop - cur.start;
-    if (span > 0) {
-      bar.firstChild.style.width = Math.max(0, Math.min(100, (Date.now() - cur.start) / span * 100)) + '%';
-      bar.classList.add('on');
-    }
-  }
-
-  function runEpg(j) {
-    epgBusy++;
-    S.provider.epg(j.it).then(function (list) {
-      var cur = currentProg(list).cur;
-      epgCache[j.it.id] = { at: Date.now(), cur: cur };
-      if (document.body.contains(j.row)) { paintEpg(j.row, cur); }
-    }, function () {
-      epgCache[j.it.id] = { at: Date.now(), cur: null };
-    }).then(function () { epgBusy--; pumpEpg(); });
-  }
-
-  function pumpEpg() {
-    while (epgBusy < 3 && epgQ.length) {
-      var j = epgQ.shift();
-      if (j.token === S.loadToken) { runEpg(j); }
-    }
-  }
-
-  function queueEpg(row, it) {
-    if (!it.epgId) { return; }
-    var c = epgCache[it.id];
-    if (c && Date.now() - c.at < 300000) { paintEpg(row, c.cur); return; }
-    epgQ.push({ row: row, it: it, token: S.loadToken });
-    pumpEpg();
-  }
-
   function buildRow(it, i) {
     var logo = h('div', { cls: 'logo' });
     if (it.logo) { imgEl(it.logo, logo); }
     var el = h('div', { cls: 'f row', 'data-i': i, on: { click: function () { openItem(i); } } }, [
-      h('div', { cls: 'num', text: it.num || '' }), logo,
-      h('div', { cls: 'rinfo' }, [
-        h('div', { cls: 'name', text: it.name }),
-        h('div', { cls: 'epg' }),
-        h('div', { cls: 'epgbar' }, [h('div', { cls: 'fill' })])
-      ]),
-      favMark(28)
+      h('div', { cls: 'num', text: it.num || '' }), logo, h('div', { cls: 'name', text: it.name }), favMark(28)
     ]);
     markFav(el, it);
-    queueEpg(el, it);
     return el;
   }
 
@@ -758,49 +644,6 @@
 
   /* ---------- configurações ---------- */
 
-  function sgroup(t) { return h('div', { cls: 'sgroup', text: t }); }
-
-  function switchRow(label, desc, key) {
-    var sw = h('span', { cls: 'sw' + (opt(key) ? ' on' : '') }, [h('span', { cls: 'knob' })]);
-    return h('div', { cls: 'f swrow', on: { click: function () {
-      setOpt(key, !opt(key));
-      sw.classList.toggle('on', opt(key));
-    } } }, [h('div', { cls: 'swtxt' }, [h('div', { cls: 'swl', text: label }), h('div', { cls: 'swd', text: desc })]), sw]);
-  }
-
-  function cityBlock() {
-    var curTxt = h('div', { text: cityLabel(getCity()) });
-    var input = h('input', { cls: 'f input', id: 'city', type: 'text', placeholder: 'Digite o nome da cidade' });
-    var results = h('div', { cls: 'cityres' });
-    function pick(r) {
-      store.set('city', { name: r.name, admin: r.admin, lat: r.lat, lon: r.lon });
-      store.del('wx');
-      curTxt.textContent = cityLabel(getCity());
-      results.innerHTML = '';
-      input.value = '';
-      toast('Cidade: ' + r.name, 2000);
-    }
-    function go() {
-      var q = input.value.trim();
-      if (q.length < 2) { toast('Digite pelo menos 2 letras'); return; }
-      results.innerHTML = '';
-      Weather.search(q).then(function (list) {
-        if (!list.length) { results.appendChild(h('div', { cls: 'empty', text: 'Nenhuma cidade encontrada.' })); return; }
-        list.forEach(function (r) {
-          results.appendChild(h('button', { cls: 'f btn', text: r.name + (r.admin ? ' — ' + r.admin : '') + (r.country ? ' (' + r.country + ')' : ''),
-            on: { click: function () { pick(r); } } }));
-        });
-        Nav.focus(results.querySelector('.f'));
-      }, function () { toast('Sem conexão para buscar a cidade', 3000); });
-    }
-    input._enter = go;
-    return h('div', {}, [
-      h('div', { cls: 'srow' }, [h('div', { cls: 'skey', text: 'Cidade do clima' }), curTxt]),
-      h('div', { cls: 'citybox' }, [input, h('button', { cls: 'f btn', text: 'Buscar', on: { click: go } })]),
-      results
-    ]);
-  }
-
   function renderSettings() {
     var page = S.pageEl, info = S.info || {};
     page.className = 'page scroll settings';
@@ -812,31 +655,17 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.5.1']
+      ['Versão do app', '1.4.0']
     ];
-    page.appendChild(sgroup('Conta'));
+    page.appendChild(h('h1', { text: 'Configurações' }));
     rows.forEach(function (r) {
       page.appendChild(h('div', { cls: 'srow' }, [h('div', { cls: 'skey', text: r[0] }), h('div', { text: String(r[1]) })]));
     });
     page.appendChild(h('div', { cls: 'sbtns' }, [
-      h('button', { cls: 'f btn primary', text: 'Editar servidor', on: { click: function () { showLogin('', true); } } }),
-      h('button', { cls: 'f btn', text: 'Trocar conta / Sair', on: { click: logout } })
-    ]));
-
-    page.appendChild(sgroup('Preferências'));
-    page.appendChild(switchRow('Reproduzir o último conteúdo ao abrir o app', 'Ao iniciar, retoma o último canal, filme ou episódio assistido.', 'autoplay'));
-    page.appendChild(switchRow('Ocultar canais SD', 'Esconde da lista os canais com "SD" no nome.', 'hideSD'));
-    page.appendChild(switchRow('Ocultar canais HD', 'Esconde da lista os canais com "HD" no nome (FHD e 4K continuam).', 'hideHD'));
-
-    page.appendChild(sgroup('Clima'));
-    page.appendChild(cityBlock());
-
-    page.appendChild(sgroup('Dados'));
-    page.appendChild(h('div', { cls: 'sbtns' }, [
+      h('button', { cls: 'f btn primary', text: 'Trocar servidor / Sair', on: { click: logout } }),
       h('button', { cls: 'f btn', text: 'Limpar histórico', on: { click: function () {
         S.cont = {}; S.resume = {}; S.recent = []; S.last = {};
         store.set('cont', S.cont); store.set('resume', S.resume); store.set('recent', S.recent); store.set('last', S.last);
-        store.del('lastlive');
         toast('Histórico limpo');
       } } }),
       h('button', { cls: 'f btn', text: 'Limpar favoritos', on: { click: function () {
@@ -1031,7 +860,6 @@
       title = (ch.num ? ch.num + '  ' : '') + ch.name;
       logo = ch.logo;
       pushRecent(ch);
-      store.set('lastlive', { item: slimItem(ch), at: Date.now() });
     } else {
       var it = c.item, ep = c.kind === 'ep' ? c.eps[c.idx] : null;
       if (ep) {
@@ -1057,7 +885,6 @@
 
   function setOsd(title, sub, sub2, logo, vod) {
     $('osd-title').textContent = title;
-    $('osd-res').classList.add('hidden');
     $('osd-sub').textContent = sub;
     $('osd-sub2').textContent = sub2;
     var l = $('osd-logo');
@@ -1167,26 +994,6 @@
       case KEY.DOWN: Nav.move('down'); break;
       case KEY.ENTER: Nav.activate(); break;
       default: break;
-    }
-  }
-
-  function resLabel(w, hh) {
-    return w + '×' + hh + ' · ' + (hh >= 2000 || w >= 3600 ? '4K' : (hh >= 1000 || w >= 1900 ? 'FHD' : (hh >= 700 || w >= 1260 ? 'HD' : 'SD')));
-  }
-
-  /* abre o último conteúdo (canal ao vivo ou filme/episódio) quando o app inicia */
-  function autoOpenLast() {
-    var ll = store.get('lastlive', null), c = contList()[0];
-    if (ll && ll.item && (!c || ll.at > c.at)) {
-      var ch = ll.item;
-      S.provider.items('live', ch.cat).then(function (list) { return list; }, function () { return [ch]; }).then(function (list) {
-        var l = filterLive(list), idx = -1;
-        l.forEach(function (x, i) { if (x.id === ch.id) { idx = i; } });
-        if (idx < 0) { l = [ch]; idx = 0; }
-        if (S.mode === 'browse') { startPlay({ kind: 'live', list: l, idx: idx }); }
-      });
-    } else if (c) {
-      resumeCont(c);
     }
   }
 
@@ -1393,7 +1200,7 @@
       if (k === KEY.ENTER) {
         a.blur();
         e.preventDefault();
-        if (a.id === 'q') { doSearch(); } else if (a._enter) { a._enter(); }
+        if (a.id === 'q') { doSearch(); }
         return;
       }
       if (k === KEY.BACK || k === KEY.ESC) { a.blur(); e.preventDefault(); return; }
@@ -1414,15 +1221,9 @@
   /* ---------- inicialização ---------- */
 
   function boot() {
-    Weather.init(http);
     Player.init($('video'), {
       onBuffer: function (on) { $('buffer').classList.toggle('hidden', !on); },
       onTracks: function () { if (S.ctx) { applyPrefs(); } },
-      onResize: function (w, hh) {
-        var r = $('osd-res');
-        r.textContent = resLabel(w, hh);
-        r.classList.remove('hidden');
-      },
       onState: function (playing) {
         if (!oPlay) { return; }
         oPlay.innerHTML = '';
@@ -1481,7 +1282,7 @@
     $('osd-tracks').insertBefore(icon('cc', 30), $('osd-tracks').firstChild);
 
     var cfg = store.get('cfg', null);
-    if (cfg && cfg.server) { S.cfg = cfg; connect(cfg, { boot: true }); } else { showLogin(); }
+    if (cfg && cfg.server) { S.cfg = cfg; connect(cfg); } else { showLogin(); }
   }
 
   if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', boot); } else { boot(); }

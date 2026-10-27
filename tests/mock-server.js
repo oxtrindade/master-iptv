@@ -14,15 +14,12 @@ function create() {
       switch (q.action) {
         case undefined:
           return json({ user_info: { auth: 1, status: 'Active', username: 'joao', exp_date: '1893456000', max_connections: '1' }, server_info: {} });
-        case 'get_live_categories': return json([{ category_id: '1', category_name: 'Notícias' }, { category_id: '2', category_name: 'Esportes' }, { category_id: '3', category_name: 'Filmes e séries 24h' }]);
+        case 'get_live_categories': return json([{ category_id: '1', category_name: 'Notícias' }, { category_id: '2', category_name: 'Esportes' }]);
         case 'get_live_streams':
           var all = [
             { num: 1, name: 'Canal Notícias', stream_id: 101, stream_icon: '', category_id: '1', epg_channel_id: 'n1' },
             { num: 2, name: 'Canal Esporte 1', stream_id: 102, stream_icon: '', category_id: '2', epg_channel_id: 'e1' },
-            { num: 3, name: 'Canal Esporte 2', stream_id: 103, stream_icon: '', category_id: '2', epg_channel_id: 'e2' },
-            { num: 4, name: 'Cine HD', stream_id: 104, stream_icon: '', category_id: '3', epg_channel_id: 'c1' },
-            { num: 5, name: 'Cine SD', stream_id: 105, stream_icon: '', category_id: '3', epg_channel_id: '' },
-            { num: 6, name: 'Cine FHD', stream_id: 106, stream_icon: '', category_id: '3', epg_channel_id: 'c3' }
+            { num: 3, name: 'Canal Esporte 2', stream_id: 103, stream_icon: '', category_id: '2', epg_channel_id: 'e2' }
           ];
           return json(q.category_id ? all.filter(function (c) { return c.category_id === q.category_id; }) : all);
         case 'get_vod_categories': return json([{ category_id: '10', category_name: 'Ação' }]);
