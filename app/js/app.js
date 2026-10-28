@@ -775,6 +775,41 @@
     } } }, [h('div', { cls: 'swtxt' }, [h('div', { cls: 'swl', text: label }), h('div', { cls: 'swd', text: desc })]), sw]);
   }
 
+  /* tamanho do texto e dos blocos no celular */
+  function scaleBlock() {
+    var cur = store.get('uiscale', 1), opts = [['Normal', 1], ['Grande', 1.15], ['Muito grande', 1.3]], box = h('div', { cls: 'sbtns scales' });
+    function paint() {
+      box.innerHTML = '';
+      opts.forEach(function (o) {
+        box.appendChild(h('button', { cls: 'f btn' + (Math.abs(cur - o[1]) < 0.01 ? ' primary' : ''), text: o[0], on: { click: function () {
+          cur = o[1]; store.set('uiscale', cur);
+          if (window.__relayout) { window.__relayout(); }
+          paint();
+        } } }));
+      });
+    }
+    paint();
+    return box;
+  }
+
+  /* letreiro: texto que não cabe na linha anda devagar para a esquerda e volta */
+  function runMarquee() {
+    var els = document.querySelectorAll('.row .name, .row .epg, .lt, .ls, .sectitle, .swl'), i, el, over, dist;
+    for (i = 0; i < els.length; i++) {
+      el = els[i];
+      if (el._mq === el.textContent + '|' + el.clientWidth) { continue; }
+      el._mq = el.textContent + '|' + el.clientWidth;
+      el.classList.remove('mq');
+      over = el.scrollWidth - el.clientWidth;
+      if (over > 3) {
+        dist = over + 8;
+        el.style.setProperty('--mq', '-' + dist + 'px');
+        el.style.setProperty('--mqd', (3 + dist / 30).toFixed(1) + 's');
+        el.classList.add('mq');
+      }
+    }
+  }
+
   function cityBlock() {
     var curTxt = h('div', { text: cityLabel(getCity()) });
     var input = h('input', { cls: 'f input', id: 'city', type: 'text', placeholder: 'Digite o nome da cidade' });
@@ -819,7 +854,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.5.5']
+      ['Versão do app', '1.5.6']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
@@ -830,6 +865,10 @@
       h('button', { cls: 'f btn', text: 'Trocar conta / Sair', on: { click: logout } })
     ]));
 
+    if (document.body.classList.contains('touch')) {
+      page.appendChild(sgroup('Aparência'));
+      page.appendChild(scaleBlock());
+    }
     page.appendChild(sgroup('Preferências'));
     page.appendChild(switchRow('Reproduzir o último conteúdo ao abrir o app', 'Ao iniciar, retoma o último canal, filme ou episódio assistido.', 'autoplay'));
     page.appendChild(switchRow('Ocultar canais SD', 'Esconde da lista os canais com "SD" no nome.', 'hideSD'));
@@ -1520,7 +1559,7 @@
       }
       onKey(fake(code));
     };
-    if (document.body.classList.contains('touch')) { buildTouchCtl(); }
+    if (document.body.classList.contains('touch')) { buildTouchCtl(); setInterval(runMarquee, 1200); }
     document.addEventListener('mouseover', function (e) {
       if (S.mode === 'player') { return; }
       var el = up(e.target), sc = Nav.getScope();

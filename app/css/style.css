@@ -455,3 +455,19 @@ body.portrait #player.mini #mini-x svg { width: 16px; height: 16px; }
 body.compact:not(.portrait) #player.mini { width: 360px; height: 203px; right: 18px; }
 body.compact:not(.portrait).mini-on #player.mini { top: 86px; }
 body.compact:not(.portrait).mini-on .page { right: 390px; }
+
+/* letreiro (celular): o que não cabe anda para a esquerda */
+.mq { text-overflow: clip !important; -webkit-animation: mq var(--mqd, 6s) linear infinite alternate; animation: mq var(--mqd, 6s) linear infinite alternate; }
+@-webkit-keyframes mq { 0%, 18% { text-indent: 0; } 82%, 100% { text-indent: var(--mq, 0); } }
+@keyframes mq { 0%, 18% { text-indent: 0; } 82%, 100% { text-indent: var(--mq, 0); } }
+body.portrait .lt, body.portrait .ls { white-space: nowrap; overflow: hidden; }
+.scales .btn { margin-bottom: 8px; }
+body.portrait .clock { display: none; }
+body.portrait .sectitle { white-space: nowrap; min-width: 0; overflow: hidden; }
+body.portrait .sechead .btn:not(.backbtn) { font-size: 0; padding: 0 12px; }
+body.portrait .sechead .btn:not(.backbtn) .ico { margin-right: 0; }
+body.portrait .brand { white-space: nowrap; }
+body.portrait .hubname { white-space: normal; }
+body.portrait .avatar, body.portrait .acct .usub { display: none; }
+body.portrait .brand { font-size: 17px; letter-spacing: 1px; min-width: 0; overflow: hidden; }
+body.portrait .hubtile { height: auto; min-height: 150px; }
