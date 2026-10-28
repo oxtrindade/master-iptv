@@ -251,10 +251,12 @@
         it.id = String(r.stream_id);
         it.ext = r.container_extension || 'mp4';
         it.rating = rating10(r);
+        it.added = parseInt(r.added, 10) || 0;
         it.url = base + '/movie/' + user + '/' + pass + '/' + r.stream_id + '.' + it.ext;
       } else {
         it.id = String(r.series_id);
         it.rating = rating10(r);
+        it.added = parseInt(r.last_modified, 10) || 0;
         it.plot = r.plot || '';
         it.year = String(r.releaseDate || r.release_date || r.year || '').slice(0, 4);
       }

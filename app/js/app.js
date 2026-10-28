@@ -743,6 +743,8 @@
 
     var conts = contList().slice(0, 12);
     if (conts.length) { rows.appendChild(makeRow('Continuar assistindo', conts.map(contCard))); }
+    trendRow(rows, 'movie', 'Filmes em alta');
+    trendRow(rows, 'series', 'Séries em alta');
     if (S.recent.length) {
       rows.appendChild(makeRow('Canais recentes', S.recent.slice(0, 12).map(function (it) { return chanTile(it, S.recent); })));
     }
@@ -753,6 +755,37 @@
     if (want === 'cont') { target = page.querySelector('.lcard'); }
     else if (want) { target = page.querySelector('[data-sec="' + want + '"]'); }
     Nav.focus(target || page.querySelector('.hubtile'));
+  }
+
+  /* "em alta": novidades do catálogo com boa nota (o Xtream não tem ranking; usamos data de adição + nota) */
+  function trending(list) {
+    var now = Date.now() / 1000, seen = {}, scored = [];
+    list.forEach(function (it) {
+      if (!(it.rating > 0) || !it.logo) { return; }
+      var key = it.name.toLowerCase().replace(/\s*\(\d{4}\)\s*$/, '');
+      if (seen[key]) { return; }
+      seen[key] = 1;
+      var age = it.added ? (now - it.added) / 86400 : 9999;
+      scored.push({ it: it, age: age, s: it.rating + Math.max(0, 1 - age / 90) * 3 });
+    });
+    var recent = scored.filter(function (x) { return x.age <= 120; });
+    var pool = recent.length >= 10 ? recent : scored;
+    pool.sort(function (a, b) { return b.s - a.s; });
+    return pool.slice(0, 20).map(function (x) { return x.it; });
+  }
+
+  function trendRow(rows, section, title) {
+    var slot = h('div'), token = S.homeToken;
+    rows.appendChild(slot);
+    setTimeout(function () {
+      if (token !== S.homeToken || !S.provider) { return; }
+      S.provider.all(section).then(function (list) {
+        if (token !== S.homeToken || !slot.parentNode) { return; }
+        var top = trending(list);
+        if (top.length < 4) { slot.parentNode.removeChild(slot); return; }
+        rows.replaceChild(makeRow(title, top.map(function (it) { return posterCard(it, top); })), slot);
+      }, function () { if (slot.parentNode) { slot.parentNode.removeChild(slot); } });
+    }, 500);
   }
 
   function refreshHome() {
@@ -854,7 +887,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.5.6']
+      ['Versão do app', '1.6.0']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
@@ -871,6 +904,7 @@
     }
     page.appendChild(sgroup('Preferências'));
     page.appendChild(switchRow('Reproduzir o último conteúdo ao abrir o app', 'Ao iniciar, retoma o último canal, filme ou episódio assistido.', 'autoplay'));
+    page.appendChild(switchRow('Pular introdução automaticamente', 'Em séries onde você já usou "Pular introdução", repete o salto no início de cada episódio.', 'autoIntro'));
     page.appendChild(switchRow('Ocultar canais SD', 'Esconde da lista os canais com "SD" no nome.', 'hideSD'));
     page.appendChild(switchRow('Ocultar canais HD', 'Esconde da lista os canais com "HD" no nome (FHD e 4K continuam).', 'hideHD'));
 
@@ -1057,6 +1091,49 @@
     try { if (window.NativeApp && window.NativeApp.setFullscreen) { window.NativeApp.setFullscreen(!!on); } } catch (e) {}
   }
 
+  function syncNative() {
+    try { if (window.NativeApp && window.NativeApp.setPlaying) { window.NativeApp.setPlaying(!!S.ctx && !Player.isPaused()); } } catch (e) {}
+  }
+
+  /* ---------- pular introdução (série) ---------- */
+
+  var INTRO_MAX = 300, INTRO_DEFAULT = 85;
+  function introKey() { var c = S.ctx; return c && c.kind === 'ep' ? c.item.type + ':' + c.item.id : ''; }
+  function introDelta() { var v = store.get('intro', {})[introKey()]; return v > 0 ? v : INTRO_DEFAULT; }
+  function introLearned() { return store.get('intro', {})[introKey()] > 0; }
+
+  function skipIntro() {
+    var c = S.ctx;
+    if (!c || c.kind !== 'ep' || S.mini) { return; }
+    var d = introDelta();
+    S.skipLearn = { t0: Player.time(), at: Date.now(), key: introKey() };
+    Player.seekTo(Player.time() + d);
+    $('skip-intro').classList.add('hidden');
+    toast('Introdução pulada (+' + d + ' s)', 1800);
+  }
+
+  /* se você ajusta logo depois de pular (±10 s), o app aprende o salto certo desta série */
+  function learnSkip() {
+    var k = S.skipLearn;
+    if (!k || k.key !== introKey() || Date.now() - k.at > 12000) { return; }
+    var d = Math.round(Player.time() - k.t0);
+    if (d >= 15 && d <= 400) {
+      var m = store.get('intro', {}); m[k.key] = d; store.set('intro', m);
+      k.at = Date.now();
+    }
+  }
+
+  function updateSkipBtn(t) {
+    var c = S.ctx, b = $('skip-intro');
+    if (!b) { return; }
+    var on = !!c && c.kind === 'ep' && !S.mini && t >= 2 && t < INTRO_MAX;
+    b.classList.toggle('hidden', !on);
+    if (on && opt('autoIntro') && !c.autoDone && introLearned() && t < 25) {
+      c.autoDone = true;
+      skipIntro();
+    }
+  }
+
   function startPlay(ctx, fromStart) {
     setMini(false);
     S.ctx = ctx;
@@ -1067,6 +1144,7 @@
     S.lastSave = Date.now();
     $('player').classList.remove('hidden');
     playCurrent(!!fromStart);
+    syncNative();
   }
 
   function pushRecent(ch) {
@@ -1099,11 +1177,14 @@
       var r = S.resume[c.rk];
       if (!fromStart && r && r.t > 30 && r.t < r.d - 45) { o.startAt = r.t; }
     }
+    c.autoDone = !!o.startAt;
+    $('skip-intro').classList.add('hidden');
     $('buffer').classList.remove('hidden');
     S.prefApplied = {};
     closeTracks();
     Player.play(url, o);
     setOsd(title, sub, '', logo, vod);
+    if (c.kind === 'ep') { $('osd-hint').textContent += ' · Amarelo: pular introdução'; }
     showOsd();
     if (c.kind === 'live') { loadEpg(c.list[c.idx]); }
   }
@@ -1269,8 +1350,8 @@
         if (act === 'next') { zap(1); return; }
         if (act === 'prev') { zap(-1); return; }
         if (act === 'toggle') { Player.toggle(); }
-        if (act === 'rew') { Player.seek(-10); }
-        if (act === 'ff') { Player.seek(10); }
+        if (act === 'rew') { Player.seek(-10); learnSkip(); }
+        if (act === 'ff') { Player.seek(10); learnSkip(); }
         showOsd();
         updateBar(Player.time(), Player.duration());
         return;
@@ -1370,6 +1451,7 @@
       setMini(false);
       S.ctx = null;
     }
+    syncNative();
     nativeFull(false);
     S.mode = S.detail ? 'detail' : 'browse';
     Nav.setScope(S.detail ? $('detail') : $('app'));
@@ -1410,6 +1492,7 @@
     S.seekAt = now;
     var steps = [10, 10, 20, 30, 60, 60, 120];
     Player.seek(dir * steps[Math.min(S.seekCount, steps.length - 1)]);
+    learnSkip();
     showOsd();
     updateBar(Player.time(), Player.duration());
   }
@@ -1422,6 +1505,7 @@
     if (live && k >= 96 && k <= 105) { digit(k - 96); return; }
     switch (k) {
       case KEY.GREEN: openTracks(); break;
+      case KEY.YELLOW: skipIntro(); break;
       case KEY.UP: case KEY.CHUP:
         if (live) { zap(1); } else if (k === KEY.UP) { openTracks(); } else { showOsd(); }
         break;
@@ -1430,8 +1514,8 @@
         break;
       case KEY.LEFT: if (live) { showOsd(); } else { seek(-1); } break;
       case KEY.RIGHT: if (live) { showOsd(); } else { seek(1); } break;
-      case KEY.REW: if (!live) { Player.seek(-30); showOsd(); } break;
-      case KEY.FF: if (!live) { Player.seek(30); showOsd(); } break;
+      case KEY.REW: if (!live) { Player.seek(-30); learnSkip(); showOsd(); } break;
+      case KEY.FF: if (!live) { Player.seek(30); learnSkip(); showOsd(); } break;
       case KEY.PLAY: if (Player.isPaused()) { Player.toggle(); } showOsd(); break;
       case KEY.PAUSE: if (!Player.isPaused()) { Player.toggle(); } showOsd(); break;
       case KEY.ENTER:
@@ -1513,12 +1597,14 @@
         r.classList.remove('hidden');
       },
       onState: function (playing) {
+        syncNative();
         if (!oPlay) { return; }
         oPlay.innerHTML = '';
         oPlay.appendChild(icon(playing ? 'pause' : 'play', 46));
       },
       onTime: function (t, d) {
         if (!S.ctx || S.ctx.kind === 'live') { return; }
+        updateSkipBtn(t);
         if (!$('osd').classList.contains('hidden')) { updateBar(t, d); }
         var now = Date.now();
         if (now - S.lastSave > 10000) { S.lastSave = now; saveResume(); }
@@ -1566,6 +1652,11 @@
       if (el && sc && sc.contains(el)) { Nav.focus(el); }
     });
     document.addEventListener('click', function () { if (S.mode === 'player' && !S.tracksOpen) { showOsd(); } });
+    var skipB = h('button', { id: 'skip-intro', type: 'button', cls: 'hidden' }, [h('span', { text: 'Pular introdução' })]);
+    if (!document.body.classList.contains('touch')) { skipB.appendChild(h('small', { text: 'Amarelo' })); }
+    skipB.addEventListener('click', function (e) { e.stopPropagation(); skipIntro(); });
+    $('player').appendChild(skipB);
+    window.__pip = function (on) { document.body.classList.toggle('pip', !!on); };
     var miniX = h('button', { id: 'mini-x', type: 'button' }, [icon('xmark', 22)]);
     var miniT = h('div', { id: 'mini-title' });
     $('player').appendChild(miniT);

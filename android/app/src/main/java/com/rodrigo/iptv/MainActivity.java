@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.View;
@@ -29,6 +30,8 @@ public class MainActivity extends Activity {
     private WebView web;
     private boolean tv;
     private boolean pageReady = false;
+    private volatile boolean playing = false;   // há vídeo tocando (informado pela página)
+    private boolean pipActive = false;
 
     @SuppressLint({"SetJavaScriptEnabled", "AddJavascriptInterface"})
     @SuppressWarnings("deprecation")
@@ -116,6 +119,12 @@ public class MainActivity extends Activity {
             });
         }
 
+        /** A página avisa se há vídeo tocando: só nesse caso o botão Home vira janela flutuante (PiP). */
+        @JavascriptInterface
+        public void setPlaying(boolean on) {
+            playing = on;
+        }
+
         @JavascriptInterface
         public void exit() {
             runOnUiThread(new Runnable() {
@@ -172,6 +181,12 @@ public class MainActivity extends Activity {
             case KeyEvent.KEYCODE_MENU:
             case KeyEvent.KEYCODE_PROG_RED:
                 return 403; // favoritar
+            case KeyEvent.KEYCODE_PROG_GREEN:
+                return 404; // áudio e legenda
+            case KeyEvent.KEYCODE_PROG_YELLOW:
+                return 405; // pular introdução / ampliar mini player
+            case KeyEvent.KEYCODE_PROG_BLUE:
+                return 406; // fechar mini player
             default:
                 return 0;
         }
@@ -207,8 +222,51 @@ public class MainActivity extends Activity {
         }
     }
 
+    /** Home com vídeo tocando: Picture-in-Picture do sistema (Android 8+). Usa reflexão para compilar também com SDKs antigos. */
+    @Override
+    protected void onUserLeaveHint() {
+        super.onUserLeaveHint();
+        if (tv || !playing || Build.VERSION.SDK_INT < 26) {
+            return;
+        }
+        try {
+            Class<?> bc = Class.forName("android.app.PictureInPictureParams$Builder");
+            Object b = bc.getConstructor().newInstance();
+            bc.getMethod("setAspectRatio", android.util.Rational.class).invoke(b, new android.util.Rational(16, 9));
+            Object params = bc.getMethod("build").invoke(b);
+            pipActive = true;
+            Activity.class.getMethod("enterPictureInPictureMode", Class.forName("android.app.PictureInPictureParams"))
+                    .invoke(this, params);
+        } catch (Throwable t) {
+            pipActive = false;
+        }
+    }
+
+    /** Sem @Override de propósito: o método só existe a partir do Android 7/8. */
+    public void onPictureInPictureModeChanged(boolean inPip, Configuration cfg) {
+        if (web != null) {
+            web.evaluateJavascript("window.__pip && window.__pip(" + (inPip ? "true" : "false") + ")", null);
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        // janela flutuante fechada no X: para o vídeo e o WebView
+        if (pipActive && web != null) {
+            web.evaluateJavascript(
+                    "(function(){var v=document.getElementById('video');if(v){v.pause();}})()", null);
+            web.onPause();
+        }
+        pipActive = false;
+        super.onStop();
+    }
+
     @Override
     protected void onPause() {
+        if (pipActive) {
+            super.onPause();   // em PiP o vídeo segue tocando
+            return;
+        }
         if (web != null) {
             // não deixa o vídeo/áudio tocando em segundo plano
             web.evaluateJavascript(
@@ -221,6 +279,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        pipActive = false;
         if (web != null) {
             web.onResume();
         }

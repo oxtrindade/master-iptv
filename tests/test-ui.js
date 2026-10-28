@@ -160,6 +160,18 @@ Promise.all([listen(api), listen(px)]).then(function () {
       $$('#detail .ep')[0].click();
       assert.ok(/7001\.mp4$/.test($('#video').getAttribute('src')));
       step('séries -> temporadas -> episódio');
+      vd = 2700; vt = 10;
+      $('#video').dispatchEvent(new w.Event('timeupdate'));
+      assert.ok(!$('#skip-intro').classList.contains('hidden'), 'botão Pular introdução aparece no começo do episódio');
+      $('#skip-intro').click();
+      assert.strictEqual(vt, 95, 'pula 85 s por padrão');
+      assert.ok($('#skip-intro').classList.contains('hidden'), 'botão some depois de pular');
+      vt += 10; key(39); // ajuste logo depois de pular: o app aprende o salto desta série
+      var learned = JSON.parse(w.localStorage.getItem('iptv.intro') || '{}');
+      assert.ok(Object.keys(learned).length === 1 && Object.keys(learned).map(function (k) { return learned[k]; })[0] > 85, 'aprendeu o salto: ' + JSON.stringify(learned));
+      vt = 600; $('#video').dispatchEvent(new w.Event('timeupdate'));
+      assert.ok($('#skip-intro').classList.contains('hidden'), 'botão só aparece nos primeiros minutos');
+      step('pular introdução: botão, salto e aprendizado');
       vt = 0; vd = NaN;
       key(27); key(27);
       go('home');
@@ -195,13 +207,13 @@ Promise.all([listen(api), listen(px)]).then(function () {
       return waitFor(function () { return $('.settings .sgroup'); }, 'config');
     }).then(function () {
       var txt = $('.settings').textContent;
-      assert.ok(/127\.0\.0\.1/.test(txt) && /joao/.test(txt) && /1\.5\.6/.test(txt));
-      assert.strictEqual($$('.swrow').length, 3, 'três chaves');
+      assert.ok(/127\.0\.0\.1/.test(txt) && /joao/.test(txt) && /1\.6\.0/.test(txt));
+      assert.strictEqual($$('.swrow').length, 4, 'quatro chaves');
       step('configurações');
       // ocultar SD / HD: a categoria "Filmes e séries 24h" tem Cine HD, Cine SD e Cine FHD
-      $$('.swrow')[1].click(); // SD
-      assert.ok($$('.sw')[1].classList.contains('on'));
-      $$('.swrow')[2].click(); // HD
+      $$('.swrow')[2].click(); // SD
+      assert.ok($$('.sw')[2].classList.contains('on'));
+      $$('.swrow')[3].click(); // HD
       $('.backbtn').click();
       go('live');
       return waitFor(function () { return $$('.cat').length === 4; }, 'ao vivo de novo');
@@ -215,7 +227,7 @@ Promise.all([listen(api), listen(px)]).then(function () {
       go('settings');
       return waitFor(function () { return $('.settings .sgroup'); }, 'config 2');
     }).then(function () {
-      $$('.swrow')[1].click(); $$('.swrow')[2].click(); // desliga os dois
+      $$('.swrow')[2].click(); $$('.swrow')[3].click(); // desliga os dois
       // cidade do clima
       $('#city').value = 'Campinas';
       $('#city').focus();

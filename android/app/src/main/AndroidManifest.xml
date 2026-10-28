@@ -23,6 +23,8 @@
             android:exported="true"
             android:launchMode="singleTask"
             android:screenOrientation="user"
+            android:supportsPictureInPicture="true"
+            android:resizeableActivity="true"
             android:windowSoftInputMode="adjustPan"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden|navigation|uiMode|density">
             <intent-filter>

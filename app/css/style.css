@@ -471,3 +471,16 @@ body.portrait .hubname { white-space: normal; }
 body.portrait .avatar, body.portrait .acct .usub { display: none; }
 body.portrait .brand { font-size: 17px; letter-spacing: 1px; min-width: 0; overflow: hidden; }
 body.portrait .hubtile { height: auto; min-height: 150px; }
+
+/* pular introdução */
+#skip-intro { position: absolute; right: 80px; bottom: 270px; z-index: 4; display: flex; align-items: center; height: 70px; padding: 0 34px; border-radius: 35px;
+  background: rgba(15,22,36,.92); box-shadow: 0 0 0 2px rgba(255,255,255,.35); font-size: 28px; font-weight: 700; color: #fff; }
+#skip-intro small { margin-left: 14px; padding: 3px 12px; border-radius: 8px; background: #ffc83d; color: #1a1400; font-size: 18px; font-weight: 800; }
+.touch #skip-intro { bottom: 160px; right: 30px; }
+body.compact #skip-intro { height: 52px; font-size: 20px; padding: 0 24px; border-radius: 26px; bottom: 150px; right: 30px; }
+body.portrait #skip-intro { height: 38px; font-size: 14px; padding: 0 16px; border-radius: 19px; bottom: 90px; right: 14px; }
+#player.mini #skip-intro { display: none !important; }
+
+/* janela flutuante do sistema (PiP): só o vídeo */
+body.pip #player, body.pip #player.mini { left: 0 !important; top: 0 !important; right: 0 !important; bottom: 0 !important; width: 100% !important; height: 100% !important; border-radius: 0; box-shadow: none; z-index: 200; }
+body.pip #osd, body.pip #tracks, body.pip #chnum, body.pip #mini-x, body.pip #mini-title, body.pip #skip-intro, body.pip #toast { display: none !important; }
