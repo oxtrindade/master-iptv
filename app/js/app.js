@@ -133,6 +133,11 @@
   function imgEl(src, parent) {
     var img = document.createElement('img');
     img.onerror = function () { if (img.parentNode) { img.parentNode.removeChild(img); } };
+    // imagem carregou: a letra de reserva (placeholder) sai de cima do pôster
+    img.onload = function () {
+      var p = img.parentNode, ph = p && p.querySelector('.ph');
+      if (ph) { p.removeChild(ph); }
+    };
     img.src = src;
     parent.appendChild(img);
   }
@@ -429,9 +434,9 @@
     S.catsEl.innerHTML = '';
     S.cats.forEach(function (c) {
       S.catsEl.appendChild(h('div', {
-        cls: 'f cat' + (c.id === S.catId ? ' on' : ''), text: c.name, 'data-id': c.id,
+        cls: 'f cat' + (c.id === S.catId ? ' on' : ''), 'data-id': c.id,
         on: { click: function () { selectCat(c.id, false); } }
-      }));
+      }, [h('span', { cls: 'ct', text: c.name })]));
     });
   }
 
@@ -812,7 +817,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.5.3']
+      ['Versão do app', '1.5.4']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {

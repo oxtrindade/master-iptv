@@ -90,7 +90,8 @@ button, input { font-family: inherit; font-size: inherit; color: inherit; border
 
 /* listas */
 .cats { width: 450px; height: 100%; padding: 30px 24px 70px 44px; background: #0d1420; flex: none; }
-.cat { padding: 16px 24px; margin-bottom: 8px; border-radius: 14px; color: #9aa7bd; font-size: 26px; line-height: 1.2; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.cat { padding: 16px 24px; margin-bottom: 8px; border-radius: 14px; color: #9aa7bd; font-size: 26px; line-height: 1.2; }
+.cat .ct { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .cat.on { background: #172238; color: #fff; }
 .content { flex: 1; height: 100%; padding: 30px 30px 80px 44px; }
 .empty { color: #8a97ad; padding: 60px 10px; font-size: 30px; }
@@ -363,7 +364,7 @@ body.portrait .rate { font-size: 12px; }
 body.portrait .page.lists { display: flex; overflow: hidden; }
 body.portrait .cats { display: block; width: 118px; height: 100%; padding: 8px 6px 30px 8px; overflow-x: hidden; overflow-y: auto; }
 body.portrait .cats::-webkit-scrollbar { display: none; }
-body.portrait .cat { display: -webkit-box; margin: 0 0 4px 0; padding: 8px 8px; font-size: 13px; line-height: 1.2; border-radius: 10px; word-break: break-word; }
+body.portrait .cat { display: block; margin: 0 0 4px 0; padding: 8px 8px; font-size: 13px; line-height: 1.2; border-radius: 10px; word-break: break-word; }
 body.portrait .cat.on { background: #172238; }
 body.portrait .content { height: 100%; min-width: 0; padding: 8px 10px 24px 8px; }
 body.portrait .input { height: 42px; font-size: 16px; padding: 0 18px; margin-bottom: 8px; border-radius: 21px; }
@@ -433,3 +434,4 @@ body.portrait .oc small { font-size: 10px; bottom: 6px; }
 body.portrait #chnum { font-size: 44px; right: 24px; top: 20px; }
 body.portrait #toast { width: 420px; margin-left: -210px; font-size: 15px; padding: 12px 16px; bottom: 40px; }
 body.portrait video::cue { font-size: 22px; }
+body.portrait .cat .ct { -webkit-line-clamp: 3; }
