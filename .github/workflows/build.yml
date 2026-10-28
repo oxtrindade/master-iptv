@@ -25,11 +25,17 @@ jobs:
         with:
           name: ipk
           path: dist/*
-      # só em tags v*: cria a Release com o .ipk, o repo.json, a descrição e o ícone
+      - name: Versão do app
+        id: ver
+        run: echo "v=$(node -p "require('./app/appinfo.json').version")" >> "$GITHUB_OUTPUT"
+      # a cada envio na main (ou tag v*): publica a Release v<versão do appinfo.json> com .ipk, repo.json, descrição e ícone
       - name: Release
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: v${{ steps.ver.outputs.v }}
+          target_commitish: ${{ github.sha }}
+          name: ${{ steps.ver.outputs.v }}
           files: |
             dist/*.ipk
             dist/repo.json
@@ -79,8 +85,14 @@ jobs:
         with:
           name: apk
           path: dist/*.apk
-      - name: Anexar o APK na Release (só em tags v*)
-        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Versão do app
+        id: ver
+        run: echo "v=$(node -p "require('./app/appinfo.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Anexar o APK na Release
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: v${{ steps.ver.outputs.v }}
+          target_commitish: ${{ github.sha }}
+          name: ${{ steps.ver.outputs.v }}
           files: dist/*.apk
