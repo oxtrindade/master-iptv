@@ -8,7 +8,7 @@
   function $(id) { return document.getElementById(id); }
 
   /* perfis: cada perfil tem o seu histórico, favoritos, preferências etc. O perfil "p1" usa as chaves antigas (nada se perde). */
-  var PROF_KEYS = { fav: 1, resume: 1, last: 1, cont: 1, recent: 1, opts: 1, lastlive: 1, intro: 1, trackpref: 1, city: 1, hist: 1, cat: 1 };
+  var PROF_KEYS = { verpref: 1, fav: 1, resume: 1, last: 1, cont: 1, recent: 1, opts: 1, lastlive: 1, intro: 1, trackpref: 1, city: 1, hist: 1, cat: 1 };
   var curProf = 'p1';
   try { curProf = JSON.parse(localStorage.getItem('iptv.curprof')) || 'p1'; } catch (e0) {}
   function pk(k) { return (PROF_KEYS[k.split(':')[0]] && curProf !== 'p1') ? curProf + '.' + k : k; }
@@ -267,6 +267,7 @@
   function reloadProfileData() {
     S.favs = store.get('fav', {}); S.resume = store.get('resume', {}); S.last = store.get('last', {});
     S.cont = store.get('cont', {}); S.recent = store.get('recent', []); S.opts = store.get('opts', {}); S.pref = store.get('trackpref', {});
+    Tmdb.setPref(store.get('verpref', 'dub'));
   }
 
   function switchProfile(id) {
@@ -901,11 +902,14 @@
     var now = Date.now() / 1000, seen = {}, scored = [];
     list.forEach(function (it) {
       if (!(it.rating > 0) || !it.logo) { return; }
-      var key = it.name.toLowerCase().replace(/\s*\(\d{4}\)\s*$/, '');
-      if (seen[key]) { return; }
-      seen[key] = 1;
-      var age = it.added ? (now - it.added) / 86400 : 9999;
-      scored.push({ it: it, age: age, s: it.rating + Math.max(0, 1 - age / 90) * 3 });
+      var key = Tmdb.norm(it.name) + '|' + Tmdb.yearOf(it.name);
+      var age = it.added ? (now - it.added) / 86400 : 9999, x = { it: it, age: age, s: it.rating + Math.max(0, 1 - age / 90) * 3 };
+      if (seen[key]) {   // mesma obra em outra versão (dublado/legendado/4K): fica a preferida
+        if (Tmdb.rank(it) > Tmdb.rank(seen[key].it)) { scored[scored.indexOf(seen[key])] = x; seen[key] = x; }
+        return;
+      }
+      seen[key] = x;
+      scored.push(x);
     });
     var recent = scored.filter(function (x) { return x.age <= 120; });
     var pool = recent.length >= 10 ? recent : scored;
@@ -991,8 +995,8 @@
       Promise.all([S.provider.all('movie'), S.provider.all('series')]).then(function (lists) {
         var aff = {}, seen = histSeen(), cands = [];
         hist.slice(0, 20).forEach(function (x, i) { var k = x.type + ':' + x.cat; aff[k] = (aff[k] || 0) + Math.max(0.3, 1 - i * 0.05); });
-        lists.forEach(function (list) {
-          list.forEach(function (it) {
+        lists.forEach(function (list0) {
+          Tmdb.best(list0).forEach(function (it) {
             var a = aff[it.type + ':' + it.cat];
             if (!a || !it.logo || seen[it.type + ':' + it.id]) { return; }
             cands.push({ it: it, s: a * 2 + (it.rating || 0) * 0.4 });
@@ -1025,6 +1029,21 @@
       setOpt(key, !opt(key));
       sw.classList.toggle('on', opt(key));
     } } }, [h('div', { cls: 'swtxt' }, [h('div', { cls: 'swl', text: label }), h('div', { cls: 'swd', text: desc })]), sw]);
+  }
+
+  /* qual versão aparece primeiro quando o catálogo tem o mesmo título dublado, legendado ou em 4K */
+  function verBlock() {
+    var cur = store.get('verpref', 'dub'), opts = [['Dublado', 'dub'], ['Legendado', 'leg'], ['Sem preferência', 'any']], box = h('div', { cls: 'sbtns scales' });
+    function paint() {
+      box.innerHTML = '';
+      opts.forEach(function (o) {
+        box.appendChild(h('button', { cls: 'f btn' + (cur === o[1] ? ' primary' : ''), text: o[0], on: { click: function () {
+          cur = o[1]; store.set('verpref', cur); Tmdb.setPref(cur); paint();
+        } } }));
+      });
+    }
+    paint();
+    return box;
   }
 
   /* tamanho do texto e dos blocos no celular */
@@ -1080,7 +1099,8 @@
     return h('div', {}, [
       h('div', { cls: 'swd tmdbhelp', text: 'Gratuito: crie conta em themoviedb.org, abra Configurações → API e copie a Chave da API. Cole abaixo.' }),
       h('div', { cls: 'citybox' }, [input, h('button', { cls: 'f btn', text: 'Salvar', on: { click: save } })]),
-      status
+      status,
+      h('div', { cls: 'swd tmdbhelp', text: 'Este produto usa a API do TMDB, mas não é endossado nem certificado pelo TMDB.' })
     ]);
   }
 
@@ -1128,7 +1148,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.7.0']
+      ['Versão do app', '1.8.1']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
@@ -1150,6 +1170,8 @@
       page.appendChild(scaleBlock());
     }
     page.appendChild(sgroup('Preferências'));
+    page.appendChild(h('div', { cls: 'sgroup sub', text: 'Versão preferida (dublado/legendado)' }));
+    page.appendChild(verBlock());
     page.appendChild(switchRow('Reproduzir o último conteúdo ao abrir o app', 'Ao iniciar, retoma o último canal, filme ou episódio assistido.', 'autoplay'));
     page.appendChild(switchRow('Pular introdução automaticamente', 'Em séries onde você já usou "Pular introdução", repete o salto no início de cada episódio.', 'autoIntro'));
     page.appendChild(switchRow('Ocultar canais SD', 'Esconde da lista os canais com "SD" no nome.', 'hideSD'));
@@ -1177,10 +1199,10 @@
 
   /* ---------- detalhes (filme / série) ---------- */
 
-  function showDetail(it) {
-    S.lastFocus = Nav.current();
+  function showDetail(it, vars) {
+    if (!(S.detail && vars)) { S.lastFocus = Nav.current(); }
     S.mode = 'detail';
-    var D = S.detail = { item: it, flat: [], seasons: [], season: null };
+    var D = S.detail = { item: it, flat: [], seasons: [], season: null, vars: vars || null };
     var d = $('detail');
     d.innerHTML = '';
     d.classList.remove('hidden');
@@ -1199,10 +1221,19 @@
     d.appendChild(bg);
     d.appendChild(h('div', { cls: 'bgfade' }));
     d.appendChild(h('div', { cls: 'dwrap' }, [
-      h('div', { cls: 'dmain' }, [poster, h('div', { cls: 'dinfo' }, [title, meta, plot, btns])]),
+      h('div', { cls: 'dmain' }, [poster, h('div', { cls: 'dinfo' }, [title, meta, plot, D.varsEl = h('div', { cls: 'dvars' }), btns])]),
       D.seasonsEl, D.epsEl
     ]));
     Nav.setScope(d);
+    if (vars) { renderVariants(D); }
+    else {
+      S.provider.all(it.type).then(function (list) {
+        var v = Tmdb.variants(list, it);
+        if (S.detail !== D || v.length < 2) { return; }
+        D.vars = v;
+        renderVariants(D);
+      }, function () {});
+    }
 
     if (it.type === 'movie') {
       buildMovieButtons();
@@ -1236,6 +1267,21 @@
         D.epsEl.appendChild(h('div', { cls: 'empty', text: 'Erro ao carregar episódios: ' + (e && e.message) }));
       });
     }
+  }
+
+  /* várias versões do mesmo título (dublado, legendado, 4K…): escolher aqui */
+  function renderVariants(D) {
+    if (!D.vars || D.vars.length < 2) { return; }
+    var el = D.varsEl, seenLbl = {};
+    el.innerHTML = '';
+    el.appendChild(h('span', { cls: 'dvlbl', text: 'Versão:' }));
+    D.vars.forEach(function (v) {
+      var info = Tmdb.variantInfo(v.name), lbl = info.label;
+      if (seenLbl[lbl]) { seenLbl[lbl]++; lbl += ' ' + seenLbl[lbl]; } else { seenLbl[lbl] = 1; }
+      el.appendChild(h('button', { cls: 'f chip' + (v === D.item ? ' on' : ''), type: 'button', text: lbl, on: { click: function () {
+        if (v !== D.item) { showDetail(v, D.vars); }
+      } } }));
+    });
   }
 
   function favBtn(it) {
@@ -1854,6 +1900,8 @@
   function boot() {
     Weather.init(http);
     Tmdb.init(http);
+    Tmdb.setTv4k(/Web0S|webOS|SMART-?TV/i.test(navigator.userAgent) || document.body.classList.contains('tv'));
+    Tmdb.setPref(store.get('verpref', 'dub'));
     Player.init($('video'), {
       onBuffer: function (on) { $('buffer').classList.toggle('hidden', !on); },
       onTracks: function () { if (S.ctx) { applyPrefs(); } },

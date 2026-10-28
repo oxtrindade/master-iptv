@@ -50,7 +50,7 @@ Promise.all([listen(api), listen(px)]).then(function () {
       return (function loop() {
         var v; try { v = fn(); } catch (e) { v = false; }
         if (v) { return Promise.resolve(v); }
-        if (Date.now() - t0 > 6000) { return Promise.reject(new Error('timeout: ' + label)); }
+        if (Date.now() - t0 > 6000) { return Promise.reject(new Error('timeout: ' + label + ' | detail: ' + ($('#detail') ? $('#detail').textContent.slice(0, 300) : ''))); }
         return sleep(25).then(loop);
       })();
     }
@@ -207,7 +207,7 @@ Promise.all([listen(api), listen(px)]).then(function () {
       return waitFor(function () { return $('.settings .sgroup'); }, 'config');
     }).then(function () {
       var txt = $('.settings').textContent;
-      assert.ok(/127\.0\.0\.1/.test(txt) && /joao/.test(txt) && /1\.7\.0/.test(txt));
+      assert.ok(/127\.0\.0\.1/.test(txt) && /joao/.test(txt) && /1\.8\.1/.test(txt));
       assert.strictEqual($$('.swrow').length, 4, 'quatro chaves');
       step('configurações');
       // ocultar SD / HD: a categoria "Filmes e séries 24h" tem Cine HD, Cine SD e Cine FHD
@@ -289,5 +289,5 @@ Promise.all([listen(api), listen(px)]).then(function () {
     });
   });
 }).then(function () { api.close(); px.close(); process.exit(0); }, function (e) {
-  console.error('  FAIL ' + (e && e.stack || e)); process.exit(1);
+  console.error('  FAIL ' + (e && e.stack || e)); try { console.error('  erros de página: ' + JSON.stringify(typeof errors !== 'undefined' ? errors : [])); } catch (x) {} process.exit(1);
 });

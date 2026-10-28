@@ -525,3 +525,11 @@ body.portrait .pform { width: 92%; }
 body.portrait .swatch { width: 40px; height: 40px; margin: 0 5px; }
 body.portrait .pedit svg { width: 24px; height: 24px; }
 body.portrait .acct .usub { display: none; }
+
+/* versões do título */
+.dvars { display: flex; flex-wrap: wrap; align-items: center; margin-bottom: 18px; }
+.dvlbl { margin-right: 16px; color: #8a97ad; font-size: 24px; }
+.dvars .chip { margin-bottom: 8px; }
+.sgroup.sub { margin-top: 18px; font-size: 18px; color: #8a97ad; letter-spacing: 1px; text-transform: none; }
+body.portrait .dvlbl { font-size: 14px; margin-right: 8px; }
+body.portrait .sgroup.sub { font-size: 13px; }

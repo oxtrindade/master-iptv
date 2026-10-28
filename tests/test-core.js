@@ -19,6 +19,33 @@ var httpText = function (u) { return get(u).then(function (r) { if (r.status >= 
 var results = [];
 function t(name, fn) { results.push({ name: name, fn: fn }); }
 
+t('TMDB: versões do mesmo título (dublado, legendado, 4K) e preferência', function () {
+  var Tmdb = require('../app/js/tmdb.js');
+  assert.strictEqual(Tmdb.variantInfo('Duna (2024) [L]').lang, 'leg');
+  assert.strictEqual(Tmdb.variantInfo('Duna (2024) 4K').q, '4K');
+  assert.strictEqual(Tmdb.variantInfo('Duna Dublado FHD').label, 'Dublado · Full HD');
+  var d = { type: 'movie', id: '1', name: 'Duna (2024) Dublado', logo: 'x' }, l = { type: 'movie', id: '2', name: 'Duna (2024) [L]', logo: 'x' }, k = { type: 'movie', id: '3', name: 'Duna (2024) 4K', logo: 'x' };
+  var list = [l, k, d];
+  Tmdb.setPref('dub');
+  var v = Tmdb.variants(list, l);
+  assert.strictEqual(v.length, 3, 'três versões, sem duplicar a própria');
+  assert.strictEqual(v[0].id, '1', 'dublado primeiro');
+  assert.strictEqual(Tmdb.match(list, [{ t: 'Duna', o: 'Dune', y: 2024 }])[0].id, '1', 'ranking prefere dublado');
+  Tmdb.setPref('leg');
+  assert.strictEqual(Tmdb.match(list, [{ t: 'Duna', o: 'Dune', y: 2024 }])[0].id, '2', 'com preferência legendado');
+  Tmdb.setPref('dub');
+});
+
+t('Versões: dublado primeiro; 4K só na TV', function () {
+  var Tmdb = require('../app/js/tmdb.js');
+  var l = [{ type: 'movie', id: '2', name: 'Duna (2024) FHD Dublado' }, { type: 'movie', id: '3', name: 'Duna (2024) 4K Dublado' }, { type: 'movie', id: '5', name: 'Duna (2024) 4K Legendado' }];
+  Tmdb.setTv4k(false);
+  assert.deepStrictEqual(Tmdb.best(l).map(function (x) { return x.id; }), ['2'], 'celular: dublado em Full HD');
+  Tmdb.setTv4k(true);
+  assert.deepStrictEqual(Tmdb.best(l).map(function (x) { return x.id; }), ['3'], 'TV: dublado em 4K');
+  Tmdb.setTv4k(false);
+});
+
 t('TMDB: normaliza títulos e cruza com o catálogo', function () {
   var Tmdb = require('../app/js/tmdb.js');
   assert.strictEqual(Tmdb.norm('Duna: Parte Dois (2024) [LEG] 4K'), 'duna parte dois');
