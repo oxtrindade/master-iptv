@@ -207,7 +207,7 @@ Promise.all([listen(api), listen(px)]).then(function () {
       return waitFor(function () { return $('.settings .sgroup'); }, 'config');
     }).then(function () {
       var txt = $('.settings').textContent;
-      assert.ok(/127\.0\.0\.1/.test(txt) && /joao/.test(txt) && /1\.6\.0/.test(txt));
+      assert.ok(/127\.0\.0\.1/.test(txt) && /joao/.test(txt) && /1\.7\.0/.test(txt));
       assert.strictEqual($$('.swrow').length, 4, 'quatro chaves');
       step('configurações');
       // ocultar SD / HD: a categoria "Filmes e séries 24h" tem Cine HD, Cine SD e Cine FHD
@@ -243,6 +243,29 @@ Promise.all([listen(api), listen(px)]).then(function () {
       step('cidade do clima editável nas configurações');
       go('settings');
       return waitFor(function () { return $('.settings .sgroup'); }, 'config 3');
+    }).then(function () {
+      // perfis: criar, trocar, dados separados
+      var favs0 = w.localStorage.getItem('iptv.fav');
+      assert.ok(favs0 && Object.keys(JSON.parse(favs0)).length >= 1, 'perfil 1 tem favoritos');
+      assert.ok(/Perfil 1/.test($('.settings').textContent), 'mostra o perfil atual');
+      $$('.settings .btn').filter(function (b) { return b.textContent === 'Gerenciar perfis'; })[0].click();
+      assert.ok(!$('#profiles').classList.contains('hidden'), 'seletor de perfis abre');
+      $('#profiles .padd').click();
+      $('#profiles input').value = 'Ana';
+      $$('#profiles .btn').filter(function (b) { return b.textContent === 'Salvar'; })[0].click();
+      assert.strictEqual($$('#profiles .pcard').length, 3, 'dois perfis + adicionar');
+      $$('#profiles .btn').filter(function (b) { return b.textContent === 'Concluído'; })[0].click();
+      $$('#profiles .pcard')[1].click(); // entra no perfil Ana
+      assert.ok($('#profiles').classList.contains('hidden') && $('.hubtile'), 'entrou no menu do novo perfil');
+      assert.strictEqual(Object.keys(w.JSON.parse(w.localStorage.getItem('iptv.' + w.JSON.parse(w.localStorage.getItem('iptv.curprof')) + '.fav') || '{}')).length, 0, 'favoritos separados');
+      assert.ok(/^A$/.test($('.avatar').textContent), 'avatar com a inicial do perfil');
+      $('.avatar').click();
+      $$('#profiles .pcard')[0].click(); // volta ao perfil 1
+      assert.strictEqual(w.JSON.parse(w.localStorage.getItem('iptv.curprof')), 'p1');
+      assert.strictEqual(w.localStorage.getItem('iptv.fav'), favs0, 'favoritos do perfil 1 intactos');
+      step('perfis: criar, trocar e manter dados separados');
+      go('settings');
+      return waitFor(function () { return $('.settings .sgroup'); }, 'config 4');
     }).then(function () {
       // editar servidor: abre o login já preenchido, com Cancelar
       $$('.settings .btn')[0].click();

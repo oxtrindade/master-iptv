@@ -19,6 +19,20 @@ var httpText = function (u) { return get(u).then(function (r) { if (r.status >= 
 var results = [];
 function t(name, fn) { results.push({ name: name, fn: fn }); }
 
+t('TMDB: normaliza títulos e cruza com o catálogo', function () {
+  var Tmdb = require('../app/js/tmdb.js');
+  assert.strictEqual(Tmdb.norm('Duna: Parte Dois (2024) [LEG] 4K'), 'duna parte dois');
+  assert.strictEqual(Tmdb.norm('PT | Filme Teste FHD H265'), 'filme teste');
+  assert.strictEqual(Tmdb.yearOf('Moana (2026)'), 2026);
+  var list = [
+    { type: 'movie', id: '1', name: 'Duna: Parte Dois (2024)', rating: 8, logo: 'x' },
+    { type: 'movie', id: '2', name: 'Duna Parte Dois', rating: 7, year: '2001' },
+    { type: 'movie', id: '3', name: 'Moana 2', rating: 6, logo: 'y' }
+  ];
+  var m = Tmdb.match(list, [{ t: 'Duna: Parte Dois', o: 'Dune: Part Two', y: 2024 }, { t: 'Moana 2', o: 'Moana 2', y: 2024 }, { t: 'Inexistente', o: 'None', y: 2020 }, { t: 'Moana 2', o: 'Moana 2', y: 2024 }]);
+  assert.deepStrictEqual(m.map(function (x) { return x.id; }), ['1', '3'], 'ano errado e repetidos ficam de fora');
+});
+
 t('normBase / detectXtream', function () {
   assert.strictEqual(Core.normBase('exemplo.com:8080/'), 'http://exemplo.com:8080');
   assert.strictEqual(Core.normBase('http://a.b/player_api.php?x=1'), 'http://a.b');

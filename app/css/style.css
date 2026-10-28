@@ -468,7 +468,7 @@ body.portrait .sechead .btn:not(.backbtn) { font-size: 0; padding: 0 12px; }
 body.portrait .sechead .btn:not(.backbtn) .ico { margin-right: 0; }
 body.portrait .brand { white-space: nowrap; }
 body.portrait .hubname { white-space: normal; }
-body.portrait .avatar, body.portrait .acct .usub { display: none; }
+body.portrait .acct .usub { display: none; }
 body.portrait .brand { font-size: 17px; letter-spacing: 1px; min-width: 0; overflow: hidden; }
 body.portrait .hubtile { height: auto; min-height: 150px; }
 
@@ -484,3 +484,44 @@ body.portrait #skip-intro { height: 38px; font-size: 14px; padding: 0 16px; bord
 /* janela flutuante do sistema (PiP): só o vídeo */
 body.pip #player, body.pip #player.mini { left: 0 !important; top: 0 !important; right: 0 !important; bottom: 0 !important; width: 100% !important; height: 100% !important; border-radius: 0; box-shadow: none; z-index: 200; }
 body.pip #osd, body.pip #tracks, body.pip #chnum, body.pip #mini-x, body.pip #mini-title, body.pip #skip-intro, body.pip #toast { display: none !important; }
+
+/* perfis */
+#profiles { position: absolute; left: 0; top: 0; width: 100%; height: 100%; z-index: 40; background: #0b101a; text-align: center; padding-top: 120px; }
+.ptitle { font-size: 56px; font-weight: 800; margin-bottom: 60px; }
+.prow { display: flex; justify-content: center; flex-wrap: wrap; }
+.pcard { width: 260px; margin: 0 26px 30px; padding: 24px 0 18px; border-radius: 24px; }
+.pcard.f.focus { box-shadow: none; }
+.pcard.f.focus .pav { box-shadow: 0 0 0 6px #fff, 0 0 30px rgba(255,255,255,.35); }
+.pcard.f.focus .pname { color: #fff; }
+.pav { position: relative; display: flex; align-items: center; justify-content: center; width: 110px; height: 110px; margin: 0 auto; border-radius: 28px; background: #3ab4e0; color: #04202c; font-size: 56px; font-weight: 800; }
+.pav.big { width: 190px; height: 190px; border-radius: 36px; font-size: 96px; }
+.pav.add { background: #172238; color: #8a97ad; }
+.pedit { position: absolute; left: 0; right: 0; top: 0; bottom: 0; border-radius: inherit; background: rgba(0,0,0,.55); color: #fff; display: flex; align-items: center; justify-content: center; }
+.pname { margin-top: 18px; font-size: 30px; color: #9aa7bd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 10px; }
+.pbtns { margin-top: 40px; }
+.pform { width: 720px; margin: 0 auto; }
+.pform .pav { margin-bottom: 34px; }
+.pform .input { text-align: center; }
+.pswatches { display: flex; justify-content: center; margin: 6px 0 10px; }
+.swatch { width: 78px; height: 78px; margin: 0 12px; border-radius: 50%; }
+.swatch.on { box-shadow: 0 0 0 5px #0b101a, 0 0 0 9px #fff; }
+.tmdbhelp { margin: 4px 0 14px 6px; line-height: 1.4; }
+button.avatar { cursor: pointer; }
+.avatar.f.focus { box-shadow: 0 0 0 4px #fff; }
+
+body.compact #profiles { padding-top: 50px; }
+body.compact .ptitle { font-size: 38px; margin-bottom: 30px; }
+body.compact .pcard { width: 190px; margin: 0 16px 16px; padding: 14px 0 10px; }
+body.compact .pav.big { width: 130px; height: 130px; font-size: 64px; border-radius: 28px; }
+body.compact .pname { font-size: 22px; }
+body.compact .pform { width: 560px; }
+body.compact .swatch { width: 56px; height: 56px; margin: 0 8px; }
+body.portrait #profiles { padding-top: 40px; }
+body.portrait .ptitle { font-size: 26px; margin-bottom: 20px; }
+body.portrait .pcard { width: 150px; margin: 0 8px 12px; }
+body.portrait .pav.big { width: 104px; height: 104px; font-size: 50px; border-radius: 22px; }
+body.portrait .pname { font-size: 16px; }
+body.portrait .pform { width: 92%; }
+body.portrait .swatch { width: 40px; height: 40px; margin: 0 5px; }
+body.portrait .pedit svg { width: 24px; height: 24px; }
+body.portrait .acct .usub { display: none; }

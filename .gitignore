@@ -3,3 +3,4 @@ dist/
 android/signing/
 *.keystore
 *.jks
+*.b64

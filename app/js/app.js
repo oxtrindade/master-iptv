@@ -7,12 +7,18 @@
 
   function $(id) { return document.getElementById(id); }
 
+  /* perfis: cada perfil tem o seu histórico, favoritos, preferências etc. O perfil "p1" usa as chaves antigas (nada se perde). */
+  var PROF_KEYS = { fav: 1, resume: 1, last: 1, cont: 1, recent: 1, opts: 1, lastlive: 1, intro: 1, trackpref: 1, city: 1, hist: 1, cat: 1 };
+  var curProf = 'p1';
+  try { curProf = JSON.parse(localStorage.getItem('iptv.curprof')) || 'p1'; } catch (e0) {}
+  function pk(k) { return (PROF_KEYS[k.split(':')[0]] && curProf !== 'p1') ? curProf + '.' + k : k; }
+
   var store = {
     get: function (k, d) {
-      try { var v = localStorage.getItem('iptv.' + k); return v ? JSON.parse(v) : d; } catch (e) { return d; }
+      try { var v = localStorage.getItem('iptv.' + pk(k)); return v ? JSON.parse(v) : d; } catch (e) { return d; }
     },
-    set: function (k, v) { try { localStorage.setItem('iptv.' + k, JSON.stringify(v)); } catch (e) {} },
-    del: function (k) { try { localStorage.removeItem('iptv.' + k); } catch (e) {} }
+    set: function (k, v) { try { localStorage.setItem('iptv.' + pk(k), JSON.stringify(v)); } catch (e) {} },
+    del: function (k) { try { localStorage.removeItem('iptv.' + pk(k)); } catch (e) {} }
   };
 
   var S = {
@@ -42,6 +48,8 @@
     play: '<path fill="currentColor" d="M7 4l13 8-13 8z"/>',
     info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>',
     back: '<path d="M15 5l-7 7 7 7"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>',
+    pencil: '<path d="M4 20h4L19 9l-4-4L4 16z"/>',
     xmark: '<path d="M6 6l12 12M18 6L6 18"/>',
     expand: '<path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/>',
     pause: '<path fill="currentColor" d="M6.5 4h4v16h-4zM13.5 4h4v16h-4z"/>',
@@ -249,6 +257,128 @@
     });
   }
 
+  /* ---------- perfis ---------- */
+
+  var PCOLORS = ['#3ab4e0', '#e0603a', '#8a5be0', '#3ab87a', '#e0b43a', '#e03a8a'];
+  function profiles() { var l = store.get('profiles', null); return l && l.length ? l : [{ id: 'p1', name: 'Perfil 1', color: 0 }]; }
+  function curProfile() { var l = profiles(), i; for (i = 0; i < l.length; i++) { if (l[i].id === curProf) { return l[i]; } } return l[0]; }
+  function profInitial(p) { return (p.name || '?').charAt(0).toUpperCase(); }
+
+  function reloadProfileData() {
+    S.favs = store.get('fav', {}); S.resume = store.get('resume', {}); S.last = store.get('last', {});
+    S.cont = store.get('cont', {}); S.recent = store.get('recent', []); S.opts = store.get('opts', {}); S.pref = store.get('trackpref', {});
+  }
+
+  function switchProfile(id) {
+    var wasBoot = S.profBoot; S.profBoot = false;
+    if (S.ctx) { closePlayer(); }   // salva o ponto no perfil que estava assistindo
+    curProf = id;
+    try { localStorage.setItem('iptv.curprof', JSON.stringify(id)); } catch (e) {}
+    reloadProfileData();
+    $('profiles').classList.add('hidden');
+    S.hubFocus = null; S.section = 'home';
+    showBrowse();
+    if (wasBoot && opt('autoplay')) { autoOpenLast(); }
+  }
+
+  function dropProfileData(id) {
+    var pre = 'iptv.' + id + '.', i, k, base, rm = [];
+    try {
+      for (i = 0; i < localStorage.length; i++) {
+        k = localStorage.key(i);
+        if (id === 'p1') { base = k.indexOf('iptv.') === 0 ? k.slice(5).split(':')[0] : ''; if (PROF_KEYS[base]) { rm.push(k); } }
+        else if (k.indexOf(pre) === 0) { rm.push(k); }
+      }
+      rm.forEach(function (x) { localStorage.removeItem(x); });
+    } catch (e) {}
+  }
+
+  function showProfiles(fromApp) {
+    S.profFrom = !!fromApp; S.profBoot = !fromApp; S.profManage = false; S.profEdit = null;
+    $('profiles').classList.remove('hidden');
+    S.mode = 'profiles';
+    renderProfiles();
+  }
+
+  function closeProfiles() {
+    $('profiles').classList.add('hidden');
+    S.mode = S.detail ? 'detail' : 'browse';
+    Nav.setScope(S.detail ? $('detail') : $('app'));
+  }
+
+  function profAvatar(p, big, manage) {
+    return h('div', { cls: 'pav' + (big ? ' big' : ''), style: 'background:' + PCOLORS[p.color % PCOLORS.length] },
+      [h('span', { text: profInitial(p) })].concat(manage ? [h('div', { cls: 'pedit' }, [icon('pencil', 34)])] : []));
+  }
+
+  function renderProfiles() {
+    var box = $('profiles'), list = profiles(), cards = [];
+    box.innerHTML = '';
+    Nav.setScope(box);
+    if (S.profEdit) { renderProfileEdit(box, list); return; }
+    list.forEach(function (p) {
+      cards.push(h('div', { cls: 'f pcard' + (p.id === curProf ? ' cur' : ''), on: { click: function () {
+        if (S.profManage) { S.profEdit = { p: p, isNew: false }; renderProfiles(); }
+        else if (p.id === curProf) { if (S.profFrom) { closeProfiles(); } else { switchProfile(p.id); } }
+        else { switchProfile(p.id); }
+      } } }, [profAvatar(p, true, S.profManage), h('div', { cls: 'pname', text: p.name })]));
+    });
+    if (list.length < 5) {
+      cards.push(h('div', { cls: 'f pcard padd', on: { click: function () {
+        S.profManage = true;
+        S.profEdit = { p: { id: 'p' + Date.now().toString(36), name: 'Perfil ' + (list.length + 1), color: list.length % PCOLORS.length }, isNew: true };
+        renderProfiles();
+      } } }, [h('div', { cls: 'pav big add' }, [icon('plus', 70)]), h('div', { cls: 'pname', text: 'Adicionar perfil' })]));
+    }
+    box.appendChild(h('div', { cls: 'ptitle', text: S.profManage ? 'Gerenciar perfis' : 'Quem está assistindo?' }));
+    box.appendChild(h('div', { cls: 'prow' }, cards));
+    box.appendChild(h('div', { cls: 'pbtns' }, [
+      h('button', { cls: 'f btn' + (S.profManage ? ' primary' : ''), text: S.profManage ? 'Concluído' : 'Gerenciar perfis', on: { click: function () { S.profManage = !S.profManage; renderProfiles(); } } })
+    ].concat(S.profFrom && !S.profManage ? [h('button', { cls: 'f btn', text: 'Fechar', on: { click: closeProfiles } })] : [])));
+    Nav.focus(box.querySelector('.pcard.cur') || box.querySelector('.pcard'));
+  }
+
+  function renderProfileEdit(box, list) {
+    var e = S.profEdit, p = { id: e.p.id, name: e.p.name, color: e.p.color }, input = h('input', { cls: 'f input', type: 'text', placeholder: 'Nome do perfil' });
+    input.value = p.name;
+    input.maxLength = 16;
+    var sw = h('div', { cls: 'pswatches' }), preview = profAvatar(p, true, false);
+    function paint() {
+      sw.innerHTML = '';
+      PCOLORS.forEach(function (c, i) {
+        sw.appendChild(h('button', { cls: 'f swatch' + (i === p.color ? ' on' : ''), type: 'button', style: 'background:' + c, on: { click: function () { p.color = i; paint(); } } }));
+      });
+      preview.style.background = PCOLORS[p.color];
+    }
+    paint();
+    input.addEventListener('input', function () { preview.firstChild.textContent = (input.value || '?').charAt(0).toUpperCase(); });
+    var del = null;
+    if (!e.isNew && list.length > 1) {
+      del = h('button', { cls: 'f btn', text: 'Excluir perfil', on: { click: function () {
+        if (del.getAttribute('data-ok') !== '1') { del.setAttribute('data-ok', '1'); del.textContent = 'Confirmar exclusão'; return; }
+        var rest = list.filter(function (x) { return x.id !== p.id; });
+        dropProfileData(p.id);
+        store.set('profiles', rest);
+        S.profEdit = null;
+        if (p.id === curProf) { switchProfile(rest[0].id); showProfiles(S.profFrom); S.profManage = true; renderProfiles(); }
+        else { renderProfiles(); }
+      } } });
+    }
+    box.appendChild(h('div', { cls: 'ptitle', text: e.isNew ? 'Novo perfil' : 'Editar perfil' }));
+    box.appendChild(h('div', { cls: 'pform' }, [preview, input, sw]));
+    box.appendChild(h('div', { cls: 'pbtns' }, [
+      h('button', { cls: 'f btn primary', text: 'Salvar', on: { click: function () {
+        p.name = (input.value || '').replace(/^\s+|\s+$/g, '') || p.name;
+        var l2 = e.isNew ? list.concat([p]) : list.map(function (x) { return x.id === p.id ? p : x; });
+        store.set('profiles', l2);
+        S.profEdit = null;
+        renderProfiles();
+      } } }),
+      h('button', { cls: 'f btn', text: 'Cancelar', on: { click: function () { S.profEdit = null; renderProfiles(); } } })
+    ].concat(del ? [del] : [])));
+    Nav.focus(input);
+  }
+
   /* ---------- login ---------- */
 
   function showLogin(msg, canCancel) {
@@ -306,7 +436,8 @@
       loading(false);
       epgCache = {};
       showBrowse();
-      if (o && o.boot && opt('autoplay')) { autoOpenLast(); }
+      if (o && o.boot && profiles().length > 1) { showProfiles(false); }
+      else if (o && o.boot && opt('autoplay')) { autoOpenLast(); }
     }).then(null, function (e) {
       loading(false);
       S.provider = null;
@@ -348,7 +479,7 @@
     var hd = S.headEl, info = S.info || {};
     hd.innerHTML = '';
     if (sec === 'home') {
-      var letter = (info.name || (S.cfg && S.cfg.user) || '?').charAt(0).toUpperCase();
+      var prof = curProfile();
       var usub = info.exp ? 'até ' + info.exp.toLocaleDateString('pt-BR') : 'conta ativa';
       hd.className = 'sechead hub';
       hd.appendChild(h('div', { cls: 'brand' }, [h('div', { cls: 'logo-mark' }, [icon('play', 26)]), 'MASTER IPTV']));
@@ -356,7 +487,8 @@
       hd.appendChild(S.wxEl);
       loadWeather();
       hd.appendChild(h('div', { cls: 'acct' }, [h('div', { cls: 'usub', text: usub }), S.clockEl]));
-      hd.appendChild(h('div', { cls: 'avatar', text: letter }));
+      hd.appendChild(h('button', { cls: 'f avatar', type: 'button', style: 'background:' + PCOLORS[prof.color % PCOLORS.length], text: profInitial(prof),
+        on: { click: function () { showProfiles(true); } } }));
       updateClock();
       return;
     }
@@ -743,8 +875,15 @@
 
     var conts = contList().slice(0, 12);
     if (conts.length) { rows.appendChild(makeRow('Continuar assistindo', conts.map(contCard))); }
+    var hist = store.get('hist', []);
+    if (tmdbKey()) {
+      var bases = [], used = {};
+      hist.forEach(function (x) { if (bases.length < 2 && !used[x.type + ':' + x.id]) { used[x.type + ':' + x.id] = 1; bases.push(x); } });
+      bases.forEach(function (b) { recRow(rows, b); });
+    }
     trendRow(rows, 'movie', 'Filmes em alta');
     trendRow(rows, 'series', 'Séries em alta');
+    if (!tmdbKey()) { forYouRow(rows); }
     if (S.recent.length) {
       rows.appendChild(makeRow('Canais recentes', S.recent.slice(0, 12).map(function (it) { return chanTile(it, S.recent); })));
     }
@@ -774,18 +913,98 @@
     return pool.slice(0, 20).map(function (x) { return x.it; });
   }
 
+  function tmdbKey() { return store.get('tmdbkey', ''); }
+
+  function tmdbCached(key, hours, fetchFn) {
+    var c = store.get(key, null);
+    if (c && Date.now() - c.at < hours * 3600000) { return Promise.resolve(c.data); }
+    return fetchFn().then(function (d) { store.set(key, { at: Date.now(), data: d }); return d; });
+  }
+
+  function clearTmdbCache() {
+    try {
+      var rm = [], i, k;
+      for (i = 0; i < localStorage.length; i++) { k = localStorage.key(i); if (k.indexOf('iptv.tmdb') === 0 && k !== 'iptv.tmdbkey') { rm.push(k); } }
+      rm.forEach(function (x) { localStorage.removeItem(x); });
+    } catch (e) {}
+  }
+
+  /* ranking real da semana (TMDB) cruzado com o catálogo; completa com nota + novidade se faltar */
+  function trendList(section, list) {
+    var key = tmdbKey(), local = trending(list);
+    if (!key) { return Promise.resolve(local); }
+    var kind = section === 'series' ? 'tv' : 'movie';
+    return tmdbCached('tmdbtr:' + kind, 12, function () { return Tmdb.trending(kind, key); }).then(function (res) {
+      var out = Tmdb.match(list, res).filter(function (it) { return it.logo; }).slice(0, 20), seen = {};
+      out.forEach(function (it) { seen[it.type + ':' + it.id] = 1; });
+      local.forEach(function (it) { if (out.length < 20 && !seen[it.type + ':' + it.id]) { out.push(it); } });
+      return out;
+    }, function () { return local; });
+  }
+
   function trendRow(rows, section, title) {
     var slot = h('div'), token = S.homeToken;
     rows.appendChild(slot);
     setTimeout(function () {
       if (token !== S.homeToken || !S.provider) { return; }
       S.provider.all(section).then(function (list) {
+        return trendList(section, list);
+      }).then(function (top) {
         if (token !== S.homeToken || !slot.parentNode) { return; }
-        var top = trending(list);
         if (top.length < 4) { slot.parentNode.removeChild(slot); return; }
         rows.replaceChild(makeRow(title, top.map(function (it) { return posterCard(it, top); })), slot);
       }, function () { if (slot.parentNode) { slot.parentNode.removeChild(slot); } });
     }, 500);
+  }
+
+  function histSeen() { var m = {}; store.get('hist', []).forEach(function (x) { m[x.type + ':' + x.id] = 1; }); return m; }
+
+  /* "Porque você assistiu X": parecidos do TMDB que existem no catálogo */
+  function recRow(rows, base) {
+    var slot = h('div'), token = S.homeToken, key = tmdbKey();
+    rows.appendChild(slot);
+    function drop() { if (slot.parentNode) { slot.parentNode.removeChild(slot); } }
+    var kind = base.type === 'series' ? 'tv' : 'movie', year = Tmdb.yearOf(base.name) || (parseInt(base.year, 10) || 0);
+    setTimeout(function () {
+      if (token !== S.homeToken || !S.provider) { return; }
+      tmdbCached('tmdbid:' + kind + ':' + Tmdb.norm(base.name), 24 * 30, function () { return Tmdb.findId(kind, base.name, year, key); }).then(function (id) {
+        if (!id) { throw new Error('sem id'); }
+        return tmdbCached('tmdbrec:' + kind + ':' + id, 24 * 7, function () { return Tmdb.recommend(kind, id, key); });
+      }).then(function (res) {
+        return S.provider.all(base.type).then(function (list) {
+          var seen = histSeen(), out = Tmdb.match(list, res).filter(function (it) { return !seen[it.type + ':' + it.id]; }).slice(0, 20);
+          if (token !== S.homeToken || !slot.parentNode) { return; }
+          if (out.length < 3) { drop(); return; }
+          rows.replaceChild(makeRow('Porque você assistiu ' + base.name, out.map(function (it) { return posterCard(it, out); })), slot);
+        });
+      }).then(null, drop);
+    }, 700);
+  }
+
+  /* sem chave do TMDB: gosto aprendido localmente pelas categorias que o perfil mais assiste */
+  function forYouRow(rows) {
+    var hist = store.get('hist', []), slot = h('div'), token = S.homeToken;
+    if (hist.length < 2) { return; }
+    rows.appendChild(slot);
+    setTimeout(function () {
+      if (token !== S.homeToken || !S.provider) { return; }
+      Promise.all([S.provider.all('movie'), S.provider.all('series')]).then(function (lists) {
+        var aff = {}, seen = histSeen(), cands = [];
+        hist.slice(0, 20).forEach(function (x, i) { var k = x.type + ':' + x.cat; aff[k] = (aff[k] || 0) + Math.max(0.3, 1 - i * 0.05); });
+        lists.forEach(function (list) {
+          list.forEach(function (it) {
+            var a = aff[it.type + ':' + it.cat];
+            if (!a || !it.logo || seen[it.type + ':' + it.id]) { return; }
+            cands.push({ it: it, s: a * 2 + (it.rating || 0) * 0.4 });
+          });
+        });
+        cands.sort(function (a, b) { return b.s - a.s; });
+        var out = cands.slice(0, 20).map(function (x) { return x.it; });
+        if (token !== S.homeToken || !slot.parentNode) { return; }
+        if (out.length < 4) { slot.parentNode.removeChild(slot); return; }
+        rows.replaceChild(makeRow('Para você', out.map(function (it) { return posterCard(it, out); })), slot);
+      }, function () { if (slot.parentNode) { slot.parentNode.removeChild(slot); } });
+    }, 900);
   }
 
   function refreshHome() {
@@ -843,6 +1062,28 @@
     }
   }
 
+  /* chave gratuita do TMDB: liga o ranking real de "em alta" e o "Porque você assistiu" */
+  function tmdbBlock() {
+    var input = h('input', { cls: 'f input', id: 'tmdbkey', type: 'text', placeholder: 'Chave de API v3 do TMDB (32 caracteres)' });
+    var status = h('div', { cls: 'swd', text: tmdbKey() ? 'Chave salva. Ranking real e recomendações ativos.' : 'Sem chave: a linha "em alta" usa nota e novidade do catálogo.' });
+    input.value = tmdbKey();
+    function save() {
+      var k = (input.value || '').replace(/\s+/g, '');
+      if (!k) { store.del('tmdbkey'); clearTmdbCache(); status.textContent = 'Chave removida.'; return; }
+      status.textContent = 'Conferindo a chave…';
+      Tmdb.check(k).then(function () {
+        store.set('tmdbkey', k); clearTmdbCache();
+        status.textContent = 'Chave válida. Ranking real e recomendações ativos.';
+      }, function () { status.textContent = 'Chave inválida (use a "Chave da API" v3 do themoviedb.org).'; });
+    }
+    input.addEventListener('keydown', function (e) { if (e.keyCode === 13) { save(); } });
+    return h('div', {}, [
+      h('div', { cls: 'swd tmdbhelp', text: 'Gratuito: crie conta em themoviedb.org, abra Configurações → API e copie a Chave da API. Cole abaixo.' }),
+      h('div', { cls: 'citybox' }, [input, h('button', { cls: 'f btn', text: 'Salvar', on: { click: save } })]),
+      status
+    ]);
+  }
+
   function cityBlock() {
     var curTxt = h('div', { text: cityLabel(getCity()) });
     var input = h('input', { cls: 'f input', id: 'city', type: 'text', placeholder: 'Digite o nome da cidade' });
@@ -887,7 +1128,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.6.0']
+      ['Versão do app', '1.7.0']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
@@ -898,6 +1139,12 @@
       h('button', { cls: 'f btn', text: 'Trocar conta / Sair', on: { click: logout } })
     ]));
 
+    page.appendChild(sgroup('Perfil'));
+    page.appendChild(h('div', { cls: 'srow' }, [h('div', { cls: 'skey', text: 'Perfil atual' }), h('div', { text: curProfile().name })]));
+    page.appendChild(h('div', { cls: 'sbtns' }, [
+      h('button', { cls: 'f btn', text: 'Trocar perfil', on: { click: function () { showProfiles(true); } } }),
+      h('button', { cls: 'f btn', text: 'Gerenciar perfis', on: { click: function () { showProfiles(true); S.profManage = true; renderProfiles(); } } })
+    ]));
     if (document.body.classList.contains('touch')) {
       page.appendChild(sgroup('Aparência'));
       page.appendChild(scaleBlock());
@@ -908,6 +1155,8 @@
     page.appendChild(switchRow('Ocultar canais SD', 'Esconde da lista os canais com "SD" no nome.', 'hideSD'));
     page.appendChild(switchRow('Ocultar canais HD', 'Esconde da lista os canais com "HD" no nome (FHD e 4K continuam).', 'hideHD'));
 
+    page.appendChild(sgroup('Recomendações'));
+    page.appendChild(tmdbBlock());
     page.appendChild(sgroup('Clima'));
     page.appendChild(cityBlock());
 
@@ -1147,6 +1396,14 @@
     syncNative();
   }
 
+  /* histórico do perfil (filmes e séries já iniciados): base das recomendações */
+  function pushHist(it) {
+    var id = it.type + ':' + it.id, out = [slimItem(it)];
+    out[0].at = Date.now();
+    store.get('hist', []).forEach(function (x) { if (x.type + ':' + x.id !== id && out.length < 40) { out.push(x); } });
+    store.set('hist', out);
+  }
+
   function pushRecent(ch) {
     var id = fk(ch), out = [slimItem(ch)];
     S.recent.forEach(function (x) { if (fk(x) !== id && out.length < 12) { out.push(x); } });
@@ -1173,6 +1430,7 @@
       } else {
         url = it.url; c.rk = 'm:' + it.id; title = it.name;
       }
+      pushHist(it);
       logo = it.logo;
       var r = S.resume[c.rk];
       if (!fromStart && r && r.t > 30 && r.t < r.d - 45) { o.startAt = r.t; }
@@ -1536,6 +1794,13 @@
   }
 
   function goBack() {
+    if (S.mode === 'profiles') {
+      if (S.profEdit) { S.profEdit = null; renderProfiles(); return; }
+      if (S.profManage) { S.profManage = false; renderProfiles(); return; }
+      if (S.profFrom) { closeProfiles(); return; }
+      exitApp();
+      return;
+    }
     if (S.mode === 'detail') { closeDetail(); return; }
     if (S.mode === 'browse') {
       if (S.section !== 'home') {
@@ -1588,6 +1853,7 @@
 
   function boot() {
     Weather.init(http);
+    Tmdb.init(http);
     Player.init($('video'), {
       onBuffer: function (on) { $('buffer').classList.toggle('hidden', !on); },
       onTracks: function () { if (S.ctx) { applyPrefs(); } },
