@@ -126,7 +126,12 @@ Promise.all([listen(api), listen(px)]).then(function () {
       assert.ok($('#tracks').classList.contains('hidden') && !$('#player').classList.contains('hidden'), 'Voltar fecha só o painel');
       step('áudio e legenda: painel, troca de faixa, Voltar fecha só o painel');
       key(27);
-      assert.ok($('#player').classList.contains('hidden'));
+      assert.ok(!$('#player').classList.contains('hidden') && $('#player').classList.contains('mini'), 'Voltar minimiza o player');
+      assert.ok(d.body.classList.contains('mini-on') && !$('#app').classList.contains('hidden'), 'lista visível com o mini player');
+      key(405);
+      assert.ok(!$('#player').classList.contains('mini'), 'Amarelo amplia');
+      key(27); key(406);
+      assert.ok($('#player').classList.contains('hidden') && !$('#player').classList.contains('mini'), 'Azul fecha o mini player');
       go('movie');
       return waitFor(function () { return $$('.card').length === 1; }, 'filmes');
     }).then(function () {
@@ -139,7 +144,7 @@ Promise.all([listen(api), listen(px)]).then(function () {
       $('#detail .btn.primary').click();
       assert.ok(/501\.mkv$/.test($('#video').getAttribute('src')));
       vd = 3600; vt = 600; // simula 10 min assistidos de 1h
-      key(27);
+      key(27); assert.ok($("#player").classList.contains("mini"), "filme: Voltar minimiza"); key(406);
       assert.ok($('#player').classList.contains('hidden'));
       assert.ok(!$('#detail').classList.contains('hidden'), 'volta ao detalhe');
       assert.ok(/Continuar/.test($('#detail .btn.primary') ? $('#detail').textContent : ''), 'botão vira Continuar');
@@ -190,7 +195,7 @@ Promise.all([listen(api), listen(px)]).then(function () {
       return waitFor(function () { return $('.settings .sgroup'); }, 'config');
     }).then(function () {
       var txt = $('.settings').textContent;
-      assert.ok(/127\.0\.0\.1/.test(txt) && /joao/.test(txt) && /1\.5\.4/.test(txt));
+      assert.ok(/127\.0\.0\.1/.test(txt) && /joao/.test(txt) && /1\.5\.5/.test(txt));
       assert.strictEqual($$('.swrow').length, 3, 'três chaves');
       step('configurações');
       // ocultar SD / HD: a categoria "Filmes e séries 24h" tem Cine HD, Cine SD e Cine FHD

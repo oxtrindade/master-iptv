@@ -3,7 +3,7 @@
   'use strict';
 
   var KEY = { ENTER: 13, ESC: 27, BS: 8, LEFT: 37, UP: 38, RIGHT: 39, DOWN: 40,
-    BACK: 461, PLAY: 415, PAUSE: 19, STOP: 413, REW: 412, FF: 417, CHUP: 33, CHDN: 34, RED: 403, GREEN: 404 };
+    BACK: 461, PLAY: 415, PAUSE: 19, STOP: 413, REW: 412, FF: 417, CHUP: 33, CHDN: 34, RED: 403, GREEN: 404, YELLOW: 405, BLUE: 406 };
 
   function $(id) { return document.getElementById(id); }
 
@@ -42,6 +42,8 @@
     play: '<path fill="currentColor" d="M7 4l13 8-13 8z"/>',
     info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>',
     back: '<path d="M15 5l-7 7 7 7"/>',
+    xmark: '<path d="M6 6l12 12M18 6L6 18"/>',
+    expand: '<path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/>',
     pause: '<path fill="currentColor" d="M6.5 4h4v16h-4zM13.5 4h4v16h-4z"/>',
     rew: '<path d="M11 6l-6 6 6 6M19 6l-6 6 6 6"/>',
     ff: '<path d="M13 6l6 6-6 6M5 6l6 6-6 6"/>',
@@ -334,7 +336,7 @@
     S.pageEl = h('div', { cls: 'page scroll' });
     S.clockEl = h('span', { cls: 'clock' });
     S.headEl = h('div', { cls: 'sechead' });
-    var hints = h('div', { cls: 'hints', text: 'Setas: mover   ·   OK: abrir   ·   Vermelho: favoritar   ·   Voltar: voltar ao menu' });
+    var hints = h('div', { cls: 'hints', text: 'Setas: mover   ·   OK: abrir   ·   Vermelho: favoritar   ·   Voltar: voltar ao menu   ·   Mini player: Amarelo amplia, Azul fecha' });
     S.mainEl = h('div', { cls: 'main' }, [S.headEl, S.pageEl, hints]);
     app.appendChild(S.mainEl);
     Nav.setScope(app);
@@ -817,7 +819,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.5.4']
+      ['Versão do app', '1.5.5']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
@@ -1017,6 +1019,7 @@
   }
 
   function startPlay(ctx, fromStart) {
+    setMini(false);
     S.ctx = ctx;
     S.resumeFocus = Nav.current();
     S.resumeScope = Nav.getScope();
@@ -1076,7 +1079,7 @@
     if (logo) { imgEl(logo, l); }
     $('osd-bar').classList.toggle('hidden', !vod);
     $('osd').classList.toggle('vod', !!vod);
-    $('osd-hint').textContent = vod ? 'OK: pausar · ←/→: ±10 s · Cima ou Verde: áudio e legenda · Voltar: sair'
+    $('osd-hint').textContent = vod ? 'OK: pausar · ←/→: ±10 s · Cima ou Verde: áudio e legenda · Voltar: mini player · Parar: sair'
       : 'Cima/Baixo: canal · 0-9: número · Verde: áudio e legenda · Vermelho: favorito';
     $('osd-fill').style.width = '0';
     $('osd-cur').textContent = '0:00';
@@ -1222,7 +1225,7 @@
       if (!c) { return; }
       if (b && b !== osd) {
         var act = b.getAttribute('data-act');
-        if (act === 'back') { closePlayer(); return; }
+        if (act === 'back') { minimizePlayer(); return; }
         if (act === 'tracks') { openTracks(); return; }
         if (act === 'next') { zap(1); return; }
         if (act === 'prev') { zap(-1); return; }
@@ -1243,6 +1246,7 @@
   }
 
   function showOsd() {
+    if (S.mini) { return; }
     $('osd').classList.remove('hidden');
     $('osd-clock').textContent = hhmm(new Date());
     clearTimeout(S.osdTimer);
@@ -1287,16 +1291,47 @@
     store.set('cont', S.cont);
   }
 
-  function closePlayer() {
+  /* mini player: o vídeo continua tocando num canto enquanto você navega; toque/Amarelo amplia, X/Azul fecha */
+  function setMini(on) {
+    S.mini = !!on;
+    $('player').classList.toggle('mini', S.mini);
+    document.body.classList.toggle('mini-on', S.mini);
+    if (S.mini) { $('mini-title').textContent = $('osd-title').textContent; }
+  }
+
+  function minimizePlayer() {
+    if (!S.ctx) { return; }
+    leavePlayer(true);
+    toast('Mini player — ' + (document.body.classList.contains('touch') ? 'toque nele para ampliar' : 'Amarelo: ampliar · Azul: fechar'), 2500);
+  }
+
+  function expandPlayer() {
+    if (!S.mini || !S.ctx) { return; }
+    setMini(false);
+    S.resumeFocus = Nav.current();
+    S.resumeScope = Nav.getScope();
+    S.mode = 'player';
+    nativeFull(true);
+    showOsd();
+  }
+
+  function closePlayer() { leavePlayer(false); }
+
+  function leavePlayer(keep) {
     saveResume();
     closeTracks();
-    Player.stop();
     clearTimeout(S.osdTimer);
-    $('player').classList.add('hidden');
-    $('buffer').classList.add('hidden');
     $('osd').classList.add('hidden');
+    if (keep) {
+      setMini(true);
+    } else {
+      Player.stop();
+      $('player').classList.add('hidden');
+      $('buffer').classList.add('hidden');
+      setMini(false);
+      S.ctx = null;
+    }
     nativeFull(false);
-    S.ctx = null;
     S.mode = S.detail ? 'detail' : 'browse';
     Nav.setScope(S.detail ? $('detail') : $('app'));
     // o detalhe reflete o ponto salvo agora ("Assistir" -> "Continuar")
@@ -1342,7 +1377,8 @@
 
   function playerKey(k) {
     var c = S.ctx, live = c.kind === 'live';
-    if (k === KEY.BACK || k === KEY.ESC || k === KEY.BS || k === KEY.STOP) { closePlayer(); return; }
+    if (k === KEY.STOP) { closePlayer(); return; }
+    if (k === KEY.BACK || k === KEY.ESC || k === KEY.BS) { minimizePlayer(); return; }
     if (live && k >= 48 && k <= 57) { digit(k - 48); return; }
     if (live && k >= 96 && k <= 105) { digit(k - 96); return; }
     switch (k) {
@@ -1419,6 +1455,8 @@
       case KEY.ENTER: e.preventDefault(); Nav.activate(); break;
       case KEY.BACK: case KEY.ESC: case KEY.BS: e.preventDefault(); goBack(); break;
       case KEY.RED: if (S.mode === 'browse') { e.preventDefault(); favFocused(); } break;
+      case KEY.YELLOW: if (S.mini) { e.preventDefault(); expandPlayer(); } break;
+      case KEY.BLUE: if (S.mini) { e.preventDefault(); closePlayer(); } break;
       default: break;
     }
   }
@@ -1489,6 +1527,12 @@
       if (el && sc && sc.contains(el)) { Nav.focus(el); }
     });
     document.addEventListener('click', function () { if (S.mode === 'player' && !S.tracksOpen) { showOsd(); } });
+    var miniX = h('button', { id: 'mini-x', type: 'button' }, [icon('xmark', 22)]);
+    var miniT = h('div', { id: 'mini-title' });
+    $('player').appendChild(miniT);
+    $('player').appendChild(miniX);
+    miniX.addEventListener('click', function (e) { e.stopPropagation(); closePlayer(); });
+    $('player').addEventListener('click', function () { if (S.mini) { expandPlayer(); } });
     $('osd-tracks').addEventListener('click', function (e) { e.stopPropagation(); openTracks(); });
     $('osd-tracks').insertBefore(icon('cc', 30), $('osd-tracks').firstChild);
 
