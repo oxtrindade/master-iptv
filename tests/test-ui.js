@@ -199,6 +199,20 @@ Promise.all([listen(api), listen(px)]).then(function () {
       $$('.card')[0].classList.add('focus');
       key(403);
       assert.ok($$('.card')[0].classList.contains('isfav'), 'estrela aparece');
+      // toque longo no segundo banner favorita
+      var ev = new w.Event('touchstart', { bubbles: true });
+      ev.touches = [{ clientX: 5, clientY: 5 }];
+      $$('.card')[1].dispatchEvent(ev);
+      return new Promise(function (r) { setTimeout(r, 800); });
+    }).then(function () {
+      assert.ok($$('.card')[1].classList.contains('isfav'), 'toque longo favorita');
+      var ev2 = new w.Event('touchstart', { bubbles: true });
+      ev2.touches = [{ clientX: 5, clientY: 5 }];
+      $$('.card')[1].dispatchEvent(ev2);
+      return new Promise(function (r) { setTimeout(r, 800); });
+    }).then(function () {
+      assert.ok(!$$('.card')[1].classList.contains('isfav'), 'toque longo desfavorita');
+      step('toque longo');
       go('fav');
       return waitFor(function () { return $$('.card').length === 1; }, 'favoritos');
     }).then(function () {
@@ -207,7 +221,7 @@ Promise.all([listen(api), listen(px)]).then(function () {
       return waitFor(function () { return $('.settings .sgroup'); }, 'config');
     }).then(function () {
       var txt = $('.settings').textContent;
-      assert.ok(/127\.0\.0\.1/.test(txt) && /joao/.test(txt) && /1\.8\.1/.test(txt));
+      assert.ok(/127\.0\.0\.1/.test(txt) && /joao/.test(txt) && /1\.8\.2/.test(txt));
       assert.strictEqual($$('.swrow').length, 4, 'quatro chaves');
       step('configurações');
       // ocultar SD / HD: a categoria "Filmes e séries 24h" tem Cine HD, Cine SD e Cine FHD

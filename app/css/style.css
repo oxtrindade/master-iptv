@@ -211,7 +211,7 @@ video::cue { background: rgba(0,0,0,.72); color: #fff; font-size: 42px; }
 /* ================= Android (TV e celular) =================
    Tudo abaixo só vale dentro do app Android (classes colocadas por js/android.js). */
 html.android { overflow: hidden; }
-body.android { position: relative; overflow: hidden; -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; }
+body.android { position: relative; overflow: hidden; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
 body.android input { -webkit-user-select: text; user-select: text; }
 
 /* controles de toque no player */

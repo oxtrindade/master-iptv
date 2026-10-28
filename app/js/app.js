@@ -746,8 +746,45 @@
     if (S.section === 'fav' && !on) { renderFavs(); }
   }
 
+  /* toque longo (celular/tablet): segurar um banner de filme, série ou canal favorita/desfavorita */
+  (function () {
+    var timer = null, sx = 0, sy = 0, target = null, swallow = 0, fired = false;
+    function cancel() { if (timer) { clearTimeout(timer); timer = null; } }
+    function fire() {
+      timer = null;
+      if (!target || !target._item || S.mode !== 'browse') { return; }
+      var el = target, on = toggleFav(el._item);
+      el.classList.toggle('isfav', on);
+      fired = true;
+      try { if (navigator.vibrate) { navigator.vibrate(30); } } catch (e) {}
+      if (S.section === 'fav' && !on) { renderFavs(); }
+    }
+    document.addEventListener('touchstart', function (e) {
+      cancel();
+      var t = e.target && e.target.closest ? e.target.closest('.f') : null;
+      if (!t || !t._item || !e.touches || e.touches.length !== 1) { return; }
+      target = t; sx = e.touches[0].clientX; sy = e.touches[0].clientY;
+      timer = setTimeout(fire, 550);
+    }, { passive: true });
+    document.addEventListener('touchmove', function (e) {
+      if (!timer || !e.touches[0]) { return; }
+      if (Math.abs(e.touches[0].clientX - sx) > 10 || Math.abs(e.touches[0].clientY - sy) > 10) { cancel(); }
+    }, { passive: true });
+    document.addEventListener('touchend', function () {
+      cancel();
+      if (fired) { fired = false; swallow = Date.now() + 500; }
+    }, { passive: true });
+    document.addEventListener('touchcancel', cancel, { passive: true });
+    document.addEventListener('click', function (e) {
+      if (Date.now() < swallow) { e.stopPropagation(); e.preventDefault(); swallow = 0; }
+    }, true);
+    document.addEventListener('contextmenu', function (e) {
+      if (e.target && e.target.closest && e.target.closest('.f')) { e.preventDefault(); }
+    });
+  })();
+
   function renderFavs() {
-    showItems(favList(), { cards: true, empty: 'Nenhum favorito ainda. Aperte o botão vermelho sobre um item.' });
+    showItems(favList(), { cards: true, empty: 'Nenhum favorito ainda. Aperte o botão vermelho (ou segure o dedo) sobre um item.' });
     var first = S.listHost.querySelector('.f');
     Nav.focus(first || S.headEl.querySelector('.f'));
   }
@@ -1148,7 +1185,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.8.1']
+      ['Versão do app', '1.8.2']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
