@@ -14,6 +14,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # Atualização pelo celular: suba um .zip na raiz do repositório e este passo o aplica sozinho
+      - name: Aplicar .zip enviado (se houver)
+        run: |
+          Z=$(ls -1 ./*.zip 2>/dev/null | head -1 || true)
+          if [ -n "$Z" ]; then
+            echo "Aplicando $Z"
+            rm -rf "$RUNNER_TEMP/upd" && mkdir -p "$RUNNER_TEMP/upd"
+            unzip -q "$Z" -d "$RUNNER_TEMP/upd"
+            SRC="$RUNNER_TEMP/upd"
+            if [ "$(ls -A "$SRC" | wc -l)" -eq 1 ] && [ -d "$SRC/$(ls -A "$SRC")" ]; then SRC="$SRC/$(ls -A "$SRC")"; fi
+            [ -f "$SRC/app/appinfo.json" ] || { echo "::error::O zip não tem app/appinfo.json"; exit 1; }
+            rm -rf app android scripts tests docs services
+            cp -a "$SRC"/. .
+            rm -f ./*.zip
+            git config user.name "github-actions"
+            git config user.email "github-actions@users.noreply.github.com"
+            git add -A
+            git diff --cached --quiet || git commit -m "Atualização via zip ($(node -p "require('./app/appinfo.json').version"))"
+            git push
+          fi
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -34,7 +54,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.ver.outputs.v }}
-          target_commitish: ${{ github.sha }}
+          target_commitish: ${{ github.ref_name }}
           name: ${{ steps.ver.outputs.v }}
           files: |
             dist/*.ipk
@@ -48,6 +68,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}   # pega o código já atualizado pelo passo do .zip
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -93,6 +115,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.ver.outputs.v }}
-          target_commitish: ${{ github.sha }}
+          target_commitish: ${{ github.ref_name }}
           name: ${{ steps.ver.outputs.v }}
           files: dist/*.apk
