@@ -533,3 +533,31 @@ body.portrait .acct .usub { display: none; }
 .sgroup.sub { margin-top: 18px; font-size: 18px; color: #8a97ad; letter-spacing: 1px; text-transform: none; }
 body.portrait .dvlbl { font-size: 14px; margin-right: 8px; }
 body.portrait .sgroup.sub { font-size: 13px; }
+
+/* elenco e filmografia */
+.dcast { margin-top: 34px; padding-bottom: 50px; }
+.dcast:empty { display: none; }
+.dclbl { margin-bottom: 14px; font-size: 22px; letter-spacing: 2px; text-transform: uppercase; color: #3ab4e0; font-weight: 700; }
+.dcast .hlist { padding: 6px 4px; }
+.cast { width: 150px; margin-right: 20px; padding: 8px 4px 6px; text-align: center; flex: none; border-radius: 14px; }
+.cphoto { position: relative; width: 116px; height: 116px; margin: 0 auto 8px; border-radius: 50%; overflow: hidden; background: #172236; }
+.cphoto img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cphoto .ph { position: absolute; left: 0; right: 0; top: 0; bottom: 0; display: flex; align-items: center; justify-content: center; font-size: 46px; color: #34425f; }
+.cast .cn { font-size: 20px; color: #e6ebf5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cast .cc { margin-top: 2px; font-size: 17px; color: #6f7c93; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.aphoto { width: 240px; height: 360px; }
+.agrid { margin-top: 30px; }
+body.compact .cphoto { width: 84px; height: 84px; }
+body.compact .cast { width: 112px; margin-right: 12px; }
+body.compact .cast .cn { font-size: 16px; }
+body.compact .cast .cc { font-size: 13px; }
+body.compact .dclbl { font-size: 16px; }
+body.portrait .cphoto { width: 72px; height: 72px; }
+body.portrait .cast { width: 92px; margin-right: 8px; }
+body.portrait .cast .cn { font-size: 13px; }
+body.portrait .cast .cc { font-size: 11px; }
+body.portrait .dclbl { font-size: 13px; }
+body.portrait .dcast { margin-top: 18px; padding-bottom: 20px; }
+body.portrait .aphoto { width: 120px; height: 120px; border-radius: 50%; margin: 0 auto 10px; }
+body.compact .aphoto { width: 150px; height: 150px; border-radius: 50%; }
+.eplist:empty, .seasons:empty { display: none; }

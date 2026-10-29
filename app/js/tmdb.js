@@ -150,6 +150,20 @@ var Tmdb = (function () {
         return x ? x.id : 0;
       });
     },
+    /* elenco principal: [{id, n (nome), c (personagem), p (foto)}] */
+    credits: function (kind, id, key) {
+      return getJson('/' + kind + '/' + id + '/credits', key, '').then(function (r) {
+        return (r.cast || []).slice(0, 15).map(function (c) { return { id: c.id, n: c.name || '', c: c.character || '', p: c.profile_path || '' }; });
+      });
+    },
+    /* filmografia de uma pessoa (mais populares primeiro): [{t, o, y, k:'movie'|'tv'}] */
+    person: function (id, key) {
+      return getJson('/person/' + id + '/combined_credits', key, '').then(function (r) {
+        var c = (r.cast || []).filter(function (x) { return x.media_type === 'movie' || x.media_type === 'tv'; });
+        c.sort(function (a, b) { return (b.popularity || 0) - (a.popularity || 0); });
+        return c.slice(0, 80).map(function (x) { var o = slim(x.media_type, x); o.k = x.media_type; return o; });
+      });
+    },
     check: function (key) { return getJson('/configuration', key, ''); }
   };
 })();

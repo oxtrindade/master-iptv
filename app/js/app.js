@@ -1185,7 +1185,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.8.2']
+      ['Versão do app', '1.9.0']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
@@ -1237,7 +1237,7 @@
   /* ---------- detalhes (filme / série) ---------- */
 
   function showDetail(it, vars) {
-    if (!(S.detail && vars)) { S.lastFocus = Nav.current(); }
+    if (!S.detail) { S.lastFocus = Nav.current(); }
     S.mode = 'detail';
     var D = S.detail = { item: it, flat: [], seasons: [], season: null, vars: vars || null };
     var d = $('detail');
@@ -1254,14 +1254,16 @@
     D.seasonsEl = h('div', { cls: 'seasons' });
     D.epsEl = h('div', { cls: 'eplist scroll' });
     D.btns = btns; D.meta = meta; D.plot = plot; D.bg = bg;
+    D.castEl = h('div', { cls: 'dcast' });
 
     d.appendChild(bg);
     d.appendChild(h('div', { cls: 'bgfade' }));
-    d.appendChild(h('div', { cls: 'dwrap' }, [
+    d.appendChild(h('div', { cls: 'dwrap scroll' }, [
       h('div', { cls: 'dmain' }, [poster, h('div', { cls: 'dinfo' }, [title, meta, plot, D.varsEl = h('div', { cls: 'dvars' }), btns])]),
-      D.seasonsEl, D.epsEl
+      D.seasonsEl, D.epsEl, D.castEl
     ]));
     Nav.setScope(d);
+    castRow(D);
     if (vars) { renderVariants(D); }
     else {
       S.provider.all(it.type).then(function (list) {
@@ -1304,6 +1306,83 @@
         D.epsEl.appendChild(h('div', { cls: 'empty', text: 'Erro ao carregar episódios: ' + (e && e.message) }));
       });
     }
+  }
+
+
+  /* ---------- elenco e filmografia (TMDB) ---------- */
+
+  var IMG = 'https://image.tmdb.org/t/p/';
+  S.dstack = [];   // pilha de telas (detalhe <-> ator): o Voltar desfaz uma de cada vez
+
+  function castRow(D) {
+    var key = tmdbKey(), it = D.item;
+    if (!key) { return; }
+    var kind = it.type === 'series' ? 'tv' : 'movie', year = Tmdb.yearOf(it.name) || (parseInt(it.year, 10) || 0);
+    tmdbCached('tmdbid:' + kind + ':' + Tmdb.norm(it.name), 24 * 30, function () {
+      return Tmdb.findId(kind, it.name, year, key).then(function (id) { if (!id) { throw new Error('sem id'); } return id; });
+    }).then(function (id) {
+      if (!id) { throw new Error('sem id'); }
+      return tmdbCached('tmdbcast:' + kind + ':' + id, 24 * 30, function () { return Tmdb.credits(kind, id, key); });
+    }).then(function (cast) {
+      if (S.detail !== D || !cast || !cast.length) { return; }
+      var row = h('div', { cls: 'hlist scroll' });
+      cast.forEach(function (c) {
+        var ph = h('div', { cls: 'cphoto' }, [h('div', { cls: 'ph', text: (c.n || '?').charAt(0) })]);
+        if (c.p) { imgEl(IMG + 'w185' + c.p, ph); }
+        row.appendChild(h('div', { cls: 'f cast', on: { click: function () {
+          S.dstack.push(function () { showDetail(D.item, D.vars); });
+          renderActor(c);
+        } } }, [ph, h('div', { cls: 'cn', text: c.n }), h('div', { cls: 'cc', text: c.c })]));
+      });
+      D.castEl.appendChild(h('div', { cls: 'dclbl', text: 'Elenco' }));
+      D.castEl.appendChild(row);
+    }).then(null, function () {});
+  }
+
+  /* página do ator: o que dele existe no catálogo do provedor */
+  function renderActor(c) {
+    var d = $('detail'), key = tmdbKey();
+    d.innerHTML = '';
+    d.classList.remove('hidden');
+    S.mode = 'detail';
+    var A = S.detail = { actor: c, item: null, flat: [], seasons: [], vars: null };
+    var photo = h('div', { cls: 'dposter aphoto' });
+    if (c.p) { photo.style.backgroundImage = bgUrl(IMG + 'w342' + c.p); }
+    var grid = h('div', { cls: 'grid agrid' }, [h('div', { cls: 'empty', text: 'Procurando no seu catálogo…' })]);
+    d.appendChild(h('div', { cls: 'bgfade' }));
+    d.appendChild(h('div', { cls: 'dwrap scroll' }, [
+      h('div', { cls: 'dmain' }, [photo, h('div', { cls: 'dinfo' }, [
+        h('div', { cls: 'dtitle', text: c.n }),
+        h('div', { cls: 'dmeta', text: 'Filmes e séries dele(a) no seu catálogo' }),
+        h('div', { cls: 'dbtns' }, [backBtn()])
+      ])]),
+      grid
+    ]));
+    Nav.setScope(d);
+    Nav.focusFirst();
+    tmdbCached('tmdbper:' + c.id, 24 * 7, function () { return Tmdb.person(c.id, key); }).then(function (res) {
+      return Promise.all([S.provider.all('movie'), S.provider.all('series')]).then(function (ls) {
+        var mv = Tmdb.match(ls[0], res.filter(function (x) { return x.k === 'movie'; }));
+        var sr = Tmdb.match(ls[1], res.filter(function (x) { return x.k === 'tv'; }));
+        return mv.concat(sr);
+      });
+    }).then(function (out) {
+      if (S.detail !== A) { return; }
+      grid.innerHTML = '';
+      if (!out.length) { grid.appendChild(h('div', { cls: 'empty', text: 'Nenhum outro título dele(a) no seu catálogo.' })); return; }
+      out.forEach(function (it) {
+        var el = h('div', { cls: 'f card', on: { click: function () {
+          S.dstack.push(function () { renderActor(c); });
+          showDetail(it);
+        } } }, [posterEl(it, false), h('div', { cls: 'title', text: it.name })]);
+        markFav(el, it);
+        grid.appendChild(el);
+      });
+    }).then(null, function () {
+      if (S.detail !== A) { return; }
+      grid.innerHTML = '';
+      grid.appendChild(h('div', { cls: 'empty', text: 'Não consegui buscar a filmografia.' }));
+    });
   }
 
   /* várias versões do mesmo título (dublado, legendado, 4K…): escolher aqui */
@@ -1399,6 +1478,7 @@
   }
 
   function closeDetailQuiet() {
+    S.dstack = [];
     var d = $('detail');
     d.classList.add('hidden');
     d.innerHTML = '';
@@ -1406,6 +1486,7 @@
   }
 
   function closeDetail() {
+    if (S.dstack.length) { S.dstack.pop()(); return; }
     closeDetailQuiet();
     S.mode = 'browse';
     Nav.setScope($('app'));
@@ -1797,8 +1878,8 @@
     S.mode = S.detail ? 'detail' : 'browse';
     Nav.setScope(S.detail ? $('detail') : $('app'));
     // o detalhe reflete o ponto salvo agora ("Assistir" -> "Continuar")
-    if (S.detail && S.detail.item.type === 'series') { renderEps(); buildSeriesButtons(); }
-    else if (S.detail && S.detail.item.type === 'movie') { buildMovieButtons(); }
+    if (S.detail && S.detail.item && S.detail.item.type === 'series') { renderEps(); buildSeriesButtons(); }
+    else if (S.detail && S.detail.item && S.detail.item.type === 'movie') { buildMovieButtons(); }
     if (!S.detail && S.section === 'home') { refreshHome(); return; }
     if (S.resumeFocus && document.body.contains(S.resumeFocus)) { Nav.focus(S.resumeFocus); }
   }

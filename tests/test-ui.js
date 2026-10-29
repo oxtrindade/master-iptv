@@ -135,11 +135,32 @@ Promise.all([listen(api), listen(px)]).then(function () {
       go('movie');
       return waitFor(function () { return $$('.card').length === 1; }, 'filmes');
     }).then(function () {
+      // TMDB simulado: elenco do filme e filmografia do ator
+      w.localStorage.setItem('iptv.tmdbkey', JSON.stringify('k'));
+      w.Tmdb.findId = function () { return Promise.resolve(77); };
+      w.Tmdb.credits = function () { return Promise.resolve([{ id: 9, n: 'Ana Atriz', c: 'Maria', p: '' }, { id: 10, n: 'Beto Ator', c: 'Zé', p: '' }]); };
+      w.Tmdb.person = function () { return Promise.resolve([{ t: 'Filme Teste', o: '', y: 0, k: 'movie' }, { t: 'Nao Existe', o: '', y: 0, k: 'movie' }]); };
       $$('.card')[0].click();
       return waitFor(function () { return !$('#detail').classList.contains('hidden') && /Assistir/.test($('#detail .btn.primary').textContent); }, 'detalhe filme');
     }).then(function () {
       return waitFor(function () { return /Um filme de teste/.test($('#detail .dplot').textContent); }, 'plot');
     }).then(function () {
+      return waitFor(function () { return $$('#detail .cast').length === 2; }, 'elenco');
+    }).then(function () {
+      assert.ok(/Ana Atriz/.test($('#detail .cast').textContent) && /Maria/.test($('#detail .cast').textContent));
+      $$('#detail .cast')[0].click();
+      return waitFor(function () { return $$('#detail .agrid .card').length === 1; }, 'filmografia do ator');
+    }).then(function () {
+      assert.ok(/Ana Atriz/.test($('#detail .dtitle').textContent));
+      $$('#detail .agrid .card')[0].click();
+      return waitFor(function () { return $('#detail .dtitle') && /Filme Teste/.test($('#detail .dtitle').textContent) && /Assistir/.test($('#detail .btn.primary').textContent); }, 'volta ao filme pelo ator');
+    }).then(function () {
+      key(27); // volta para a página do ator
+      assert.ok(/Ana Atriz/.test($('#detail .dtitle').textContent), 'Voltar volta ao ator');
+      key(27); // volta para o filme
+      assert.ok(/Filme Teste/.test($('#detail .dtitle').textContent), 'Voltar volta ao filme');
+      assert.ok(!$('#detail').classList.contains('hidden'));
+      step('elenco + filmografia do ator');
       step('filmes + detalhe com sinopse');
       $('#detail .btn.primary').click();
       assert.ok(/501\.mkv$/.test($('#video').getAttribute('src')));
@@ -221,7 +242,7 @@ Promise.all([listen(api), listen(px)]).then(function () {
       return waitFor(function () { return $('.settings .sgroup'); }, 'config');
     }).then(function () {
       var txt = $('.settings').textContent;
-      assert.ok(/127\.0\.0\.1/.test(txt) && /joao/.test(txt) && /1\.8\.2/.test(txt));
+      assert.ok(/127\.0\.0\.1/.test(txt) && /joao/.test(txt) && /1\.9\.0/.test(txt));
       assert.strictEqual($$('.swrow').length, 4, 'quatro chaves');
       step('configurações');
       // ocultar SD / HD: a categoria "Filmes e séries 24h" tem Cine HD, Cine SD e Cine FHD
