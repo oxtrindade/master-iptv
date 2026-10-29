@@ -244,11 +244,11 @@ body.compact .avatar { width: 38px; height: 38px; }
 body.compact .clock { font-size: 22px; }
 body.compact .page { top: 74px; }
 body.compact .hub-tiles { padding: 18px 36px 0; }
-body.compact .hubtile { height: 190px; margin-right: 22px; padding: 26px 28px; border-radius: 22px; }
-body.compact .hubico { width: 78px; height: 78px; border-radius: 22px; }
-body.compact .hubico svg { width: 46px; height: 46px; }
-body.compact .hubname { font-size: 34px; margin-top: 14px; }
-body.compact .hubsub { font-size: 18px; margin-top: 2px; }
+body.compact .hubtile { height: 134px; margin-right: 18px; padding: 18px 22px; border-radius: 18px; }
+body.compact .hubico { width: 54px; height: 54px; border-radius: 16px; }
+body.compact .hubico svg { width: 32px; height: 32px; }
+body.compact .hubname { font-size: 26px; margin-top: 8px; }
+body.compact .hubsub { font-size: 15px; margin-top: 1px; }
 body.compact .hub-links { padding: 12px 36px 0; }
 body.compact .btn { height: 52px; line-height: 52px; padding: 0 26px; font-size: 22px; margin: 4px 10px 4px 0; }
 body.compact .hrows { padding-bottom: 30px; }
@@ -342,11 +342,11 @@ body.portrait .avatar { width: 30px; height: 30px; font-size: 15px; }
 body.portrait .clock { font-size: 16px; margin-left: 8px; }
 body.portrait .page { top: 60px; }
 body.portrait .hub-tiles { display: block; padding: 12px 14px 0; }
-body.portrait .hubtile { text-align: left; display: block; width: 100%; height: 150px; margin: 0 0 12px; padding: 30px 24px; border-radius: 22px; }
-body.portrait .hubico { float: left; width: 88px; height: 88px; margin-right: 22px; border-radius: 24px; }
-body.portrait .hubico svg { width: 50px; height: 50px; }
-body.portrait .hubname { margin-top: 14px; font-size: 32px; line-height: 1.15; white-space: nowrap; }
-body.portrait .hubsub { margin-top: 4px; font-size: 16px; }
+body.portrait .hubtile { text-align: left; display: block; width: 100%; height: 100px; margin: 0 0 10px; padding: 20px 20px; border-radius: 18px; }
+body.portrait .hubico { float: left; width: 60px; height: 60px; margin-right: 18px; border-radius: 17px; }
+body.portrait .hubico svg { width: 34px; height: 34px; }
+body.portrait .hubname { margin-top: 4px; font-size: 24px; line-height: 1.15; white-space: nowrap; }
+body.portrait .hubsub { margin-top: 2px; font-size: 14px; }
 body.portrait .hub-links { padding: 4px 14px 0; }
 body.portrait .btn { height: 42px; line-height: 42px; padding: 0 16px; font-size: 16px; margin: 4px 6px 4px 0; border-radius: 21px; }
 body.portrait .btn .ico { margin-right: 6px; }
@@ -470,7 +470,7 @@ body.portrait .brand { white-space: nowrap; }
 body.portrait .hubname { white-space: normal; }
 body.portrait .acct .usub { display: none; }
 body.portrait .brand { font-size: 17px; letter-spacing: 1px; min-width: 0; overflow: hidden; }
-body.portrait .hubtile { height: auto; min-height: 150px; }
+body.portrait .hubtile { height: auto; min-height: 100px; }
 
 /* pular introdução */
 #skip-intro { position: absolute; right: 80px; bottom: 270px; z-index: 4; display: flex; align-items: center; height: 70px; padding: 0 34px; border-radius: 35px;
