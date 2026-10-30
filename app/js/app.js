@@ -44,6 +44,7 @@
     fav: STAR,
     star: STAR,
     starfill: STAR.replace('<path ', '<path fill="currentColor" '),
+    menu: '<path d="M4 6.5h16M4 12h16M4 17.5h16"/>',
     settings: '<path d="M4 7h7M15 7h5M4 12h3M11 12h9M4 17h9M17 17h3"/><circle cx="13" cy="7" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="15" cy="17" r="2"/>',
     play: '<path fill="currentColor" d="M7 4l13 8-13 8z"/>',
     info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>',
@@ -152,7 +153,11 @@
     parent.appendChild(img);
   }
 
-  function updateClock() { if (S.clockEl) { S.clockEl.textContent = hhmm(new Date()); } }
+  function updateClock() {
+    var t = hhmm(new Date());
+    if (S.clockEl) { S.clockEl.textContent = t; }
+    if (S.drawClockEl) { S.drawClockEl.textContent = t; }
+  }
   setInterval(updateClock, 20000);
 
   /* ---------- clima ---------- */
@@ -471,9 +476,53 @@
     var hints = h('div', { cls: 'hints', text: 'Setas: mover   ·   OK: abrir   ·   Vermelho: favoritar   ·   Voltar: voltar ao menu   ·   Mini player: Amarelo amplia, Azul fecha' });
     S.mainEl = h('div', { cls: 'main' }, [S.headEl, S.pageEl, hints]);
     app.appendChild(S.mainEl);
+    buildDrawer();
     Nav.setScope(app);
     S.hubFocus = null;
     selectSection('home');
+  }
+
+  /* ---------- menu lateral (hambúrguer): clima, relógio e Configurações ---------- */
+
+  function buildDrawer() {
+    S.drawerOpen = false;
+    S.wxEl = h('div', { cls: 'wx' });
+    S.drawClockEl = h('span', { cls: 'clock' });
+    S.drawSubEl = h('div', { cls: 'usub' });
+    var panel = h('div', { cls: 'drawer-panel' }, [
+      h('div', { cls: 'drawer-brand', text: 'MASTER IPTV' }),
+      S.wxEl,
+      h('div', { cls: 'drawer-meta' }, [S.drawClockEl, S.drawSubEl]),
+      h('button', { cls: 'f btn drawer-settings', type: 'button',
+        on: { click: function () { closeDrawer(true); selectSection('settings'); } } }, [icon('settings', 26), 'Configurações'])
+    ]);
+    S.drawerEl = h('div', { cls: 'drawer hidden' }, [
+      h('div', { cls: 'drawer-scrim', on: { click: function () { closeDrawer(); } } }), panel
+    ]);
+    S.mainEl.appendChild(S.drawerEl);
+  }
+
+  function updateDrawerInfo() {
+    var info = S.info || {};
+    if (S.drawSubEl) { S.drawSubEl.textContent = info.exp ? 'até ' + info.exp.toLocaleDateString('pt-BR') : 'conta ativa'; }
+    updateClock();
+  }
+
+  function openDrawer() {
+    if (!S.drawerEl || S.drawerOpen) { return; }
+    S.drawerOpen = true;
+    updateDrawerInfo();
+    S.drawerEl.classList.remove('hidden');
+    Nav.setScope(S.drawerEl);
+    Nav.focus(S.drawerEl.querySelector('.drawer-settings'));
+  }
+
+  function closeDrawer(skipFocus) {
+    if (!S.drawerEl || !S.drawerOpen) { return; }
+    S.drawerOpen = false;
+    S.drawerEl.classList.add('hidden');
+    Nav.setScope($('app'));
+    if (!skipFocus) { Nav.focus(S.headEl && S.headEl.querySelector('.menubtn')); }
   }
 
   function headIcon(sec, label) {
@@ -486,17 +535,14 @@
     hd.innerHTML = '';
     if (sec === 'home') {
       var prof = curProfile();
-      var usub = info.exp ? 'até ' + info.exp.toLocaleDateString('pt-BR') : 'conta ativa';
       hd.className = 'sechead hub';
+      hd.appendChild(h('button', { cls: 'f iconbtn menubtn', type: 'button', title: 'Menu', 'aria-label': 'Menu',
+        on: { click: openDrawer } }, [icon('menu', 28)]));
       hd.appendChild(h('div', { cls: 'brand', text: 'MASTER IPTV' }));
-      S.wxEl = h('div', { cls: 'wx' });
-      hd.appendChild(S.wxEl);
-      loadWeather();
-      hd.appendChild(h('div', { cls: 'acct' }, [h('div', { cls: 'usub', text: usub }), S.clockEl]));
-      hd.appendChild(headIcon('settings', 'Configurações'));
       hd.appendChild(h('button', { cls: 'f avatar', type: 'button', style: 'background:' + PCOLORS[prof.color % PCOLORS.length], text: profInitial(prof),
         on: { click: function () { showProfiles(true); } } }));
-      updateClock();
+      loadWeather();
+      updateDrawerInfo();
       return;
     }
     hd.className = 'sechead';
@@ -935,6 +981,7 @@
 
     var want = S.hubFocus, target = null;
     if (want === 'cont') { target = page.querySelector('.lcard'); }
+    else if (want === 'settings') { target = S.headEl.querySelector('.menubtn'); }
     else if (want) { target = S.mainEl.querySelector('[data-sec="' + want + '"]'); }
     Nav.focus(target || page.querySelector('.hubtab'));
   }
@@ -1190,7 +1237,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.11.1']
+      ['Versão do app', '1.12.0']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
@@ -1972,6 +2019,7 @@
     }
     if (S.mode === 'detail') { closeDetail(); return; }
     if (S.mode === 'browse') {
+      if (S.drawerOpen) { closeDrawer(); return; }
       if (S.section !== 'home') {
         var cur = Nav.current();
         if (S.catsEl && S.contentEl && cur && S.contentEl.contains(cur)) {

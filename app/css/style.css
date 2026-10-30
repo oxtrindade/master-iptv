@@ -38,7 +38,36 @@ button, input { font-family: inherit; font-size: inherit; color: inherit; border
 .sectitle .ico { margin-right: 18px; color: #3ab4e0; }
 .sechead .clock { margin: 0 0 0 20px; }
 .brand { flex: 1; display: flex; align-items: center; font-size: 42px; font-weight: 800; letter-spacing: 4px; }
-.sechead.hub .brand { color: #3ab4e0; font-weight: 900; }
+.sechead.hub .brand { color: #3ab4e0; font-weight: 900; justify-content: center; }
+.sechead.hub .iconbtn { margin-right: 0; }
+.sechead.hub .avatar { margin-right: 0; }
+
+/* menu lateral (hambúrguer) */
+.drawer { position: absolute; left: 0; top: 0; right: 0; bottom: 0; z-index: 30; }
+.drawer-scrim { position: absolute; left: 0; top: 0; right: 0; bottom: 0; background: rgba(0,0,0,.6); }
+.drawer-panel { position: absolute; left: 0; top: 0; bottom: 0; width: 560px; padding: 50px 50px 0; background: #101828; box-shadow: 8px 0 40px rgba(0,0,0,.5);
+  -webkit-animation: drawin .18s ease-out; animation: drawin .18s ease-out; }
+@-webkit-keyframes drawin { from { -webkit-transform: translateX(-60px); opacity: 0; } to { -webkit-transform: none; opacity: 1; } }
+@keyframes drawin { from { transform: translateX(-60px); opacity: 0; } to { transform: none; opacity: 1; } }
+.drawer-brand { font-size: 34px; font-weight: 900; letter-spacing: 3px; color: #3ab4e0; margin-bottom: 40px; }
+.drawer .wx { margin: 0 0 22px; }
+.drawer-meta { display: flex; align-items: center; margin-bottom: 40px; color: #cdd5e5; }
+.drawer-meta .usub { margin: 0 0 0 22px; }
+.drawer .btn { display: block; width: 100%; margin: 0; text-align: left; }
+body.compact .drawer-panel { width: 380px; padding: 26px 26px 0; }
+body.compact .drawer .wx { margin: 0 0 14px; }
+body.compact .drawer .wx-c { font-size: 18px; }
+body.compact .drawer .wx-r { font-size: 15px; }
+body.compact .drawer-brand { font-size: 22px; margin-bottom: 22px; }
+body.compact .drawer-meta { margin-bottom: 22px; }
+body.portrait .drawer-panel { width: 78%; padding: 20px 18px 0; }
+body.portrait .drawer .usub, body.portrait .drawer .wx-c, body.portrait .drawer .wx-r { display: block; }
+body.portrait .drawer .wx { margin: 0 0 12px; }
+body.portrait .drawer .wx-t { font-size: 28px; margin: 0 12px 0 8px; }
+body.portrait .drawer .wx-c { font-size: 16px; }
+body.portrait .drawer .wx-r { font-size: 13px; }
+body.portrait .drawer-brand { font-size: 18px; margin-bottom: 16px; }
+body.portrait .drawer-meta { margin-bottom: 18px; }
 .logo-mark { width: 54px; height: 54px; margin-right: 18px; border-radius: 15px; background: #3ab4e0; color: #04202c; display: flex; align-items: center; justify-content: center; }
 .wx { display: flex; align-items: center; margin-right: 44px; color: #cdd5e5; }
 .wx .ico { color: #3ab4e0; }

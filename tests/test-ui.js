@@ -43,6 +43,7 @@ Promise.all([listen(api), listen(px)]).then(function () {
     function go(sec) {
       while (!$('.hubtab') && $('.backbtn')) { $('.backbtn').click(); } // a busca de seção volta primeiro à seção, depois ao menu
       if (sec === 'home') { return; }
+      if (sec === 'settings') { $('.menubtn').click(); $('.drawer-settings').click(); return; } // Configurações ficam no menu lateral
       $('[data-sec="' + sec + '"]').click();
     }
     function waitFor(fn, label) {
@@ -86,14 +87,24 @@ Promise.all([listen(api), listen(px)]).then(function () {
       assert.ok(!$('.side'), 'sem barra lateral');
       assert.ok(!$('.hub-links') && !$$('.hub-links .btn').length, 'sem botões de atalho embaixo (Buscar/Configurações vão no topo)');
       assert.ok(!$$('.hrow-title').some(function (t) { return t.textContent === 'Favoritos'; }), 'sem favoritos: a fileira não aparece');
-      assert.deepStrictEqual($$('.sechead .iconbtn').map(function (b) { return b.getAttribute('data-sec'); }), ['settings'], 'só a engrenagem no topo (sem lupa)');
-      assert.strictEqual($('.sechead .brand').textContent, 'MASTER IPTV', 'só o nome do app no topo');
-      assert.ok(!$('.sechead .logo-mark'), 'sem quadradinho de logo');
+      var hdKids = [].slice.call($('.sechead').children).map(function (c) { return c.className.replace(/\bf\b/, '').replace(/\bfocus\b/, '').replace(/\s+/g, ' ').trim(); });
+      assert.deepStrictEqual(hdKids, ['iconbtn menubtn', 'brand', 'avatar'], 'topo: menu à esquerda, nome no centro, perfil à direita: ' + hdKids.join(' | '));
+      assert.strictEqual($('.sechead .brand').textContent, 'MASTER IPTV', 'nome do app no centro');
+      assert.ok(!$('.sechead .wx') && !$('.sechead .clock') && !$('.sechead .usub'), 'clima/relógio/validade não ficam no topo');
+      assert.ok($('.drawer').classList.contains('hidden'), 'menu lateral começa fechado');
+      assert.ok($('.drawer .wx') && $('.drawer .clock') && $('.drawer .drawer-settings'), 'clima, relógio e Configurações dentro do menu lateral');
       step('menu inicial: TV ao vivo / Filmes / Séries');
       return waitFor(function () { return $('.wx-t') && /24°/.test($('.wx-t').textContent); }, 'clima');
     }).then(function () {
       assert.ok(/Taubaté/.test($('.wx-c').textContent), 'cidade padrão');
       assert.ok(/17° \/ 29°/.test($('.wx-r').textContent) && /Parcialmente/.test($('.wx-r').textContent), $('.wx-r').textContent);
+      $('.menubtn').click();
+      assert.ok(!$('.drawer').classList.contains('hidden'), 'hambúrguer abre o menu lateral');
+      assert.ok($('.drawer-settings').classList.contains('focus'), 'foco em Configurações dentro do menu');
+      key(461);
+      assert.ok($('.drawer').classList.contains('hidden'), 'Voltar fecha o menu lateral (sem sair do app)');
+      assert.ok($('.menubtn').classList.contains('focus'), 'foco volta ao hambúrguer');
+      step('menu lateral: abre, mostra clima/Configurações e fecha com Voltar');
       step('clima na home (24°, mín/máx, cidade)');
       go('live');
       return waitFor(function () { return $$('.cat').length === 4 && $$('.row').length === 1; }, 'ao vivo');
