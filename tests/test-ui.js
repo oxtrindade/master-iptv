@@ -41,8 +41,8 @@ Promise.all([listen(api), listen(px)]).then(function () {
     function key(code) { d.dispatchEvent(new w.KeyboardEvent('keydown', { keyCode: code, bubbles: true, cancelable: true })); }
     // navega pelo menu inicial: volta ao menu (se preciso) e abre a seção
     function go(sec) {
-      if (sec === 'home') { if (!$('.hubtile')) { $('.backbtn').click(); } return; }
-      if (!$('.hubtile')) { $('.backbtn').click(); }
+      while (!$('.hubtab') && $('.backbtn')) { $('.backbtn').click(); } // a busca de seção volta primeiro à seção, depois ao menu
+      if (sec === 'home') { return; }
       $('[data-sec="' + sec + '"]').click();
     }
     function waitFor(fn, label) {
@@ -79,14 +79,16 @@ Promise.all([listen(api), listen(px)]).then(function () {
       step('erro de login mantém os dados nos campos');
       inputs[2].value = 'segredo';
       $('.btn.primary').click();
-      return waitFor(function () { return $$('.hubtile').length === 3; }, 'menu inicial');
+      return waitFor(function () { return $$('.hubtab').length === 3; }, 'menu inicial');
     }).then(function () {
-      assert.deepStrictEqual($$('.hubname').map(function (e) { return e.textContent; }), ['TV ao vivo', 'Filmes', 'Séries']);
-      assert.ok($('.hubtile.focus'), 'foco no primeiro item do menu');
+      assert.deepStrictEqual($$('.hubtab').map(function (e) { return e.textContent; }), ['TV ao vivo', 'Filmes', 'Séries']);
+      assert.ok($('.hubtab.focus'), 'foco no primeiro item do menu');
       assert.ok(!$('.side'), 'sem barra lateral');
       assert.ok(!$('.hub-links') && !$$('.hub-links .btn').length, 'sem botões de atalho embaixo (Buscar/Configurações vão no topo)');
       assert.ok(!$$('.hrow-title').some(function (t) { return t.textContent === 'Favoritos'; }), 'sem favoritos: a fileira não aparece');
-      assert.deepStrictEqual($$('.sechead .iconbtn').map(function (b) { return b.getAttribute('data-sec'); }), ['search', 'settings'], 'lupa e engrenagem no topo');
+      assert.deepStrictEqual($$('.sechead .iconbtn').map(function (b) { return b.getAttribute('data-sec'); }), ['settings'], 'só a engrenagem no topo (sem lupa)');
+      assert.strictEqual($('.sechead .brand').textContent, 'MASTER IPTV', 'só o nome do app no topo');
+      assert.ok(!$('.sechead .logo-mark'), 'sem quadradinho de logo');
       step('menu inicial: TV ao vivo / Filmes / Séries');
       return waitFor(function () { return $('.wx-t') && /24°/.test($('.wx-t').textContent); }, 'clima');
     }).then(function () {
@@ -201,7 +203,7 @@ Promise.all([listen(api), listen(px)]).then(function () {
       go('home');
       return waitFor(function () { return $$('.hrow-title').map(function (e) { return e.textContent; }).indexOf('Continuar assistindo') >= 0; }, 'continuar assistindo');
     }).then(function () {
-      assert.ok($('.hubtile'), 'voltou ao menu');
+      assert.ok($('.hubtab'), 'voltou ao menu');
       var w0 = $('.lcard .pbar .fill').getAttribute('style');
       assert.ok(/width:17%/.test(w0), 'barra de progresso ~17%: ' + w0);
       assert.ok(/50 min restantes/.test($('.lcard .ls').textContent), $('.lcard .ls').textContent);
@@ -211,7 +213,8 @@ Promise.all([listen(api), listen(px)]).then(function () {
       assert.ok(/501\.mkv$/.test($('#video').getAttribute('src')));
       vt = 0; vd = NaN;
       key(27);
-      go('search');
+      go('live'); // a lupa saiu da home: a busca agora fica dentro de cada seção
+      $$('.sechead .btn').filter(function (b) { return !b.classList.contains('backbtn'); })[0].click();
       return waitFor(function () { return $('#q'); }, 'busca');
     }).then(function () {
       $('#q').value = 'esporte';
@@ -242,7 +245,7 @@ Promise.all([listen(api), listen(px)]).then(function () {
     }).then(function () {
       step('favoritos');
       $('.backbtn').click();
-      return waitFor(function () { return $('.hubtile'); }, 'menu com favoritos');
+      return waitFor(function () { return $('.hubtab'); }, 'menu com favoritos');
     }).then(function () {
       var titles = $$('.hrow-title').map(function (t) { return t.textContent; });
       assert.ok(titles.indexOf('Favoritos') >= 0, 'com favoritos: fileira na home (' + titles.join(' | ') + ')');
@@ -309,7 +312,7 @@ Promise.all([listen(api), listen(px)]).then(function () {
       assert.strictEqual($$('#profiles .pcard').length, 3, 'dois perfis + adicionar');
       $$('#profiles .btn').filter(function (b) { return b.textContent === 'Concluído'; })[0].click();
       $$('#profiles .pcard')[1].click(); // entra no perfil Ana
-      assert.ok($('#profiles').classList.contains('hidden') && $('.hubtile'), 'entrou no menu do novo perfil');
+      assert.ok($('#profiles').classList.contains('hidden') && $('.hubtab'), 'entrou no menu do novo perfil');
       assert.strictEqual(Object.keys(w.JSON.parse(w.localStorage.getItem('iptv.' + w.JSON.parse(w.localStorage.getItem('iptv.curprof')) + '.fav') || '{}')).length, 0, 'favoritos separados');
       assert.ok(/^A$/.test($('.avatar').textContent), 'avatar com a inicial do perfil');
       $('.avatar').click();

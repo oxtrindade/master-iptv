@@ -488,12 +488,11 @@
       var prof = curProfile();
       var usub = info.exp ? 'até ' + info.exp.toLocaleDateString('pt-BR') : 'conta ativa';
       hd.className = 'sechead hub';
-      hd.appendChild(h('div', { cls: 'brand' }, [h('div', { cls: 'logo-mark' }, [icon('play', 26)]), 'MASTER IPTV']));
+      hd.appendChild(h('div', { cls: 'brand', text: 'MASTER IPTV' }));
       S.wxEl = h('div', { cls: 'wx' });
       hd.appendChild(S.wxEl);
       loadWeather();
       hd.appendChild(h('div', { cls: 'acct' }, [h('div', { cls: 'usub', text: usub }), S.clockEl]));
-      hd.appendChild(headIcon('search', 'Buscar'));
       hd.appendChild(headIcon('settings', 'Configurações'));
       hd.appendChild(h('button', { cls: 'f avatar', type: 'button', style: 'background:' + PCOLORS[prof.color % PCOLORS.length], text: profInitial(prof),
         on: { click: function () { showProfiles(true); } } }));
@@ -904,20 +903,14 @@
     });
   }
 
-  function hubTile(sec, sub) {
-    return h('button', { cls: 'f hubtile t-' + sec, 'data-sec': sec, on: { click: function () { selectSection(sec); } } }, [
-      h('div', { cls: 'hubico' }, [icon(sec, 76)]),
-      h('div', { cls: 'hubname', text: SECT[sec] }),
-      h('div', { cls: 'hubsub', text: sub })
-    ]);
+  function hubTab(sec) {
+    return h('button', { cls: 'f hubtab', type: 'button', 'data-sec': sec, text: SECT[sec], on: { click: function () { selectSection(sec); } } });
   }
 
   function renderHome() {
     var page = S.pageEl;
     page.className = 'page scroll home';
-    page.appendChild(h('div', { cls: 'hub-tiles' }, [
-      hubTile('live', 'Canais e programação'), hubTile('movie', 'Catálogo de filmes'), hubTile('series', 'Séries e episódios')
-    ]));
+    page.appendChild(h('div', { cls: 'hubtabs' }, [hubTab('live'), hubTab('movie'), hubTab('series')]));
     var rows = h('div', { cls: 'hrows' });
     page.appendChild(rows);
 
@@ -943,7 +936,7 @@
     var want = S.hubFocus, target = null;
     if (want === 'cont') { target = page.querySelector('.lcard'); }
     else if (want) { target = S.mainEl.querySelector('[data-sec="' + want + '"]'); }
-    Nav.focus(target || page.querySelector('.hubtile'));
+    Nav.focus(target || page.querySelector('.hubtab'));
   }
 
   /* "em alta": novidades do catálogo com boa nota (o Xtream não tem ranking; usamos data de adição + nota) */
@@ -1197,7 +1190,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.10.3']
+      ['Versão do app', '1.11.0']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
