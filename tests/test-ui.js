@@ -113,12 +113,24 @@ Promise.all([listen(api), listen(px)]).then(function () {
       return waitFor(function () { return /Jornal da Noite/.test($('.row .epg').textContent); }, 'epg na lista');
     }).then(function () {
       assert.ok($('.row .epgbar.on'), 'barra de progresso do programa');
-      step('EPG do canal aparece na lista');
+      assert.ok(/^\d\d:\d\d–\d\d:\d\d  Jornal da Noite/.test($('.row .epg').textContent), 'horário início–fim: ' + $('.row .epg').textContent);
+      assert.ok(/^A seguir  \d\d:\d\d  Cinema da Madrugada/.test($('.row .epgnext').textContent), 'próximo programa: ' + $('.row .epgnext').textContent);
+      assert.ok($$('.cat .ct').every(function (e) { return !/^Canais\s*\|/.test(e.textContent); }), 'categorias sem o prefixo "Canais |"');
+      assert.ok($$('.cat .ct').some(function (e) { return e.textContent === '⚽ Esportes'; }), 'nome limpo da categoria: ' + $$('.cat .ct').map(function (e) { return e.textContent; }).join(' | '));
+      step('EPG do canal aparece na lista (horário + próximo) e categorias sem prefixo');
       assert.ok(/TV ao vivo/.test($('.sectitle').textContent));
       $$('.cat')[2].click();
       return waitFor(function () { return $$('.row').length === 2; }, 'cat esportes');
     }).then(function () {
       step('categorias ao vivo');
+      $$('.cat')[3].click();
+      return waitFor(function () { return $$('.row .epg.none').length >= 1; }, 'canal sem EPG');
+    }).then(function () {
+      assert.strictEqual($('.row .epg.none').textContent, 'Sem programação', 'canal sem EPG mostra texto discreto');
+      step('canal sem EPG: "Sem programação"');
+      $$('.cat')[2].click();
+      return waitFor(function () { return $$('.row').length === 2; }, 'volta a esportes');
+    }).then(function () {
       $$('.row')[0].click();
       return waitFor(function () { return !$('#player').classList.contains('hidden') && $('#video').getAttribute('src'); }, 'player live');
     }).then(function () {

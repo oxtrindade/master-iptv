@@ -623,8 +623,14 @@
       S.catsEl.appendChild(h('div', {
         cls: 'f cat' + (c.id === S.catId ? ' on' : ''), 'data-id': c.id,
         on: { click: function () { selectCat(c.id, false); } }
-      }, [h('span', { cls: 'ct', text: c.name })]));
+      }, [h('span', { cls: 'ct', text: catLabel(c.name) })]));
     });
+  }
+
+  /* tira o prefixo repetido dos nomes de categoria ("Canais | ✨ Abertos" -> "✨ Abertos") */
+  function catLabel(name) {
+    var n = String(name || '').replace(/^\s*(canais|filmes?|s[ée]ries?|tv)\s*[|:\-–—]\s*/i, '').replace(/^\s+|\s+$/g, '');
+    return n || name;
   }
 
   function selectCat(id, soft) {
@@ -690,25 +696,32 @@
     return { cur: cur, nxt: nxt };
   }
 
-  function paintEpg(row, cur) {
-    var t = row.querySelector('.epg'), bar = row.querySelector('.epgbar');
-    if (!t || !cur) { return; }
-    t.textContent = hhmm(new Date(cur.start)) + '  ' + cur.title;
+  function paintEpg(row, cur, nxt) {
+    var t = row.querySelector('.epg'), bar = row.querySelector('.epgbar'), nx = row.querySelector('.epgnext');
+    if (!t) { return; }
+    if (!cur) {
+      if (S.provider && S.provider.hasEpg) { t.textContent = 'Sem programação'; t.classList.add('none'); }
+      return;
+    }
+    t.classList.remove('none');
+    t.textContent = hhmm(new Date(cur.start)) + (cur.stop > cur.start ? '–' + hhmm(new Date(cur.stop)) : '') + '  ' + cur.title;
     var span = cur.stop - cur.start;
     if (span > 0) {
       bar.firstChild.style.width = Math.max(0, Math.min(100, (Date.now() - cur.start) / span * 100)) + '%';
       bar.classList.add('on');
     }
+    if (nx && nxt) { nx.textContent = 'A seguir  ' + hhmm(new Date(nxt.start)) + '  ' + nxt.title; }
   }
 
   function runEpg(j) {
     epgBusy++;
     S.provider.epg(j.it).then(function (list) {
-      var cur = currentProg(list).cur;
-      epgCache[j.it.id] = { at: Date.now(), cur: cur };
-      if (document.body.contains(j.row)) { paintEpg(j.row, cur); }
+      var p = currentProg(list);
+      epgCache[j.it.id] = { at: Date.now(), cur: p.cur, nxt: p.nxt };
+      if (document.body.contains(j.row)) { paintEpg(j.row, p.cur, p.nxt); }
     }, function () {
-      epgCache[j.it.id] = { at: Date.now(), cur: null };
+      epgCache[j.it.id] = { at: Date.now(), cur: null, nxt: null };
+      if (document.body.contains(j.row)) { paintEpg(j.row, null, null); }
     }).then(function () { epgBusy--; pumpEpg(); });
   }
 
@@ -720,9 +733,9 @@
   }
 
   function queueEpg(row, it) {
-    if (!it.epgId) { return; }
+    if (!it.epgId) { paintEpg(row, null, null); return; }
     var c = epgCache[it.id];
-    if (c && Date.now() - c.at < 300000) { paintEpg(row, c.cur); return; }
+    if (c && Date.now() - c.at < 300000) { paintEpg(row, c.cur, c.nxt); return; }
     epgQ.push({ row: row, it: it, token: S.loadToken });
     pumpEpg();
   }
@@ -735,7 +748,8 @@
       h('div', { cls: 'rinfo' }, [
         h('div', { cls: 'name', text: it.name }),
         h('div', { cls: 'epg' }),
-        h('div', { cls: 'epgbar' }, [h('div', { cls: 'fill' })])
+        h('div', { cls: 'epgbar' }, [h('div', { cls: 'fill' })]),
+        h('div', { cls: 'epgnext' })
       ]),
       favMark(28)
     ]);
@@ -1237,7 +1251,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.12.0']
+      ['Versão do app', '1.13.0']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {

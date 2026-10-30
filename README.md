@@ -6,10 +6,11 @@ App web (HTML/JS) com **TV ao vivo, filmes e séries**, navegação por controle
 Servidor, usuário e senha (Xtream Codes). Se algo der errado, os campos continuam preenchidos para você só corrigir o que errou.
 
 ## Telas
-- **Menu inicial:** três blocos grandes — **TV ao vivo**, **Filmes** e **Séries** —, **lupa** (Buscar) e **engrenagem** (Configurações) no topo, o **clima** da sua cidade e as fileiras Continuar assistindo, **Favoritos** (só aparece se você favoritou algo; o último item, "Ver todos", abre a lista completa), Canais recentes e recomendações.
+- **Início (estilo Netflix):** no topo, o botão de **três traços** à esquerda, o nome **Master IPTV** no centro e o **perfil** à direita. Logo abaixo, as abas **TV ao vivo**, **Filmes** e **Séries**, e depois as fileiras Continuar assistindo, **Favoritos** (só aparece se você favoritou algo; o último item, "Ver todos", abre a lista completa), Canais recentes e recomendações.
+- **Menu lateral (três traços):** mostra o **clima** da sua cidade, o relógio, a validade da conta e o botão **Configurações**. **Voltar** fecha o menu.
 - **Cada seção mostra só o seu conteúdo**, com categorias na coluna da esquerda e um botão **Buscar** que pesquisa só dentro dela. **Voltar** sobe um nível (lista → categorias → menu); o botão **Menu** do topo volta direto.
-- **TV ao vivo:** lista em duas colunas, com o **programa atual** (EPG) e a barra de progresso em cada canal.
-- **Configurações:** dados da conta, **editar servidor**, chaves para **reproduzir o último conteúdo ao abrir o app**, **ocultar canais SD** e **ocultar canais HD** (FHD e 4K continuam), e a **cidade do clima** (busca pelo nome).
+- **TV ao vivo:** lista em duas colunas, com o **programa atual** (horário de início e fim), a barra de progresso e o **próximo programa** em cada canal; canais sem guia mostram "Sem programação". Os nomes das categorias aparecem sem o prefixo repetido (ex.: "Canais | Esportes" vira "Esportes").
+- **Configurações** (pelo menu lateral): dados da conta, **editar servidor**, chaves para **reproduzir o último conteúdo ao abrir o app**, **ocultar canais SD** e **ocultar canais HD** (FHD e 4K continuam), e a **cidade do clima** (busca pelo nome).
 - **Player:** mostra a **resolução real** do vídeo (ex.: 1920×1080 · FHD).
 
 ## Controles

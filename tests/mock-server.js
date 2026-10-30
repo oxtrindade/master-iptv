@@ -14,7 +14,7 @@ function create() {
       switch (q.action) {
         case undefined:
           return json({ user_info: { auth: 1, status: 'Active', username: 'joao', exp_date: '1893456000', max_connections: '1' }, server_info: {} });
-        case 'get_live_categories': return json([{ category_id: '1', category_name: 'Notícias' }, { category_id: '2', category_name: 'Esportes' }, { category_id: '3', category_name: 'Filmes e séries 24h' }]);
+        case 'get_live_categories': return json([{ category_id: '1', category_name: 'Notícias' }, { category_id: '2', category_name: 'Canais | ⚽ Esportes' }, { category_id: '3', category_name: 'Filmes e séries 24h' }]);
         case 'get_live_streams':
           var all = [
             { num: 1, name: 'Canal Notícias', stream_id: 101, stream_icon: '', category_id: '1', epg_channel_id: 'n1' },
@@ -39,7 +39,8 @@ function create() {
             '2': [{ id: '7101', episode_num: 1, title: 'Retorno', container_extension: 'mkv', season: 2, info: {} }]
           } });
         case 'get_short_epg':
-          return json({ epg_listings: [{ title: b64('Jornal da Noite — ação'), description: b64('x'), start_timestamp: '1', stop_timestamp: '99999999999' }] });
+          return json({ epg_listings: [{ title: b64('Jornal da Noite — ação'), description: b64('x'), start_timestamp: '1', stop_timestamp: '99999999990' },
+          { title: b64('Cinema da Madrugada'), description: b64('y'), start_timestamp: '99999999990', stop_timestamp: '99999999999' }] });
         default: return json([]);
       }
     }
