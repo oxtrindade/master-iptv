@@ -871,6 +871,14 @@
     return el;
   }
 
+  /* último item da fileira Favoritos: abre a lista completa */
+  function seeAllCard(n) {
+    return h('div', { cls: 'f card seeall', 'data-sec': 'fav', on: { click: function () { selectSection('fav'); } } }, [
+      h('div', { cls: 'poster seeall-p' }, [icon('fav', 44), h('div', { cls: 'seeall-t', text: 'Ver todos' }), h('div', { cls: 'seeall-n', text: n + (n === 1 ? ' favorito' : ' favoritos') })]),
+      h('div', { cls: 'title', text: '' })
+    ]);
+  }
+
   function posterCard(it, list) {
     var el = h('div', { cls: 'f card', on: { click: function () { openItemObj(it, list); } } }, [
       posterEl(it, false), h('div', { cls: 'title', text: it.name })
@@ -904,22 +912,21 @@
     ]);
   }
 
-  function hubLink(sec) {
-    return h('button', { cls: 'f btn', 'data-sec': sec, on: { click: function () { selectSection(sec); } } }, [icon(sec, 26), SECT[sec]]);
-  }
-
   function renderHome() {
     var page = S.pageEl;
     page.className = 'page scroll home';
     page.appendChild(h('div', { cls: 'hub-tiles' }, [
       hubTile('live', 'Canais e programação'), hubTile('movie', 'Catálogo de filmes'), hubTile('series', 'Séries e episódios')
     ]));
-    page.appendChild(h('div', { cls: 'hub-links' }, [hubLink('fav')]));
     var rows = h('div', { cls: 'hrows' });
     page.appendChild(rows);
 
     var conts = contList().slice(0, 12);
     if (conts.length) { rows.appendChild(makeRow('Continuar assistindo', conts.map(contCard))); }
+    var favs = favList();
+    if (favs.length) {
+      rows.appendChild(makeRow('Favoritos', favs.slice(0, 20).map(function (it) { return posterCard(it, favs); }).concat([seeAllCard(favs.length)])));
+    }
     var hist = store.get('hist', []);
     if (tmdbKey()) {
       var bases = [], used = {};
@@ -932,8 +939,6 @@
     if (S.recent.length) {
       rows.appendChild(makeRow('Canais recentes', S.recent.slice(0, 12).map(function (it) { return chanTile(it, S.recent); })));
     }
-    var favs = favList();
-    if (favs.length) { rows.appendChild(makeRow('Favoritos', favs.slice(0, 20).map(function (it) { return posterCard(it, favs); }))); }
 
     var want = S.hubFocus, target = null;
     if (want === 'cont') { target = page.querySelector('.lcard'); }

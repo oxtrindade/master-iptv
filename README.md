@@ -6,7 +6,7 @@ App web (HTML/JS) com **TV ao vivo, filmes e séries**, navegação por controle
 Servidor, usuário e senha (Xtream Codes). Se algo der errado, os campos continuam preenchidos para você só corrigir o que errou.
 
 ## Telas
-- **Menu inicial:** três blocos grandes — **TV ao vivo**, **Filmes** e **Séries** —, atalho para Favoritos, **lupa** (Buscar) e **engrenagem** (Configurações) no topo, o **clima** da sua cidade e as fileiras Continuar assistindo, Canais recentes e Favoritos.
+- **Menu inicial:** três blocos grandes — **TV ao vivo**, **Filmes** e **Séries** —, **lupa** (Buscar) e **engrenagem** (Configurações) no topo, o **clima** da sua cidade e as fileiras Continuar assistindo, **Favoritos** (só aparece se você favoritou algo; o último item, "Ver todos", abre a lista completa), Canais recentes e recomendações.
 - **Cada seção mostra só o seu conteúdo**, com categorias na coluna da esquerda e um botão **Buscar** que pesquisa só dentro dela. **Voltar** sobe um nível (lista → categorias → menu); o botão **Menu** do topo volta direto.
 - **TV ao vivo:** lista em duas colunas, com o **programa atual** (EPG) e a barra de progresso em cada canal.
 - **Configurações:** dados da conta, **editar servidor**, chaves para **reproduzir o último conteúdo ao abrir o app**, **ocultar canais SD** e **ocultar canais HD** (FHD e 4K continuam), e a **cidade do clima** (busca pelo nome).

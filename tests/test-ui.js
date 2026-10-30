@@ -84,6 +84,9 @@ Promise.all([listen(api), listen(px)]).then(function () {
       assert.deepStrictEqual($$('.hubname').map(function (e) { return e.textContent; }), ['TV ao vivo', 'Filmes', 'Séries']);
       assert.ok($('.hubtile.focus'), 'foco no primeiro item do menu');
       assert.ok(!$('.side'), 'sem barra lateral');
+      assert.ok(!$('.hub-links') && !$$('.hub-links .btn').length, 'sem botões de atalho embaixo (Buscar/Configurações vão no topo)');
+      assert.ok(!$$('.hrow-title').some(function (t) { return t.textContent === 'Favoritos'; }), 'sem favoritos: a fileira não aparece');
+      assert.deepStrictEqual($$('.sechead .iconbtn').map(function (b) { return b.getAttribute('data-sec'); }), ['search', 'settings'], 'lupa e engrenagem no topo');
       step('menu inicial: TV ao vivo / Filmes / Séries');
       return waitFor(function () { return $('.wx-t') && /24°/.test($('.wx-t').textContent); }, 'clima');
     }).then(function () {
@@ -238,6 +241,19 @@ Promise.all([listen(api), listen(px)]).then(function () {
       return waitFor(function () { return $$('.card').length === 1; }, 'favoritos');
     }).then(function () {
       step('favoritos');
+      $('.backbtn').click();
+      return waitFor(function () { return $('.hubtile'); }, 'menu com favoritos');
+    }).then(function () {
+      var titles = $$('.hrow-title').map(function (t) { return t.textContent; });
+      assert.ok(titles.indexOf('Favoritos') >= 0, 'com favoritos: fileira na home (' + titles.join(' | ') + ')');
+      var row = $$('.hrow').filter(function (r) { return r.querySelector('.hrow-title').textContent === 'Favoritos'; })[0];
+      assert.strictEqual(row.querySelectorAll('.card:not(.seeall)').length, 1, 'o favorito aparece na fileira');
+      assert.ok(row.querySelector('.card.seeall'), 'Ver todos no fim da fileira');
+      assert.ok(!$('.hub-links'), 'continua sem botão de atalho');
+      row.querySelector('.card.seeall').click();
+      return waitFor(function () { return $$('.card').length === 1 && $('.sectitle') && /Favoritos/.test($('.sectitle').textContent); }, 'ver todos abre a lista');
+    }).then(function () {
+      step('Favoritos na home como fileira (+ Ver todos), sem botão');
       go('settings');
       return waitFor(function () { return $('.settings .sgroup'); }, 'config');
     }).then(function () {
