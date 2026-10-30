@@ -55,13 +55,13 @@ button, input { font-family: inherit; font-size: inherit; color: inherit; border
 .clock { font-size: 30px; font-weight: 600; }
 
 /* menu inicial: abas no topo (TV ao vivo / Filmes / Séries), como na referência */
-.hubtabs { display: flex; padding: 22px 70px 6px 70px; }
-.hubtab { margin-right: 16px; padding: 0 36px; height: 62px; line-height: 58px; border-radius: 31px; border: 2px solid rgba(255,255,255,.28); background: transparent; color: #dfe6f3; font-size: 30px; font-weight: 700; }
+.hubtabs { display: flex; justify-content: center; padding: 22px 70px 6px 70px; }
+.hubtab { min-width: 320px; margin: 0 12px; text-align: center; padding: 0 36px; height: 62px; line-height: 58px; border-radius: 31px; border: 2px solid rgba(255,255,255,.28); background: transparent; color: #dfe6f3; font-size: 30px; font-weight: 700; }
 .hubtab.f.focus { background: #fff; color: #0b101a; border-color: #fff; box-shadow: 0 0 22px rgba(255,255,255,.25); }
 body.compact .hubtabs { padding: 12px 36px 4px; }
-body.compact .hubtab { height: 44px; line-height: 40px; padding: 0 24px; font-size: 21px; margin-right: 10px; border-radius: 22px; }
+body.compact .hubtab { height: 44px; line-height: 40px; min-width: 200px; padding: 0 24px; font-size: 21px; margin: 0 8px; border-radius: 22px; }
 body.portrait .hubtabs { padding: 8px 14px 2px; }
-body.portrait .hubtab { height: 38px; line-height: 34px; padding: 0 14px; font-size: 15px; margin-right: 6px; border-radius: 19px; white-space: nowrap; }
+body.portrait .hubtab { flex: 1; min-width: 0; height: 38px; line-height: 34px; padding: 0 6px; font-size: 15px; margin: 0 3px; border-radius: 19px; white-space: nowrap; }
 .home .hrow { margin-top: 20px; }
 .hrows { padding-bottom: 90px; }
 .hrow { padding-left: 70px; margin-bottom: 8px; }
