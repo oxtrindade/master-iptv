@@ -9,6 +9,7 @@ Servidor, usuário e senha (Xtream Codes). Se algo der errado, os campos continu
 - **Menu inicial:** três blocos grandes — **TV ao vivo**, **Filmes** e **Séries** —, atalhos para Buscar, Favoritos e Configurações, o **clima** da sua cidade e as fileiras Continuar assistindo, Canais recentes e Favoritos.
 - **Cada seção mostra só o seu conteúdo**, com categorias na coluna da esquerda e um botão **Buscar** que pesquisa só dentro dela. **Voltar** sobe um nível (lista → categorias → menu); o botão **Menu** do topo volta direto.
 - **TV ao vivo:** lista em duas colunas, com o **programa atual** (EPG) e a barra de progresso em cada canal.
+- **Guia** (só na TV): grade de canais por horário, estilo guia de TV. Janela de 3 horas com a linha do **agora**, programa em foco com descrição e o que vem a seguir. Escolha a categoria (ou **Favoritos**) e ela é lembrada. O EPG é buscado só dos canais que aparecem na tela (3 por vez, guardado por 30 min). Não grava nem faz replay.
 - **Configurações:** dados da conta, **editar servidor**, chaves para **reproduzir o último conteúdo ao abrir o app**, **ocultar canais SD** e **ocultar canais HD** (FHD e 4K continuam), e a **cidade do clima** (busca pelo nome).
 - **Player:** mostra a **resolução real** do vídeo (ex.: 1920×1080 · FHD).
 
@@ -25,6 +26,20 @@ Servidor, usuário e senha (Xtream Codes). Se algo der errado, os campos continu
 | Voltar | sai do player | sai do player (salva o ponto) |
 
 Filmes e episódios retomam de onde parou; ao terminar um episódio, o próximo toca sozinho.
+
+## Guia (grade de canais)
+| Tecla | O que faz |
+|---|---|
+| ◀ ▶ | programa anterior / próximo (a janela de horário acompanha) |
+| ▲ ▼ | canal anterior / próximo |
+| CH+ CH- | página de canais |
+| OK | assistir o canal |
+| Verde | escolher categoria |
+| Amarelo | voltar para o agora (com mini player aberto, continua ampliando o mini player) |
+| Vermelho | favoritar canal |
+| Voltar | fecha o seletor; depois volta ao menu |
+
+Código isolado em `app/js/guide.js` e `app/css/guide.css`. Para remover o Guia: apague esses dois arquivos (e `tests/test-guide.js`) e as linhas marcadas com `GUIA` em `app/index.html` e `app/js/app.js`.
 
 ## Áudio e legenda
 No player, tecla **Verde** (ou ▲ em filme/série, ou o botão "Áudio e legenda" no canto superior com o Magic Remote) abre o painel com as faixas de áudio e as legendas embutidas. O idioma escolhido fica salvo e é aplicado nos próximos conteúdos que tiverem a mesma faixa. A lista vem do que o player da TV (ou o hls.js) expõe; se o conteúdo só tem uma faixa, o painel avisa. O rodapé do painel mostra o motor em uso e quantas faixas foram encontradas, útil para diagnóstico.

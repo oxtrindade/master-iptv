@@ -1,0 +1,65 @@
+/* Guia de programação (grade de canais). Remover este arquivo desfaz o estilo do Guia. Pensado para o palco 1920x1080 da TV. */
+.page.guide { overflow: hidden; }
+.gd { position: relative; width: 100%; height: 100%; }
+
+/* painel de informações do programa em foco */
+.gd-info { position: absolute; left: 80px; right: 90px; top: 0; height: 210px; display: flex; }
+.gd-main { flex: 1; min-width: 0; padding-top: 6px; }
+.gd-chan { font-size: 22px; font-weight: 700; letter-spacing: 1px; color: #3ab4e0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gd-title { margin-top: 4px; font-size: 42px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gd-meta { margin-top: 6px; height: 30px; line-height: 30px; font-size: 22px; color: #cdd5e5; white-space: nowrap; }
+.gd-badge { display: inline-block; margin-right: 14px; padding: 0 12px; height: 28px; line-height: 28px; border-radius: 14px; background: #ff8a4c; color: #2a1204; font-size: 18px; font-weight: 800; vertical-align: top; margin-top: 1px; }
+.gd-desc { margin-top: 10px; max-height: 66px; font-size: 22px; line-height: 33px; color: #8a97ad; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.gd-side { width: 520px; flex: none; padding: 8px 0 0 40px; text-align: right; }
+.gd-cat { font-size: 26px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gd-cnt { margin-top: 4px; font-size: 20px; color: #6f7c93; }
+.gd-next { margin-top: 20px; font-size: 21px; color: #8a97ad; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* grade */
+.gd-grid { position: absolute; left: 0; right: 0; top: 214px; height: 688px; }
+.gd-ruler { position: relative; height: 48px; }
+.gd-rday { position: absolute; left: 80px; top: 10px; font-size: 21px; font-weight: 800; letter-spacing: 1px; color: #3ab4e0; }
+.gd-rtl { position: relative; height: 48px; }
+.gd-rl { position: absolute; top: 10px; font-size: 21px; font-weight: 600; color: #8a97ad; }
+.gd-rows { position: relative; }
+.gd-row { display: flex; height: 80px; margin-left: 80px; }
+
+/* coluna de canais */
+.gd-ch { position: relative; flex: none; height: 72px; margin: 0 10px 8px 0; padding: 0 14px 0 16px; display: flex; align-items: center; background: #121b2b; border-radius: 12px; overflow: hidden; }
+.gd-row.sel .gd-ch { background: #1b2a47; box-shadow: inset 5px 0 0 #3ab4e0; }
+.gd-num { width: 50px; flex: none; font-size: 20px; color: #6f7c93; }
+.gd-logo { width: 84px; height: 52px; margin-right: 14px; flex: none; display: flex; align-items: center; justify-content: center; }
+.gd-logo img { max-width: 84px; max-height: 52px; object-fit: contain; }
+.gd-logo .ph { font-size: 28px; font-weight: 800; color: #3a4a66; }
+.gd-name { flex: 1; min-width: 0; font-size: 22px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gd-fav { flex: none; width: 30px; margin-left: 6px; color: #f5c542; line-height: 0; }
+
+/* linha do tempo: linhas verticais a cada 30 min vêm do fundo (backgroundSize é definido no JS) */
+.gd-tl { position: relative; flex: none; height: 72px; margin-bottom: 8px; overflow: hidden; border-radius: 12px; background-color: #0f1726;
+  background-image: linear-gradient(to right, rgba(255,255,255,.07) 1px, transparent 1px); background-repeat: repeat-x; }
+.gd-p { position: absolute; top: 4px; bottom: 4px; padding: 7px 12px 0 14px; border-radius: 9px; background: #1b2740; overflow: hidden; white-space: nowrap; cursor: pointer; }
+.gd-p.on { background: #22406b; }
+.gd-p.past { opacity: .5; }
+.gd-p.focus { opacity: 1; background: #2f5d94; box-shadow: inset 0 0 0 3px #3ab4e0; }
+.gd-p.ph { background: #121b2b; color: #6f7c93; font-style: italic; }
+.gd-p.ph.focus { background: #1b2a47; color: #cdd5e5; }
+.gd-pt { font-size: 23px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
+.gd-ps { margin-top: 2px; font-size: 17px; color: #9fb0cc; }
+.gd-pg { position: absolute; left: 0; bottom: 0; height: 4px; background: #3ab4e0; }
+/* setinhas (CSS puro: não dependem de fonte) quando o programa continua além da janela */
+.gd-p.cl { padding-left: 28px; }
+.gd-p.cl::before { content: ''; position: absolute; left: 9px; top: 50%; margin-top: -7px; border: 7px solid transparent; border-left-width: 0; border-right-color: rgba(255,255,255,.55); }
+.gd-p.cr { padding-right: 28px; }
+.gd-p.cr::after { content: ''; position: absolute; right: 9px; top: 50%; margin-top: -7px; border: 7px solid transparent; border-right-width: 0; border-left-color: rgba(255,255,255,.55); }
+
+/* linha do "agora" */
+.gd-now { position: absolute; top: 0; bottom: 8px; width: 3px; margin-left: -1px; background: #ff8a4c; z-index: 3; pointer-events: none; display: none; }
+.gd-now span { position: absolute; top: 4px; left: 50%; transform: translateX(-50%); padding: 0 11px; height: 32px; line-height: 32px; border-radius: 16px; background: #ff8a4c; color: #2a1204; font-size: 20px; font-weight: 800; }
+
+/* mensagens e seletor de categoria */
+.gd-msg { position: absolute; left: 80px; right: 90px; top: 380px; text-align: center; font-size: 30px; line-height: 1.4; color: #8a97ad; display: none; }
+.gd-pick { position: absolute; left: 80px; top: 24px; width: 640px; padding: 20px 22px 22px; border-radius: 22px; background: #0f1726; box-shadow: 0 30px 80px rgba(0,0,0,.65), 0 0 0 2px #1b2740; z-index: 8; }
+.gd-pick-t { height: 52px; line-height: 44px; font-size: 24px; font-weight: 800; letter-spacing: 1px; color: #3ab4e0; }
+.gd-pick-i { height: 62px; line-height: 62px; padding: 0 24px; border-radius: 14px; font-size: 26px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+.gd-pick-i.cur { color: #3ab4e0; }
+.gd-pick-i.on { background: #3ab4e0; color: #04202c; }

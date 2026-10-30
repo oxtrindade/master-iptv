@@ -65,7 +65,8 @@
     storm: '<path d="M7 14.5a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 7 3.8 3.8 0 0 1 17.5 14.5z"/><path d="M12.5 14l-2.5 4h3.5l-2 4"/>',
     fog: '<path d="M4 8h16M3 12h18M5 16h14M8 20h8"/>',
     check: '<path d="M5 12.5l5 5 9-10.5"/>',
-    cc: '<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10.5 10.3a2.4 2.4 0 1 0 0 3.4M17 10.3a2.4 2.4 0 1 0 0 3.4"/>'
+    cc: '<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10.5 10.3a2.4 2.4 0 1 0 0 3.4M17 10.3a2.4 2.4 0 1 0 0 3.4"/>',
+    guide: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 9v11M8 14.5h13M14 9v5.5"/>' // GUIA
   };
 
   function icon(name, size) {
@@ -459,7 +460,7 @@
 
   /* ---------- estrutura: menu inicial + uma tela por seção ---------- */
 
-  var SECT = { live: 'TV ao vivo', movie: 'Filmes', series: 'Séries', search: 'Buscar', fav: 'Favoritos', settings: 'Configurações' };
+  var SECT = { live: 'TV ao vivo', movie: 'Filmes', series: 'Séries', search: 'Buscar', fav: 'Favoritos', settings: 'Configurações', guide: 'Guia' }; // GUIA
 
   function showBrowse() {
     S.mode = 'browse';
@@ -509,6 +510,7 @@
 
   function selectSection(sec, opts) {
     opts = opts || {};
+    if (window.Guide) { Guide.close(); } // GUIA
     S.section = sec;
     S.backTo = opts.backTo || 'home';
     if (sec !== 'home') { S.hubFocus = sec === 'search' && opts.backTo ? opts.backTo : sec; }
@@ -525,6 +527,7 @@
     loading(false);
 
     if (sec === 'home') { renderHome(); return; }
+    if (sec === 'guide') { openGuide(); return; } // GUIA
     Nav.focus(S.headEl.querySelector('.f'));
     if (sec === 'settings') { renderSettings(); return; }
     if (sec === 'search') { buildContentOnly(); renderSearch(); return; }
@@ -907,7 +910,9 @@
     page.appendChild(h('div', { cls: 'hub-tiles' }, [
       hubTile('live', 'Canais e programação'), hubTile('movie', 'Catálogo de filmes'), hubTile('series', 'Séries e episódios')
     ]));
-    page.appendChild(h('div', { cls: 'hub-links' }, [hubLink('search'), hubLink('fav'), hubLink('settings')]));
+    var links = [hubLink('search'), hubLink('fav'), hubLink('settings')];
+    if (window.Guide && !document.body.classList.contains('touch')) { links.unshift(hubLink('guide')); } // GUIA
+    page.appendChild(h('div', { cls: 'hub-links' }, links));
     var rows = h('div', { cls: 'hrows' });
     page.appendChild(rows);
 
@@ -1957,6 +1962,16 @@
     window.close();
   }
 
+  /* GUIA: entrega ao módulo guide.js o que ele precisa do app (nada mais é compartilhado) */
+  function openGuide() {
+    Guide.open({
+      host: S.pageEl, hints: S.mainEl.querySelector('.hints'), provider: S.provider, cfg: S.cfg, http: http,
+      filterLive: filterLive, favList: favList, isFav: function (it) { return !!S.favs[fk(it)]; }, toggleFav: toggleFav,
+      icon: icon, imgEl: imgEl, store: store, isMini: function () { return !!S.mini; },
+      play: function (list, idx) { startPlay({ kind: 'live', list: list, idx: idx }); }
+    });
+  }
+
   function goBack() {
     if (S.mode === 'profiles') {
       if (S.profEdit) { S.profEdit = null; renderProfiles(); return; }
@@ -1988,6 +2003,7 @@
   function onKey(e) {
     var k = e.keyCode, a = document.activeElement;
     if (S.mode === 'player') { e.preventDefault(); if (S.tracksOpen) { tracksKey(k); } else { playerKey(k); } return; }
+    if (S.mode === 'browse' && S.section === 'guide' && window.Guide && Guide.key(e)) { return; } // GUIA
     var typing = a && a.tagName === 'INPUT';
     if (typing) {
       if (k === KEY.ENTER) {
