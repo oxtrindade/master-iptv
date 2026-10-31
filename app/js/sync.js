@@ -10,8 +10,8 @@
   'use strict';
   var Sy = {};
 
-  /* Se quiser não digitar o endereço em cada aparelho, preencha aqui (ex.: 'https://master-sync.seunome.workers.dev'). */
-  Sy.DEFAULT_URL = '';
+  /* Se quiser não digitar o endereço em cada aparelho, preencha aqui (já preenchido com o servidor do dono do app). */
+  Sy.DEFAULT_URL = 'https://master-sync.rodrigotrindade92.workers.dev';
   Sy.transport = null;   // só para testes: function (method, url, body) -> Promise({status, text})
 
   var DAY = 86400000;
