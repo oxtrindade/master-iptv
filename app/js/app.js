@@ -8,7 +8,7 @@
   function $(id) { return document.getElementById(id); }
 
   /* perfis: cada perfil tem o seu histórico, favoritos, preferências etc. O perfil "p1" usa as chaves antigas (nada se perde). */
-  var PROF_KEYS = { verpref: 1, fav: 1, resume: 1, last: 1, cont: 1, recent: 1, opts: 1, lastlive: 1, intro: 1, trackpref: 1, city: 1, hist: 1, cat: 1 };
+  var PROF_KEYS = { verpref: 1, fav: 1, resume: 1, last: 1, cont: 1, recent: 1, opts: 1, lastlive: 1, intro: 1, trackpref: 1, city: 1, hist: 1, cat: 1, tomb: 1, favmeta: 1, synccode: 1 };
   var curProf = 'p1';
   try { curProf = JSON.parse(localStorage.getItem('iptv.curprof')) || 'p1'; } catch (e0) {}
   function pk(k) { return (PROF_KEYS[k.split(':')[0]] && curProf !== 'p1') ? curProf + '.' + k : k; }
@@ -262,6 +262,61 @@
     });
   }
 
+  /* ---------- sincronização entre aparelhos (TV <-> celular) ---------- */
+
+  var cloudLast = 0, cloudTimer = null, cloudPushTimer = null;
+  function cloudUrl() { return Sync.normUrl(store.get('syncurl', '') || Sync.DEFAULT_URL); }
+  function cloudCode() { return Sync.normCode(store.get('synccode', '')); }
+  function cloudOn() { return !!(cloudUrl() && Sync.validCode(cloudCode())); }
+
+  function cloudState() {
+    return { resume: S.resume, cont: S.cont, tomb: store.get('tomb', {}), fav: S.favs, favmeta: store.get('favmeta', {}),
+      hist: store.get('hist', []), last: S.last };
+  }
+
+  function cloudApply(m) {
+    S.resume = m.resume; S.cont = m.cont; S.favs = m.fav; S.last = m.last;
+    store.set('resume', m.resume); store.set('cont', m.cont); store.set('fav', m.fav); store.set('last', m.last);
+    store.set('tomb', m.tomb); store.set('favmeta', m.favmeta); store.set('hist', m.hist);
+  }
+
+  /* itens que saem do "continuar assistindo" (terminou ou limpou) e favoritos marcados/desmarcados precisam de data */
+  function markDone(rk) { var t = store.get('tomb', {}); t[rk] = Date.now(); store.set('tomb', t); }
+  function stampFav(k, on) { var fm = store.get('favmeta', {}); fm[k] = on ? { at: Date.now() } : { at: Date.now(), del: true }; store.set('favmeta', fm); }
+
+  function cloudNow() {
+    if (!cloudOn()) { return Promise.resolve(null); }
+    var prof = curProf;
+    return Sync.run({
+      url: cloudUrl(), code: cloudCode(),
+      local: function () { if (prof !== curProf) { throw new Error('perfil mudou'); } return cloudState(); },
+      apply: function (m) { if (prof !== curProf) { throw new Error('perfil mudou'); } cloudApply(m); }
+    }).then(function (r) {
+      cloudLast = Date.now();
+      store.set('syncat', cloudLast);
+      if (r.pulled) { cloudRefreshHome(); }
+      return r;
+    });
+  }
+
+  function cloudSoon(ms, throttle) {
+    if (!cloudOn()) { return; }
+    if (throttle && Date.now() - cloudLast < 60000) { return; }
+    if (cloudTimer) { clearTimeout(cloudTimer); }
+    cloudTimer = setTimeout(function () { cloudTimer = null; cloudNow().then(null, function () {}); }, ms || 0);
+  }
+
+  /* chegou dado novo de outro aparelho: atualiza a Início sem tirar o foco de quem está navegando nas fileiras */
+  function cloudRefreshHome() {
+    if (S.mode !== 'browse' || S.section !== 'home' || S.drawerOpen || !S.pageEl) { return; }
+    var cur = Nav.current();
+    if (cur && !((cur.classList.contains('hubtab') || cur.classList.contains('hubtile')) && S.pageEl.contains(cur))) { return; }
+    var sec = cur && cur.getAttribute('data-sec');
+    S.pageEl.innerHTML = '';
+    renderHome();
+    if (sec) { Nav.focus(S.pageEl.querySelector('[data-sec="' + sec + '"]')); }
+  }
+
   /* ---------- perfis ---------- */
 
   var PCOLORS = ['#3ab4e0', '#e0603a', '#8a5be0', '#3ab87a', '#e0b43a', '#e03a8a'];
@@ -480,6 +535,7 @@
     Nav.setScope(app);
     S.hubFocus = null;
     selectSection('home');
+    cloudSoon(400);
   }
 
   /* ---------- menu lateral (hambúrguer): clima, relógio e Configurações ---------- */
@@ -576,7 +632,7 @@
     S.items = []; S.shown = 0;
     loading(false);
 
-    if (sec === 'home') { renderHome(); return; }
+    if (sec === 'home') { renderHome(); cloudSoon(0, true); return; }
     Nav.focus(S.headEl.querySelector('.f'));
     if (sec === 'settings') { renderSettings(); return; }
     if (sec === 'search') { buildContentOnly(); renderSearch(); return; }
@@ -795,6 +851,7 @@
     if (S.favs[k]) { delete S.favs[k]; toast('Removido dos favoritos', 1500); }
     else { S.favs[k] = it; toast('Adicionado aos favoritos', 1500); }
     store.set('fav', S.favs);
+    stampFav(k, !!S.favs[k]);
     return !!S.favs[k];
   }
 
@@ -963,6 +1020,21 @@
     });
   }
 
+  /* estilo da Início: blocos grandes (padrão nas TVs) ou abas no topo (padrão no celular); escolha por aparelho */
+  function isTvDevice() { return document.body.classList.contains('tv') || /Web0S|webOS|SMART-?TV/i.test(navigator.userAgent); }
+  function homeStyle() {
+    var v = store.get('homestyle', '');
+    return v === 'blocks' || v === 'tabs' ? v : (isTvDevice() ? 'blocks' : 'tabs');
+  }
+
+  function hubTile(sec, sub) {
+    return h('button', { cls: 'f hubtile t-' + sec, type: 'button', 'data-sec': sec, on: { click: function () { selectSection(sec); } } }, [
+      h('div', { cls: 'hubico' }, [icon(sec, 76)]),
+      h('div', { cls: 'hubname', text: SECT[sec] }),
+      h('div', { cls: 'hubsub', text: sub })
+    ]);
+  }
+
   function hubTab(sec) {
     return h('button', { cls: 'f hubtab', type: 'button', 'data-sec': sec, text: SECT[sec], on: { click: function () { selectSection(sec); } } });
   }
@@ -970,7 +1042,13 @@
   function renderHome() {
     var page = S.pageEl;
     page.className = 'page scroll home';
-    page.appendChild(h('div', { cls: 'hubtabs' }, [hubTab('live'), hubTab('movie'), hubTab('series')]));
+    if (homeStyle() === 'blocks') {
+      page.appendChild(h('div', { cls: 'hub-tiles' }, [
+        hubTile('live', 'Canais e programação'), hubTile('movie', 'Catálogo de filmes'), hubTile('series', 'Séries e episódios')
+      ]));
+    } else {
+      page.appendChild(h('div', { cls: 'hubtabs' }, [hubTab('live'), hubTab('movie'), hubTab('series')]));
+    }
     var rows = h('div', { cls: 'hrows' });
     page.appendChild(rows);
 
@@ -997,7 +1075,7 @@
     if (want === 'cont') { target = page.querySelector('.lcard'); }
     else if (want === 'settings') { target = S.headEl.querySelector('.menubtn'); }
     else if (want) { target = S.mainEl.querySelector('[data-sec="' + want + '"]'); }
-    Nav.focus(target || page.querySelector('.hubtab'));
+    Nav.focus(target || page.querySelector('.hubtab, .hubtile'));
   }
 
   /* "em alta": novidades do catálogo com boa nota (o Xtream não tem ranking; usamos data de adição + nota) */
@@ -1149,6 +1227,21 @@
     return box;
   }
 
+  /* estilo da tela inicial: vale para este aparelho (não vai para a sincronização) */
+  function homeStyleBlock() {
+    var cur = homeStyle(), opts = [['Blocos grandes', 'blocks'], ['Abas no topo', 'tabs']], box = h('div', { cls: 'sbtns scales' });
+    function paint() {
+      box.innerHTML = '';
+      opts.forEach(function (o) {
+        box.appendChild(h('button', { cls: 'f btn' + (cur === o[1] ? ' primary' : ''), text: o[0], on: { click: function () {
+          cur = o[1]; store.set('homestyle', cur); paint(); toast('Vale ao voltar para a Início', 2000);
+        } } }));
+      });
+    }
+    paint();
+    return box;
+  }
+
   /* tamanho do texto e dos blocos no celular */
   function scaleBlock() {
     var cur = store.get('uiscale', 1), opts = [['Normal', 1], ['Grande', 1.15], ['Muito grande', 1.3]], box = h('div', { cls: 'sbtns scales' });
@@ -1240,6 +1333,63 @@
     ]);
   }
 
+  /* sincronização com outros aparelhos: endereço do servidor (uma vez por aparelho) + código (por perfil) */
+  function cloudBlock() {
+    var urlIn = h('input', { cls: 'f input', id: 'syncurl', type: 'text', placeholder: 'Endereço do servidor (ex.: master-sync.seunome.workers.dev)' });
+    var codeIn = h('input', { cls: 'f input', id: 'synccode', type: 'text', placeholder: 'Código (ou endereço#código para parear de uma vez)' });
+    var status = h('div', { cls: 'swd' });
+    var pairEl = h('div', { cls: 'swd' });
+    function load() {
+      urlIn.value = cloudUrl().replace(/^https:\/\//i, '');
+      codeIn.value = cloudCode() ? Sync.fmtCode(cloudCode()) : '';
+    }
+    function paint(msg) {
+      var at = store.get('syncat', 0);
+      if (!cloudOn()) {
+        status.textContent = msg || 'Desligada. Informe o endereço do servidor e gere um código aqui; nos outros aparelhos digite o mesmo código neste perfil.';
+        pairEl.textContent = '';
+        return;
+      }
+      status.textContent = msg || ('Ligada neste perfil' + (at ? ' · última sincronização às ' + hhmm(new Date(at)) : '') + '.');
+      pairEl.textContent = 'Para parear outro aparelho, digite lá: ' + Sync.pairString(cloudUrl(), cloudCode());
+    }
+    function save() {
+      var p = Sync.parsePair(codeIn.value), u = p.url || Sync.normUrl(urlIn.value);
+      if (u) { store.set('syncurl', u); } else { store.del('syncurl'); }
+      if (p.code) {
+        if (!Sync.validCode(p.code)) { toast('Código inválido (16 letras e números)', 3000); return false; }
+        store.set('synccode', p.code);
+      } else { store.del('synccode'); }
+      load(); paint();
+      return true;
+    }
+    function run() {
+      if (!cloudOn()) { paint('Informe o endereço do servidor e o código primeiro.'); return; }
+      paint('Sincronizando…');
+      cloudNow().then(function (r) {
+        paint(r && r.pulled ? 'Sincronizado: dados novos recebidos.' : 'Sincronizado: tudo em dia.');
+      }, function (e) { paint('Falha: ' + ((e && e.message) || 'erro')); });
+    }
+    codeIn._enter = function () { if (save()) { run(); } };
+    urlIn._enter = function () { Nav.focus(codeIn); };
+    load(); paint();
+    return h('div', {}, [
+      h('div', { cls: 'swd tmdbhelp', text: 'Mantém "continuar assistindo", favoritos e histórico iguais na TV e no celular. Não leva o login do servidor IPTV. Precisa do servidor gratuito descrito em docs/sincronizacao.md.' }),
+      h('div', { cls: 'citybox' }, [urlIn]),
+      h('div', { cls: 'citybox' }, [codeIn, h('button', { cls: 'f btn', text: 'Salvar', on: { click: function () { if (save()) { run(); } } } })]),
+      h('div', { cls: 'sbtns' }, [
+        h('button', { cls: 'f btn primary', text: 'Gerar novo código', on: { click: function () {
+          if (!Sync.normUrl(urlIn.value) && !cloudUrl()) { toast('Informe o endereço do servidor primeiro', 3000); return; }
+          codeIn.value = Sync.fmtCode(Sync.newCode());
+          if (save()) { run(); }
+        } } }),
+        h('button', { cls: 'f btn', text: 'Sincronizar agora', on: { click: run } }),
+        h('button', { cls: 'f btn', text: 'Desligar', on: { click: function () { store.del('synccode'); load(); paint(); } } })
+      ]),
+      status, pairEl
+    ]);
+  }
+
   function renderSettings() {
     var page = S.pageEl, info = S.info || {};
     page.className = 'page scroll settings';
@@ -1251,7 +1401,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.13.0']
+      ['Versão do app', '1.15.1']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
@@ -1275,6 +1425,8 @@
     page.appendChild(sgroup('Preferências'));
     page.appendChild(h('div', { cls: 'sgroup sub', text: 'Versão preferida (dublado/legendado)' }));
     page.appendChild(verBlock());
+    page.appendChild(h('div', { cls: 'sgroup sub', text: 'Estilo da tela inicial (neste aparelho)' }));
+    page.appendChild(homeStyleBlock());
     page.appendChild(switchRow('Reproduzir o último conteúdo ao abrir o app', 'Ao iniciar, retoma o último canal, filme ou episódio assistido.', 'autoplay'));
     page.appendChild(switchRow('Pular introdução automaticamente', 'Em séries onde você já usou "Pular introdução", repete o salto no início de cada episódio.', 'autoIntro'));
     page.appendChild(switchRow('Ocultar canais SD', 'Esconde da lista os canais com "SD" no nome.', 'hideSD'));
@@ -1284,16 +1436,20 @@
     page.appendChild(tmdbBlock());
     page.appendChild(sgroup('Clima'));
     page.appendChild(cityBlock());
+    page.appendChild(sgroup('Sincronização'));
+    page.appendChild(cloudBlock());
 
     page.appendChild(sgroup('Dados'));
     page.appendChild(h('div', { cls: 'sbtns' }, [
       h('button', { cls: 'f btn', text: 'Limpar histórico', on: { click: function () {
+        Object.keys(S.cont).concat(Object.keys(S.resume)).forEach(markDone);
         S.cont = {}; S.resume = {}; S.recent = []; S.last = {};
         store.set('cont', S.cont); store.set('resume', S.resume); store.set('recent', S.recent); store.set('last', S.last);
         store.del('lastlive');
         toast('Histórico limpo');
       } } }),
       h('button', { cls: 'f btn', text: 'Limpar favoritos', on: { click: function () {
+        Object.keys(S.favs).forEach(function (k) { stampFav(k, false); });
         S.favs = {}; store.set('fav', S.favs); toast('Favoritos limpos');
       } } })
     ]));
@@ -1655,7 +1811,7 @@
       if (ep) {
         url = ep.url; c.rk = 'e:' + ep.id;
         title = it.name; sub = 'T' + ep.season + ' · E' + ep.num + ' — ' + ep.title;
-        S.last[it.id] = { season: ep.season, id: ep.id };
+        S.last[it.id] = { season: ep.season, id: ep.id, at: Date.now() };
         store.set('last', S.last);
       } else {
         url = it.url; c.rk = 'm:' + it.id; title = it.name;
@@ -1880,7 +2036,7 @@
     if (!c || c.kind === 'live' || !c.rk) { return; }
     var t = Player.time(), d = Player.duration();
     if (!isFinite(d) || d < 120) { return; }
-    if (t > d * 0.95) { delete S.resume[c.rk]; delete S.cont[c.rk]; }
+    if (t > d * 0.95) { delete S.resume[c.rk]; delete S.cont[c.rk]; markDone(c.rk); }
     else if (t > 5) {
       var ep = c.kind === 'ep' ? c.eps[c.idx] : null, now = Date.now();
       S.resume[c.rk] = { t: t, d: d, at: now };
@@ -1897,6 +2053,8 @@
     }
     store.set('resume', S.resume);
     store.set('cont', S.cont);
+    // durante a reprodução, envia o ponto de tempos em tempos (e ao sair do player)
+    if (cloudOn() && !cloudPushTimer) { cloudPushTimer = setTimeout(function () { cloudPushTimer = null; cloudSoon(0); }, 45000); }
   }
 
   /* mini player: o vídeo continua tocando num canto enquanto você navega; toque/Amarelo amplia, X/Azul fecha */
@@ -1927,6 +2085,7 @@
 
   function leavePlayer(keep) {
     saveResume();
+    cloudSoon(600);
     closeTracks();
     clearTimeout(S.osdTimer);
     $('osd').classList.add('hidden');
@@ -2112,13 +2271,13 @@
         var c = S.ctx;
         if (!c) { return; }
         if (c.kind === 'ep' && c.idx + 1 < c.eps.length) {
-          delete S.resume[c.rk]; delete S.cont[c.rk];
+          delete S.resume[c.rk]; delete S.cont[c.rk]; markDone(c.rk);
           store.set('resume', S.resume); store.set('cont', S.cont);
           c.idx++;
           toast('Próximo episódio…', 2000);
           playCurrent(true);
         } else if (c.kind !== 'live') {
-          delete S.resume[c.rk]; delete S.cont[c.rk];
+          delete S.resume[c.rk]; delete S.cont[c.rk]; markDone(c.rk);
           store.set('resume', S.resume); store.set('cont', S.cont);
           closePlayer();
         }
@@ -2135,6 +2294,7 @@
     });
 
     document.addEventListener('keydown', onKey, true);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) { cloudSoon(800, true); } });
     var fake = function (code) { return { keyCode: code, preventDefault: function () {} }; };
     window.__nativeBack = function () { onKey(fake(KEY.BACK)); };
     window.__nativeKey = function (code) {

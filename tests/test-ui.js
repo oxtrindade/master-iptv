@@ -10,7 +10,29 @@ var api = mock.create(), px = proxyLib.create('tok');
 function listen(s) { return new Promise(function (r) { s.listen(0, '127.0.0.1', r); }); }
 function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
 
-Promise.all([listen(api), listen(px)]).then(function () {
+var syncKV = {}, syncSrv = null;
+// servidor de sincronização falso: o próprio Worker, com KV em memória, atrás de um servidor HTTP local
+function startSync() {
+  return import('../worker/sync-worker.mjs').then(function (m) {
+    var env = { SYNC: { get: async function (k) { return Object.prototype.hasOwnProperty.call(syncKV, k) ? syncKV[k] : null; }, put: async function (k, v) { syncKV[k] = v; } } };
+    syncSrv = require('http').createServer(function (req, res) {
+      var chunks = [];
+      req.on('data', function (c) { chunks.push(c); });
+      req.on('end', function () {
+        var body = Buffer.concat(chunks).toString('utf8'), noBody = req.method === 'GET' || req.method === 'HEAD';
+        m.default.fetch(new Request('http://sync.local' + req.url, { method: req.method, body: noBody ? undefined : body }), env).then(function (r) {
+          return r.text().then(function (txt) {
+            var hd = {}; r.headers.forEach(function (v, k) { hd[k] = v; });
+            res.writeHead(r.status, hd); res.end(txt);
+          });
+        });
+      });
+    });
+    return listen(syncSrv);
+  });
+}
+
+Promise.all([listen(api), listen(px), startSync()]).then(function () {
   var base = 'http://127.0.0.1:' + api.address().port, pport = px.address().port;
   var errors = [];
   var vc = new jsdom.VirtualConsole();
@@ -322,6 +344,60 @@ Promise.all([listen(api), listen(px)]).then(function () {
       step('cidade do clima editável nas configurações');
       go('settings');
       return waitFor(function () { return $('.settings .sgroup'); }, 'config 3');
+    }).then(function () {
+      // sincronização entre aparelhos (Worker simulado em http://127.0.0.1)
+      var surl = 'http://127.0.0.1:' + syncSrv.address().port;
+      assert.ok($('#syncurl') && $('#synccode'), 'bloco Sincronização nas configurações');
+      $('#syncurl').value = surl;
+      $$('.settings .btn').filter(function (b) { return b.textContent === 'Gerar novo código'; })[0].click();
+      return waitFor(function () { return Object.keys(syncKV).length === 1 && /Sincronizado/.test($('.settings').textContent); }, 'primeira sincronização');
+    }).then(function () {
+      var codeTxt = $('#synccode').value, stored = JSON.parse(syncKV[Object.keys(syncKV)[0]]);
+      assert.ok(/^[A-Z2-9]{4}(-[A-Z2-9]{4}){3}$/.test(codeTxt), 'código gerado: ' + codeTxt);
+      assert.ok(Object.keys(stored.fav).length >= 1 && Object.keys(stored.cont).length >= 1, 'enviou favoritos e continuar assistindo');
+      assert.ok(/Para parear outro aparelho, digite lá: .+#/.test($('.settings').textContent), 'mostra o texto de pareamento');
+      // outro aparelho marca um favorito e assiste algo; este recebe ao sincronizar
+      stored.fav['movie:777'] = { type: 'movie', id: '777', name: 'Filme do Celular' };
+      stored.favmeta['movie:777'] = { at: Date.now() + 5000 };
+      stored.cont['m:777'] = { rk: 'm:777', kind: 'movie', item: { type: 'movie', id: '777', name: 'Filme do Celular' }, t: 600, d: 6000, at: Date.now() + 5000 };
+      stored.resume['m:777'] = { t: 600, d: 6000, at: Date.now() + 5000 };
+      syncKV[Object.keys(syncKV)[0]] = JSON.stringify(stored);
+      $$('.settings .btn').filter(function (b) { return b.textContent === 'Sincronizar agora'; })[0].click();
+      return waitFor(function () { return JSON.parse(w.localStorage.getItem('iptv.fav'))['movie:777']; }, 'favorito do outro aparelho chegou');
+    }).then(function () {
+      assert.ok(JSON.parse(w.localStorage.getItem('iptv.cont'))['m:777'], 'continuar assistindo do outro aparelho chegou');
+      assert.ok(JSON.parse(w.localStorage.getItem('iptv.favmeta'))['movie:1'] || JSON.parse(w.localStorage.getItem('iptv.favmeta'))['movie:777'], 'favoritos têm data');
+      step('sincronização: gerar código, enviar e receber do outro aparelho');
+      go('settings');
+      return waitFor(function () { return $('.settings .sgroup'); }, 'config 4');
+    }).then(function () {
+      // estilo da Início: blocos grandes (padrão nas TVs) ou abas (padrão no celular)
+      var btns = function (txt) { return $$('.settings .btn').filter(function (x) { return x.textContent === txt; })[0]; };
+      assert.ok(btns('Abas no topo').classList.contains('primary'), 'aqui o padrão são as abas');
+      btns('Blocos grandes').click();
+      assert.strictEqual(w.localStorage.getItem('iptv.homestyle'), '"blocks"', 'escolha guardada neste aparelho');
+      $('.backbtn').click();
+      return waitFor(function () { return $$('.hubtile').length === 3; }, 'blocos grandes');
+    }).then(function () {
+      assert.deepStrictEqual($$('.hubname').map(function (e) { return e.textContent; }), ['TV ao vivo', 'Filmes', 'Séries']);
+      assert.ok(!$('.hubtab'), 'sem abas quando o estilo é blocos');
+      $$('.hubtile')[1].click();
+      return waitFor(function () { return $('.sectitle') && /Filmes/.test($('.sectitle').textContent); }, 'abre Filmes pelo bloco');
+    }).then(function () {
+      $('.backbtn').click();
+      return waitFor(function () { return $$('.hubtile').length === 3 && $('.hubtile.focus'); }, 'volta aos blocos');
+    }).then(function () {
+      assert.strictEqual($('.hubtile.focus').getAttribute('data-sec'), 'movie', 'foco volta ao bloco de Filmes');
+      step('estilo da Início: blocos grandes (e opção nas configurações)');
+      $('.menubtn').click(); $('.drawer-settings').click();
+      return waitFor(function () { return $('.settings .sgroup'); }, 'config 5');
+    }).then(function () {
+      $$('.settings .btn').filter(function (x) { return x.textContent === 'Abas no topo'; })[0].click();
+      $('.backbtn').click();
+      return waitFor(function () { return $$('.hubtab').length === 3 && !$('.hubtile'); }, 'abas de novo');
+    }).then(function () {
+      go('settings');
+      return waitFor(function () { return $('.settings .sgroup'); }, 'config 6');
     }).then(function () {
       // perfis: criar, trocar, dados separados
       var favs0 = w.localStorage.getItem('iptv.fav');

@@ -7,11 +7,15 @@ Servidor, usuário e senha (Xtream Codes). Se algo der errado, os campos continu
 
 ## Telas
 - **Início (estilo Netflix):** no topo, o botão de **três traços** à esquerda, o nome **Master IPTV** no centro e o **perfil** à direita. Logo abaixo, as abas **TV ao vivo**, **Filmes** e **Séries**, e depois as fileiras Continuar assistindo, **Favoritos** (só aparece se você favoritou algo; o último item, "Ver todos", abre a lista completa), Canais recentes e recomendações.
+- **Estilo da tela inicial:** nas TVs (webOS e Android TV) a Início abre com **blocos grandes** (TV ao vivo, Filmes, Séries); no celular, com as **abas** do topo. Dá para trocar em Configurações → *Estilo da tela inicial* (vale só para aquele aparelho).
 - **Menu lateral (três traços):** mostra o **clima** da sua cidade, o relógio, a validade da conta e o botão **Configurações**. **Voltar** fecha o menu.
 - **Cada seção mostra só o seu conteúdo**, com categorias na coluna da esquerda e um botão **Buscar** que pesquisa só dentro dela. **Voltar** sobe um nível (lista → categorias → menu); o botão **Menu** do topo volta direto.
 - **TV ao vivo:** lista em duas colunas, com o **programa atual** (horário de início e fim), a barra de progresso e o **próximo programa** em cada canal; canais sem guia mostram "Sem programação". Os nomes das categorias aparecem sem o prefixo repetido (ex.: "Canais | Esportes" vira "Esportes").
 - **Configurações** (pelo menu lateral): dados da conta, **editar servidor**, chaves para **reproduzir o último conteúdo ao abrir o app**, **ocultar canais SD** e **ocultar canais HD** (FHD e 4K continuam), e a **cidade do clima** (busca pelo nome).
 - **Player:** mostra a **resolução real** do vídeo (ex.: 1920×1080 · FHD).
+
+## Sincronizar TV e celular
+Configurações → **Sincronização** mantém *continuar assistindo*, favoritos e histórico iguais nos aparelhos, usando um servidor gratuito no Cloudflare Workers (`worker/sync-worker.mjs`). Passo a passo em [docs/sincronizacao.md](docs/sincronizacao.md).
 
 ## Controles
 | Tecla | Ao vivo | Filmes/séries |
@@ -42,7 +46,7 @@ Com root + Homebrew Channel também dá para copiar o `.ipk` para a TV e instala
 ## Recompilar
 ```
 npm install
-node tests/test-core.js && node tests/test-ui.js
+node tests/test-core.js && node tests/test-sync.js && node tests/test-ui.js
 npx ares-package app services --no-minify -o dist
 ```
 
