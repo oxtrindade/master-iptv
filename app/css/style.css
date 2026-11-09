@@ -982,3 +982,14 @@ body.portrait .hero { margin: 0 12px 8px; border-radius: 14px; height: 400px; bo
 /* 1.41.0: banner na altura da referência */
 .hero { height: 720px; margin: 8px 48px 16px; }
 body.compact .hero { height: 340px; }
+
+/* 1.42.0: cards maiores na TV (como na referência): ~28% maiores; o card largo acompanha */
+.card { width: 262px; margin-right: 30px; }
+.card .poster { width: 262px; height: 393px; }
+.card .title { font-size: 26px; height: 72px; }
+.hlist > .card .title { height: 34px; }
+.hlist > .card.wide, .hlist > .card.wide .poster { width: 700px; }
+.wideh { font-size: 34px; }
+.widem { font-size: 20px; }
+.widep { font-size: 20px; max-height: 54px; }
+body.compact .hlist > .card.wide, body.compact .hlist > .card.wide .poster { width: 380px; }

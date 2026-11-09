@@ -2395,6 +2395,21 @@
   /* ---------- prévia muda ao segurar o foco num filme/série (cards, Continuar assistindo) ---------- */
   var Prev = { vid: null, host: null, t: null, stopT: null, guard: null };
 
+  /* LG: o play() chamado antes dos metadados é cancelado (AbortError) quando eles chegam; o vídeo fica pronto mas parado.
+     Em vez de desistir, tenta de novo quando o vídeo estiver pronto (até 3 vezes). */
+  function pvKick(v, isCur) {
+    var n = 0;
+    function kick() {
+      if (!isCur() || !v.paused || n >= 3) { return; }
+      n++;
+      try { var p = v.play(); if (p && p.catch) { p.catch(function () {}); } } catch (e) {}
+    }
+    v.addEventListener('loadstart', function () { n = 0; });
+    v.addEventListener('loadedmetadata', kick);
+    v.addEventListener('canplay', kick);
+    v.addEventListener('loadeddata', kick);
+  }
+
   function pvStopCard() {
     clearTimeout(Prev.t); clearTimeout(Prev.stopT); clearInterval(Prev.guard);
     var v = Prev.vid;
@@ -2534,7 +2549,8 @@
       v.onplaying = function () { host.classList.add('pv'); S.pvLast = ''; PD.tocando++; };
       host.appendChild(v);
       v.src = url;
-      var pr = v.play(); if (pr && pr.catch) { pr.catch(function (e) { if (Prev.vid !== v) { return; } fail('play recusado ' + (e && e.name) + ' ' + tr()); }); }
+      pvKick(v, function () { return Prev.vid === v; });
+      var pr = v.play(); if (pr && pr.catch) { pr.catch(function (e) { if (Prev.vid !== v) { return; } if (e && e.name === 'AbortError') { return; } fail('play recusado ' + (e && e.name) + ' ' + tr()); }); }
       Prev.stopT = setTimeout(function () { if (!host.classList.contains('pv')) { fail('não iniciou em 20 s (' + ext + ') ' + tr()); } }, 20000);
       Prev.guard = setInterval(function () {
         if (S.mode !== 'browse' || S.mini || document.hidden || !document.body.contains(host)) { pvStopCard(); }
@@ -2643,7 +2659,8 @@
         }
         vid.onplaying = function () { hero.classList.add('pv'); PD.tocando++; };
         vid.src = url;
-        var p = vid.play(); if (p && p.catch) { p.catch(function (e) { if (vid._gen !== gen) { return; } fail('play recusado ' + (e && e.name)); }); }
+        if (!vid._kick) { vid._kick = 1; pvKick(vid, function () { return !!vid.getAttribute('src'); }); }
+        var p = vid.play(); if (p && p.catch) { p.catch(function (e) { if (vid._gen !== gen) { return; } if (e && e.name === 'AbortError') { return; } fail('play recusado ' + (e && e.name)); }); }
         clearTimeout(pvStop);
         pvStop = setTimeout(function () { if (!hero.classList.contains('pv')) { fail('não iniciou em 20 s'); } else { pvEnd(); } }, 30000);
       };
@@ -3080,7 +3097,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.41.0']
+      ['Versão do app', '1.42.0']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {

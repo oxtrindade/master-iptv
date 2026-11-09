@@ -193,3 +193,7 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 ## 1.41.0 — Banner maior e sem filmes de cinema (CAM)
 - Banner da Início mais alto (720 px na TV), na proporção da referência.
 - Nova chave **"Ocultar filmes de cinema (gravação)"** (Configurações, ligada por padrão): esconde de Filmes, Início, busca e recomendações as categorias com "Cinema"/CAM/HDCAM/HDTS no nome e os títulos com etiqueta [CAM], (Cinema), HDCAM, HDTS ou "- Cinema". Só filmes; canais e séries não mudam.
+
+## 1.42.0 — Cards maiores e prévia que não desiste na LG
+- Cards (pôsteres) ~28% maiores na TV, e o card largo ao parar o foco passa a 700 px.
+- Prévia: na LG o diagnóstico mostrava `loadedmetadata@3.2 … canplay rs4` e "play recusado AbortError" — o play() era cancelado quando os metadados chegavam (o provedor leva ~3 s) e o vídeo ficava pronto, porém parado. Agora o app não desiste no AbortError e chama play() de novo em loadedmetadata/canplay/loadeddata (até 3 vezes por vídeo), no card e no banner.
