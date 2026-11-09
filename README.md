@@ -203,3 +203,8 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 - O trailer vem do campo `youtube_trailer` do provedor ou, se não houver, do TMDB (precisa da chave do TMDB, a mesma das recomendações). Toca pelo player incorporado do YouTube, mudo e sem controles, cortado para preencher: no **banner** e no **card largo**.
 - Se não houver trailer, o YouTube recusar ou não começar em 9 s, volta sozinho ao trecho do filme (como antes), e esse título passa a pular o trailer. Nos pôsteres estreitos das listas em grade continua o trecho do filme.
 - Experimental na LG (Chromium 68): o diagnóstico em Configurações mostra "trailer … não iniciou" quando falha.
+
+## 1.44.0 — Prévia só com trailer (e correção do erro 153 do YouTube)
+- A prévia deixou de ser "experimental" e **não toca mais um trecho do filme**: só o trailer (campo `youtube_trailer` do provedor, senão TMDB). A chave virou **"Trailer na prévia"** e vem ligada para todos. Sem trailer, nada toca.
+- Erro **153** ("erro de configuração do player"): o YouTube recusa embed sem endereço de origem, e o app abre de `file://`. Na LG a página do player agora vem do proxy local (`http://127.0.0.1:porta/yt?t=…&id=…`), que dá uma origem http válida e repassa os eventos ao app. Fora da LG usa o embed direto.
+- Trailer também nos pôsteres estreitos (cortado para preencher); banner e card largo como antes. Falhas aparecem no diagnóstico em Configurações.

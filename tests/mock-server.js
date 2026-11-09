@@ -29,12 +29,12 @@ function create() {
         case 'get_vod_categories': return json([{ category_id: '10', category_name: 'Ação' }]);
         case 'get_vod_streams':
           return json([{ stream_id: 501, name: 'Filme Teste', stream_icon: 'http://127.0.0.1:9/poster.jpg', category_id: '10', rating: '7.4', container_extension: 'mkv' }]);
-        case 'get_vod_info': return json({ info: { plot: 'Um filme de teste.', genre: 'Ação', releasedate: '2020-05-01', duration: '01:40:00' } });
+        case 'get_vod_info': return json({ info: { plot: 'Um filme de teste.', genre: 'Ação', releasedate: '2020-05-01', duration: '01:40:00', youtube_trailer: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' } });
         case 'get_series_categories': return json([{ category_id: '20', category_name: 'Drama' }]);
         case 'get_series':
           return json([{ series_id: 900, name: 'Série Teste', cover: '', category_id: '20', rating_5based: 4, releaseDate: '2019-01-01', plot: 'Sobre testes.' }]);
         case 'get_series_info':
-          return json({ info: { plot: 'Sobre testes.', genre: 'Drama' }, episodes: {
+          return json({ info: { plot: 'Sobre testes.', genre: 'Drama', youtube_trailer: 'abcdefghijk' }, episodes: {
             '1': [{ id: '7002', episode_num: 2, title: 'Dois', container_extension: 'mp4', season: 1, info: { duration: '00:42:00' } },
                   { id: '7001', episode_num: 1, title: 'Um', container_extension: 'mp4', season: 1, info: {} }],
             '2': [{ id: '7101', episode_num: 1, title: 'Retorno', container_extension: 'mkv', season: 2, info: {} }]

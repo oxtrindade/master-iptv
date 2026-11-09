@@ -163,7 +163,7 @@
   function opt(k) { return !!S.opts[k]; }
   function pvOn() {
     if (window.__pvTest) { return true; }
-    if (S.opts.pvv !== 2) { S.opts.pvv = 2; S.opts.heropv = false; store.set('opts', S.opts); }   // 1.34.4: recurso experimental, desligado por padrão
+    if (S.opts.pvv !== 3) { S.opts.pvv = 3; S.opts.heropv = true; store.set('opts', S.opts); }   // 1.44.0: prévia = trailer, ligada por padrão
     return !!S.opts.heropv;
   }
   function setOpt(k, v) { S.opts[k] = !!v; store.set('opts', S.opts); if (k === 'bgplay') { applyBg(); } }
@@ -2395,27 +2395,8 @@
   /* ---------- prévia muda ao segurar o foco num filme/série (cards, Continuar assistindo) ---------- */
   var Prev = { vid: null, host: null, t: null, stopT: null, guard: null };
 
-  /* LG: o play() chamado antes dos metadados é cancelado (AbortError) quando eles chegam; o vídeo fica pronto mas parado.
-     Em vez de desistir, tenta de novo quando o vídeo estiver pronto (até 3 vezes). */
-  function pvKick(v, isCur) {
-    var n = 0;
-    function kick() {
-      if (!isCur() || !v.paused || n >= 3) { return; }
-      n++;
-      try { var p = v.play(); if (p && p.catch) { p.catch(function () {}); } } catch (e) {}
-    }
-    v.addEventListener('loadstart', function () { n = 0; });
-    v.addEventListener('loadedmetadata', kick);
-    v.addEventListener('canplay', kick);
-    v.addEventListener('loadeddata', kick);
-  }
-
   /* ---------- trailer (YouTube embed) no lugar do arquivo do filme ---------- */
   var TR = {};
-  function trailerOn() {
-    if (S.opts.pvtrailer === undefined) { S.opts.pvtrailer = true; store.set('opts', S.opts); }
-    return !!S.opts.pvtrailer;
-  }
   function ytId(v) {
     v = String(v || '');
     var m = v.match(/(?:[?&]v=|youtu\.be\/|embed\/)([\w-]{11})/);
@@ -2444,15 +2425,16 @@
   }
   /* player incorporado, mudo, sem controles, cortado para cobrir o espaço (host). cb: {play, fail(why)} */
   function ytEmbed(host, id, cb) {
-    var f = document.createElement('iframe'), done = false;
+    var f = document.createElement('iframe'), done = false, dead = false;
     f.className = 'cardvid ytv';
     f.setAttribute('frameborder', '0');
     f.setAttribute('allow', 'autoplay; encrypted-media');
+    f.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
     f.setAttribute('tabindex', '-1');
     var w = host.offsetWidth || 700, hh = host.offsetHeight || 394, fh = Math.round(w * 9 / 16), fw = w;
     if (fh < hh) { fh = hh; fw = Math.round(hh * 16 / 9); }
     f.style.cssText = 'left:50%;top:50%;width:' + fw + 'px;height:' + fh + 'px;margin-left:-' + Math.round(fw / 2) + 'px;margin-top:-' + Math.round(fh / 2) + 'px;border:0';
-    f.src = 'https://www.youtube.com/embed/' + id + '?autoplay=1&mute=1&controls=0&disablekb=1&fs=0&modestbranding=1&rel=0&playsinline=1&iv_load_policy=3&loop=1&playlist=' + id + '&enablejsapi=1';
+    var direct = 'https://www.youtube.com/embed/' + id + '?autoplay=1&mute=1&controls=0&disablekb=1&fs=0&modestbranding=1&rel=0&playsinline=1&iv_load_policy=3&loop=1&playlist=' + id + '&enablejsapi=1';
     function onMsg(e) {
       if (e.source !== f.contentWindow || typeof e.data !== 'string') { return; }
       var d; try { d = JSON.parse(e.data); } catch (x) { return; }
@@ -2461,9 +2443,14 @@
       if (d.event === 'onError') { cb.fail('erro do YouTube ' + d.info); }
     }
     window.addEventListener('message', onMsg);
-    f.onload = function () { try { f.contentWindow.postMessage(JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }), '*'); } catch (x) {} };
     host.appendChild(f);
-    return { el: f, off: function () { window.removeEventListener('message', onMsg); if (f.parentNode) { f.parentNode.removeChild(f); } } };
+    /* o YouTube recusa (erro 153) quem embute sem endereço de origem; o app abre de file://, então na LG a página
+       do player vem do proxy local (http://127.0.0.1), que dá uma origem válida */
+    if (window.PalmServiceBridge) {
+      startProxy().then(function (p) { if (!dead) { f.src = 'http://127.0.0.1:' + p.port + '/yt?t=' + p.token + '&id=' + id; } },
+        function () { if (!dead) { f.src = direct; } });
+    } else { f.src = direct; }
+    return { el: f, off: function () { dead = true; window.removeEventListener('message', onMsg); if (f.parentNode) { f.parentNode.removeChild(f); } } };
   }
 
   function pvStopCard() {
@@ -2483,26 +2470,6 @@
   }
 
   var PD = { ultima: '', foco: 0, agendadas: 0, iniciadas: 0, tocando: 0, bloqueio: '', falha: '', player: '' };
-
-  function pvTrace(v) {
-    var t0 = Date.now(), log = [];
-    ['loadstart', 'loadedmetadata', 'loadeddata', 'canplay', 'playing', 'waiting', 'stalled', 'suspend', 'seeking', 'seeked', 'abort', 'emptied', 'error'].forEach(function (n) {
-      v.addEventListener(n, function () { log.push(n + '@' + (Math.round((Date.now() - t0) / 100) / 10)); });
-    });
-    var f = function () { return '[t+' + Math.round((Date.now() - t0) / 1000) + 's ' + log.slice(-8).join(' ') + ' rs' + v.readyState + ' ns' + v.networkState + ']'; };
-    f.age = function () { return Date.now() - t0; };
-    return f;
-  }
-  function pvSkip(v, it, en) {   // só depois de já estar tocando: pula para um trecho do meio
-    var done = false;
-    v.addEventListener('playing', function () {
-      if (done) { return; } done = true;
-      try {
-        if (en && en.t > 30) { v.currentTime = en.t; }
-        else if (isFinite(v.duration) && v.duration > 300) { v.currentTime = v.duration * (0.15 + 0.1 * (it.id % 3)); }
-      } catch (e) {}
-    });
-  }
 
   /* ---------- card largo (estilo Netflix): ao parar o foco numa fileira da TV, o pôster vira 16:9 e a prévia toca nele ---------- */
   var Wide = { el: null, t: null };
@@ -2587,60 +2554,20 @@
   }
 
   function pvCardStart(host, it) {
-    var key = it.type + ':' + it.id, en = host._en;
-    if (S.pvBad && S.pvBad[key]) { PD.bloqueio = 'já falhou antes: ' + it.name; return; }
+    var key = it.type + ':' + it.id;
     PD.iniciadas++;
-    S.pvBad = S.pvBad || {};
-    var fail = function (why) { S.pvBad[key] = 1; S.pvLast = it.name + ': ' + why; PD.falha = S.pvLast; pvStopCard(); };
-    var go = function (url) {
-      if (Prev.host || S.mode !== 'browse' || !document.body.contains(host)) { return; }
-      if (!url) { fail('sem endereço direto'); return; }
-      if (/m3u8/i.test(url)) { fail('formato HLS (m3u8) não suportado na prévia'); return; }
-      var v = h('video', { cls: 'cardvid', muted: 'muted', playsinline: 'playsinline' });
-      v.muted = true;
-      Prev.vid = v; Prev.host = host;
-      var tr = pvTrace(v), ext = (String(url).split('?')[0].split('.').pop() || '?').slice(0, 5);
-      Prev.tr = tr; Prev.nm = it.name;
-      v.onerror = function () { fail('erro do vídeo ' + (v.error ? v.error.code : '?') + ' (' + ext + ') ' + tr()); };
-      pvSkip(v, it, en);
-      v.onplaying = function () { host.classList.add('pv'); S.pvLast = ''; PD.tocando++; };
-      host.appendChild(v);
-      v.src = url;
-      pvKick(v, function () { return Prev.vid === v; });
-      var pr = v.play(); if (pr && pr.catch) { pr.catch(function (e) { if (Prev.vid !== v) { return; } if (e && e.name === 'AbortError') { return; } fail('play recusado ' + (e && e.name) + ' ' + tr()); }); }
-      Prev.stopT = setTimeout(function () { if (!host.classList.contains('pv')) { fail('não iniciou em 20 s (' + ext + ') ' + tr()); } }, 20000);
+    trailerFor(it).then(function (id) {
+      if (Prev.host || S.mode !== 'browse' || !document.body.contains(host) || !Nav.current() || !Nav.current().contains(host)) { return; }
+      if (!id) { PD.bloqueio = 'sem trailer: ' + it.name; return; }
+      var tfail = function (why) { TR[key] = Promise.resolve(''); PD.falha = 'trailer ' + it.name + ': ' + why; S.pvLast = PD.falha; pvStopCard(); };
+      var yt = ytEmbed(host, id, { play: function () { host.classList.add('pv'); S.pvLast = ''; PD.tocando++; }, fail: tfail });
+      Prev.yt = yt; Prev.vid = yt.el; Prev.host = host; Prev.tr = null; Prev.nm = it.name;
+      Prev.stopT = setTimeout(function () { if (Prev.yt === yt && !host.classList.contains('pv')) { tfail('não iniciou em 12 s'); } }, 12000);
       Prev.guard = setInterval(function () {
         if (S.mode !== 'browse' || S.mini || document.hidden || !document.body.contains(host)) { pvStopCard(); }
       }, 700);
-      setTimeout(function () { if (Prev.vid === v) { pvStopCard(); } }, 45000);
-    };
-    var fileStart = function () {
-      if (en && en.ep && en.ep.url) { go(en.ep.url); return; }
-      if (it.type === 'movie') { go(it.url); return; }
-      S.provider.episodes(it).then(function (r) {
-        var ss = (r && r.seasons) || [], e = ss[0] && ss[0].episodes && ss[0].episodes[0];
-        go(e && e.url);
-      }, function () { fail('sem resposta do servidor'); });
-    };
-    // card largo (16:9): tenta o trailer; sem trailer ou se o YouTube não tocar, cai no arquivo do filme
-    if (trailerOn() && host.offsetWidth > host.offsetHeight * 1.3 && !(en && en.ep)) {
-      PD.iniciadas--; 
-      trailerFor(it).then(function (id) {
-        if (Prev.host || S.mode !== 'browse' || !document.body.contains(host) || !host.classList.contains('poster') || !Nav.current() || !Nav.current().contains(host)) { return; }
-        if (!id) { fileStart(); return; }
-        PD.iniciadas++;
-        var tfail = function (why) { TR[it.type + ':' + it.id] = Promise.resolve(''); PD.falha = 'trailer ' + it.name + ': ' + why; pvStopCard(); fileStart(); };
-        var yt = ytEmbed(host, id, { play: function () { host.classList.add('pv'); PD.tocando++; }, fail: tfail });
-        Prev.yt = yt; Prev.vid = yt.el; Prev.host = host; Prev.tr = null; Prev.nm = it.name;
-        Prev.stopT = setTimeout(function () { if (Prev.yt === yt && !host.classList.contains('pv')) { tfail('não iniciou em 9 s'); } }, 9000);
-        Prev.guard = setInterval(function () {
-          if (S.mode !== 'browse' || S.mini || document.hidden || !document.body.contains(host)) { pvStopCard(); }
-        }, 700);
-        setTimeout(function () { if (Prev.yt === yt) { pvStopCard(); } }, 90000);
-      }, function () { fileStart(); });
-      return;
-    }
-    fileStart();
+      setTimeout(function () { if (Prev.yt === yt) { pvStopCard(); } }, 90000);
+    }, function () { PD.bloqueio = 'sem resposta do servidor'; });
   }
 
   /* ---------- banner de destaque (Início) ---------- */
@@ -2671,10 +2598,8 @@
     var tag = h('div', { cls: 'herotag' }), title = h('div', { cls: 'herotitle' }), meta = h('div', { cls: 'herometa' }), plot = h('div', { cls: 'heroplot' });
     var btns = h('div', { cls: 'herobtns' }), dots = h('div', { cls: 'herodots' });
     var txt = h('div', { cls: 'herotxt' }, [tag, title, meta, plot, btns]);
-    var vid = h('video', { cls: 'herovid', muted: 'muted', playsinline: 'playsinline' });
-    vid.muted = true;
     var pvT = null, pvStop = null, pvBad = {};
-    hero.appendChild(bg); hero.appendChild(vid); hero.appendChild(h('div', { cls: 'herofade' })); hero.appendChild(poster); hero.appendChild(txt); hero.appendChild(dots);
+    hero.appendChild(bg); hero.appendChild(h('div', { cls: 'herofade' })); hero.appendChild(poster); hero.appendChild(txt); hero.appendChild(dots);
 
     function show(i) {
       if (!slides.length) { return; }
@@ -2706,10 +2631,7 @@
     function pvEnd() {
       clearTimeout(pvStop);
       if (hero._yt) { hero._yt.off(); hero._yt = null; }
-      if (vid._tr && vid.getAttribute('src') && !hero.classList.contains('pv') && vid._tr.age() > 3000) { PD.ultima = 'banner interrompido ' + vid._tr(); }
-      vid._gen = (vid._gen || 0) + 1;
       hero.classList.remove('pv');
-      if (vid.getAttribute('src')) { try { vid.pause(); } catch (e) {} vid.removeAttribute('src'); try { vid.load(); } catch (e) {} }
     }
     function pvSchedule() {
       clearTimeout(pvT);
@@ -2718,50 +2640,21 @@
     }
     function pvStart() {
       if (!pvAlive()) { pvEnd(); return; }
-      var f = Nav.current(), sl = slides[cur];
+      var sl = slides[cur];
       PD.player = 'banner tentou ' + (++PD.agendadas);
       if (S.mode !== 'browse' || S.mini || document.hidden || !sl || pvBad[sl.it.type + ':' + sl.it.id]) { return; }
       var key = sl.it.type + ':' + sl.it.id;
-      var go = function (url) {
-        if (!url || /m3u8/i.test(url) || !pvAlive() || slides[cur] !== sl || S.mode !== 'browse') { if (!url || /m3u8/i.test(url)) { pvBad[key] = 1; } return; }
-        var gen = vid._gen = (vid._gen || 0) + 1;
-        var tr = vid._tr = pvTrace(vid), ext = (String(url).split('?')[0].split('.').pop() || '?').slice(0, 5);
-        var fail = function (why) { pvBad[key] = 1; PD.falha = 'banner ' + sl.it.name + ': ' + (why || 'erro ' + (vid.error ? vid.error.code : '?')) + ' (' + ext + ') ' + tr(); pvEnd(); };
-        vid.onerror = function () { fail(); };
-        vid._sl = sl; vid._skipDone = null;
-        if (!vid._skipSet) {
-          vid._skipSet = 1;
-          vid.addEventListener('playing', function () {
-            var c = vid._sl; if (!c || vid._skipDone === c) { return; } vid._skipDone = c;
-            try { if (isFinite(vid.duration) && vid.duration > 300) { vid.currentTime = vid.duration * (0.15 + 0.1 * (c.it.id % 3)); } } catch (e) {}
-          });
-        }
-        vid.onplaying = function () { hero.classList.add('pv'); PD.tocando++; };
-        vid.src = url;
-        if (!vid._kick) { vid._kick = 1; pvKick(vid, function () { return !!vid.getAttribute('src'); }); }
-        var p = vid.play(); if (p && p.catch) { p.catch(function (e) { if (vid._gen !== gen) { return; } if (e && e.name === 'AbortError') { return; } fail('play recusado ' + (e && e.name)); }); }
-        clearTimeout(pvStop);
-        pvStop = setTimeout(function () { if (!hero.classList.contains('pv')) { fail('não iniciou em 20 s'); } else { pvEnd(); } }, 30000);
-      };
-      var legacy = function () {
-        if (sl.it.type === 'movie') { go(sl.it.url); return; }
-        S.provider.episodes(sl.it).then(function (r) {
-          var ss = (r && r.seasons) || [], e = ss[0] && ss[0].episodes && ss[0].episodes[0];
-          go(e && e.url);
-        }, function () { pvBad[key] = 1; });
-      };
-      if (!trailerOn()) { legacy(); return; }
       trailerFor(sl.it).then(function (id) {
         if (!pvAlive() || slides[cur] !== sl || S.mode !== 'browse' || hero._yt) { return; }
-        if (!id) { legacy(); return; }
-        var tfail = function (why) { TR[key] = Promise.resolve(''); PD.falha = 'trailer ' + sl.it.name + ': ' + why; pvEnd(); legacy(); };
+        if (!id) { pvBad[key] = 1; PD.bloqueio = 'sem trailer: ' + sl.it.name; return; }
+        var tfail = function (why) { TR[key] = Promise.resolve(''); pvBad[key] = 1; PD.falha = 'trailer ' + sl.it.name + ': ' + why; pvEnd(); };
         var yt = ytEmbed(hero, id, { play: function () { hero.classList.add('pv'); PD.tocando++; }, fail: tfail });
         yt.el.className = 'herovid ytv';
         hero._yt = yt;
         hero.insertBefore(yt.el, hero.querySelector('.herofade'));
         clearTimeout(pvStop);
-        pvStop = setTimeout(function () { if (hero._yt === yt && !hero.classList.contains('pv')) { tfail('não iniciou em 9 s'); } else if (hero._yt === yt) { pvEnd(); } }, 90000);
-      }, function () { legacy(); });
+        pvStop = setTimeout(function () { if (hero._yt === yt && !hero.classList.contains('pv')) { tfail('não iniciou em 12 s'); } else if (hero._yt === yt) { pvEnd(); } }, 90000);
+      }, function () { pvBad[key] = 1; });
     }
     function pvIdle() { pvEnd(); pvSchedule(); }
     ['keydown', 'touchstart', 'mousedown'].forEach(function (ev) {
@@ -3190,7 +3083,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.43.0']
+      ['Versão do app', '1.44.0']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
@@ -3222,9 +3115,9 @@
     if (hasBg()) { page.appendChild(switchRow('Continuar tocando com a tela bloqueada', 'O áudio segue tocando ao bloquear o celular ou sair do app (aparece uma notificação enquanto toca).', 'bgplay')); }
     if (isTvDevice()) { wideOn(); page.appendChild(switchRow('Card ampliado ao parar o foco', 'Na TV, o filme/série em foco nas fileiras da Início vira um cartão largo com imagem, nota e sinopse (a prévia de vídeo toca nele, se ligada).', 'widecard')); }
     pvOn();
-    page.appendChild(switchRow('Prévia de vídeo (experimental)', 'Toca um trecho mudo do filme/série no banner e nos cards depois de alguns segundos parado. Pode não funcionar em algumas TVs, usa uma conexão do provedor e deixa o app mais pesado.', 'heropv'));
+    page.appendChild(switchRow('Trailer na prévia', 'Depois de alguns segundos parado no banner ou num card, toca o trailer (YouTube, pelo provedor ou pelo TMDB), mudo.', 'heropv'));
     if (opt('heropv')) [
-      'Diagnóstico da prévia — foco em filmes/séries: ' + PD.foco + ' · agendadas: ' + PD.agendadas + ' · iniciadas: ' + PD.iniciadas + ' · tocando: ' + PD.tocando + (PD.bloqueio ? ' · bloqueio: ' + PD.bloqueio : ''),
+      'Diagnóstico do trailer — foco em filmes/séries: ' + PD.foco + ' · agendadas: ' + PD.agendadas + ' · iniciadas: ' + PD.iniciadas + ' · tocando: ' + PD.tocando + (PD.bloqueio ? ' · bloqueio: ' + PD.bloqueio : ''),
       PD.falha ? 'Última falha: ' + PD.falha : '',
       PD.ultima ? 'Interrompida: ' + PD.ultima : ''
     ].forEach(function (t) { if (t) { page.appendChild(h('div', { cls: 'swd', style: 'margin:-6px 40px 10px 4px;white-space:normal;word-break:break-word;max-width:1500px', text: t })); } });
@@ -3232,8 +3125,6 @@
     page.appendChild(switchRow('Ocultar canais HD', 'Esconde da lista os canais com "HD" no nome (FHD e 4K continuam).', 'hideHD'));
     camOn();
     page.appendChild(switchRow('Ocultar filmes de cinema (gravação)', 'Esconde filmes de categoria/etiqueta Cinema ou CAM, que são gravações de sala com qualidade baixa.', 'hideCam'));
-    trailerOn();
-    page.appendChild(switchRow('Usar o trailer na prévia', 'Toca o trailer do YouTube (pelo campo do provedor ou pelo TMDB) no banner e no card largo, em vez de um trecho do filme. Sem trailer ou se o YouTube não tocar, usa o filme como antes.', 'pvtrailer'));
 
     page.appendChild(sgroup('Recomendações'));
     page.appendChild(tmdbBlock());

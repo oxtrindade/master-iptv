@@ -113,10 +113,10 @@ Promise.all([listen(api), listen(px), startSync()]).then(function () {
       assert.ok(/Filme Teste/.test($('.herotitle').textContent), 'banner mostra um destaque do catálogo');
       assert.ok($('.herobtns .btn.primary') && /Assistir/.test($('.herobtns .btn.primary').textContent) && $('.herobtns .btn:not(.primary)'), 'banner com Assistir e Mais informações');
       step('home: banner de destaque');
-      return waitFor(function () { var v = $('.herovid'); return v && v.getAttribute('src'); }, 'prévia muda do banner');
+      return waitFor(function () { var v = $('.herovid.ytv'); return v && v.getAttribute('src'); }, 'trailer no banner');
     }).then(function () {
-      assert.ok(/^http/.test($('.herovid').getAttribute('src')) && $('.herovid').muted, 'prévia começa muda após ~4 s parado no banner');
-      step('banner: prévia muda após alguns segundos');
+      assert.ok(/(youtube\.com\/embed\/|\/yt\?t=tok&id=)(dQw4w9WgXcQ|abcdefghijk)/.test($('.herovid').getAttribute('src')), 'trailer (página do player via proxy local) começa após ~4 s parado no banner: ' + $('.herovid').getAttribute('src'));
+      step('banner: trailer mudo após alguns segundos');
     }).then(function () {
       assert.ok(!$('.side'), 'sem barra lateral');
       assert.ok(!$('.hub-links') && !$$('.hub-links .btn').length, 'sem botões de atalho embaixo (Buscar/Configurações vão no topo)');
@@ -248,10 +248,10 @@ Promise.all([listen(api), listen(px), startSync()]).then(function () {
     }).then(function () {
       var cd = $$('.card')[0];
       w.Nav.focus(cd);
-      return waitFor(function () { return cd.querySelector('.cardvid') && cd.querySelector('.cardvid').getAttribute('src'); }, 'prévia no card').then(function () {
+      return waitFor(function () { return cd.querySelector('.cardvid.ytv') && cd.querySelector('.cardvid.ytv').getAttribute('src'); }, 'trailer no card').then(function () {
         w.Nav.focus($$('.f').filter(function (x) { return x !== cd; })[0]);
         return waitFor(function () { return !cd.querySelector('.cardvid'); }, 'prévia do card para ao mover o foco');
-      }).then(function () { step('card: prévia muda ao segurar o foco, para ao sair'); });
+      }).then(function () { step('card: trailer ao segurar o foco, para ao sair'); });
     }).then(function () {
       // TMDB simulado: elenco do filme e filmografia do ator
       w.localStorage.setItem('iptv.tmdbkey', JSON.stringify('k'));
@@ -432,7 +432,7 @@ Promise.all([listen(api), listen(px), startSync()]).then(function () {
       assert.ok(/127\.0\.0\.1/.test(txt) && /joao/.test(txt));
       var ver = require('../app/appinfo.json').version;
       assert.ok(txt.indexOf('Versão do app') >= 0 && txt.indexOf(ver) >= 0, 'versão do app em Configurações deve ser a do appinfo.json (' + ver + ')');
-      assert.strictEqual($$('.swrow').length, 6, 'seis chaves');
+      assert.strictEqual($$('.swrow').length, 5, 'cinco chaves');
       step('configurações');
       // ocultar SD / HD: a categoria "Filmes e séries 24h" tem Cine HD, Cine SD e Cine FHD
       $$('.swrow')[2].click(); // SD

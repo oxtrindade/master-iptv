@@ -159,7 +159,17 @@ t('Proxy: troca de User-Agent e erro detalhado', function () {
     new Promise(function (r) { srv.listen(0, '127.0.0.1', r); })
   ]).then(function () {
     var root = 'http://127.0.0.1:' + srv.address().port + '/?t=k&u=';
-    return get(root + encodeURIComponent('http://127.0.0.1:' + picky.address().port + '/')).then(function (r) {
+    return get('http://127.0.0.1:' + srv.address().port + '/yt?t=k&id=dQw4w9WgXcQ').then(function (r) {
+      assert.strictEqual(r.status, 200);
+      assert.ok(/youtube\.com\/embed\/dQw4w9WgXcQ/.test(r.body) && /origin=http/.test(r.body), 'página do trailer com origem http');
+      return get('http://127.0.0.1:' + srv.address().port + '/yt?t=k&id=../x');
+    }).then(function (r) {
+      assert.strictEqual(r.status, 400, 'id inválido recusado');
+      return get('http://127.0.0.1:' + srv.address().port + '/yt?t=errado&id=dQw4w9WgXcQ');
+    }).then(function (r) {
+      assert.strictEqual(r.status, 403, 'sem token: recusado');
+      return get(root + encodeURIComponent('http://127.0.0.1:' + picky.address().port + '/'));
+    }).then(function (r) {
       assert.strictEqual(r.status, 200);
       assert.strictEqual(r.body, 'ola', 'segunda tentativa (okhttp) deve funcionar');
       var dead = picky.address().port; picky.close();

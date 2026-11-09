@@ -29,6 +29,17 @@ var IDLE_TIMEOUT = 60000;
 
 function codeErr(code) { var e = new Error(code); e.code = code; return e; }
 
+/* página mínima com o player do YouTube: dá ao embed uma origem http (evita o erro 153) e repassa os eventos ao app */
+function ytPage(id, host) {
+  var src = 'https://www.youtube.com/embed/' + id + '?autoplay=1&mute=1&controls=0&disablekb=1&fs=0&modestbranding=1&rel=0&playsinline=1&iv_load_policy=3&loop=1&playlist=' + id +
+    '&enablejsapi=1&origin=' + encodeURIComponent('http://' + host) + '&widget_referrer=' + encodeURIComponent('http://' + host + '/');
+  return '<!doctype html><html><head><meta charset="utf-8"><meta name="referrer" content="strict-origin-when-cross-origin"></head>' +
+    '<body style="margin:0;background:#000;overflow:hidden"><iframe id="f" style="border:0;width:100%;height:100%" allow="autoplay; encrypted-media" referrerpolicy="strict-origin-when-cross-origin" src="' + src + '"></iframe>' +
+    '<script>var f=document.getElementById("f");' +
+    'window.addEventListener("message",function(e){if(e.source===f.contentWindow){parent.postMessage(e.data,"*");}});' +
+    'f.onload=function(){try{f.contentWindow.postMessage(JSON.stringify({event:"listening",id:1,channel:"widget"}),"*");}catch(x){}};</script></body></html>';
+}
+
 function create(token) {
   function attempt(target, hops, ua, family, res, onFail, setCur) {
     var u = urlLib.parse(target);
@@ -97,8 +108,13 @@ function create(token) {
 
   return http.createServer(function (req, res) {
     if (req.method === 'OPTIONS') { res.writeHead(204, CORS); return res.end(); }
-    var q = urlLib.parse(req.url, true).query;
+    var pu = urlLib.parse(req.url, true), q = pu.query;
     if (q.t !== token) { res.writeHead(403, CORS); return res.end('forbidden'); }
+    if (pu.pathname === '/yt') {
+      if (!/^[\w-]{11}$/.test(q.id || '')) { res.writeHead(400, CORS); return res.end('bad id'); }
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
+      return res.end(ytPage(q.id, req.headers.host || '127.0.0.1'));
+    }
     if (!/^https?:\/\//i.test(q.u || '')) { res.writeHead(400, CORS); return res.end('bad url'); }
     fetchFollow(q.u, res, q.ua === 'browser');
   });
