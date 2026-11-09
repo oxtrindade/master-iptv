@@ -960,3 +960,21 @@ body.portrait .aicon.art { width: 38px; height: 38px; margin: 2px; border-radius
 .widep { margin-top: 6px; font-size: 17px; line-height: 1.3; color: #dfe6f3; max-height: 44px; overflow: hidden; }
 .hlist > .card.wide .poster .ph { opacity: .35; }
 .hlist > .card.wide .title { visibility: hidden; }
+
+/* banner estilo Netflix (TV): cantos arredondados, margem nas laterais, botões branco / translúcido */
+.hero { margin: 10px 64px 18px; border-radius: 26px; height: 620px; box-shadow: 0 18px 50px rgba(0,0,0,.45); }
+.herofade { background: linear-gradient(90deg, rgba(8,13,24,.92) 0%, rgba(8,13,24,.6) 36%, rgba(8,13,24,0) 72%), linear-gradient(0deg, rgba(8,13,24,.75) 0%, rgba(8,13,24,0) 38%); }
+.herotxt { left: 70px; width: 48%; }
+.herotag { color: #fff; opacity: .85; font-size: 20px; letter-spacing: 4px; }
+.herotitle { font-size: 76px; text-shadow: 0 4px 24px rgba(0,0,0,.6); }
+.herometa { font-size: 26px; color: #e2e8f3; }
+.heroplot { font-size: 26px; color: #eef2f8; text-shadow: 0 2px 12px rgba(0,0,0,.7); }
+.herobtns .btn { border-radius: 40px; padding: 0 40px; font-weight: 700; background: rgba(255,255,255,.2); color: #fff; }
+.herobtns .btn.primary { background: #fff; color: #0c1220; }
+.herobtns .btn .ico { margin-right: 10px; }
+.herodots { right: 40px; bottom: 28px; }
+.herodot.on { background: #fff; }
+body.compact .hero { margin: 6px 28px 10px; border-radius: 16px; height: 290px; }
+body.compact .herotxt { left: 30px; }
+body.compact .herobtns .btn { padding: 0 22px; }
+body.portrait .hero { margin: 0 12px 8px; border-radius: 14px; height: 400px; box-shadow: none; }

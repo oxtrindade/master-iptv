@@ -181,3 +181,11 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 - Nas fileiras da Início (TV), ao parar o foco por ~0,6 s num filme/série o pôster vira um cartão 16:9 com a imagem de fundo, título, ano/nota/gênero e sinopse; os vizinhos se afastam e a fileira acompanha o foco.
 - A prévia muda passa a tocar nesse cartão maior (antes tocava no pôster pequeno).
 - Segue a mesma chave da prévia (Configurações): desligada, tudo volta ao comportamento anterior. Celular não muda.
+
+## 1.39.1 — Card largo com chave própria
+- O card largo (1.39.0) dependia da chave da prévia de vídeo, que vem desligada; na LG parecia que nada tinha mudado. Agora tem chave própria, **"Card ampliado ao parar o foco"** (Configurações, só na TV), ligada por padrão. A prévia de vídeo continua separada e só toca dentro do card se estiver ligada.
+
+## 1.40.0 — Banner estilo Netflix
+- Banner da Início com cantos arredondados, margem nas laterais e sombra; degradê mais suave à esquerda para a imagem aparecer mais.
+- Botões como na referência: **Assistir** branco e **Mais informações** translúcido, arredondados; indicador de destaque em branco.
+- Só visual (celular e TV compacta ajustados); nada muda no comportamento do banner nem da prévia.

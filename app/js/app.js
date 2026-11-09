@@ -2398,7 +2398,10 @@
   /* ---------- card largo (estilo Netflix): ao parar o foco numa fileira da TV, o pôster vira 16:9 e a prévia toca nele ---------- */
   var Wide = { el: null, t: null };
 
-  function wideOn() { return isTvDevice() && pvOn() && !document.body.classList.contains('portrait'); }
+  function wideOn() {
+    if (S.opts.widecard === undefined) { S.opts.widecard = true; store.set('opts', S.opts); }   // 1.39.1: chave própria, ligada por padrão
+    return isTvDevice() && S.opts.widecard && !document.body.classList.contains('portrait');
+  }
 
   function wideInfo(it, cb) {
     var key = it.type + ':' + it.id, c = heroInfo[key];
@@ -3040,7 +3043,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.39.0']
+      ['Versão do app', '1.40.0']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
@@ -3070,6 +3073,7 @@
     page.appendChild(homeStyleBlock());
     page.appendChild(switchRow('Reproduzir o último conteúdo ao abrir o app', 'Ao iniciar, retoma o último canal, filme ou episódio assistido.', 'autoplay'));
     if (hasBg()) { page.appendChild(switchRow('Continuar tocando com a tela bloqueada', 'O áudio segue tocando ao bloquear o celular ou sair do app (aparece uma notificação enquanto toca).', 'bgplay')); }
+    if (isTvDevice()) { wideOn(); page.appendChild(switchRow('Card ampliado ao parar o foco', 'Na TV, o filme/série em foco nas fileiras da Início vira um cartão largo com imagem, nota e sinopse (a prévia de vídeo toca nele, se ligada).', 'widecard')); }
     pvOn();
     page.appendChild(switchRow('Prévia de vídeo (experimental)', 'Toca um trecho mudo do filme/série no banner e nos cards depois de alguns segundos parado. Pode não funcionar em algumas TVs, usa uma conexão do provedor e deixa o app mais pesado.', 'heropv'));
     if (opt('heropv')) [
