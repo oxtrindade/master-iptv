@@ -978,3 +978,7 @@ body.compact .hero { margin: 6px 28px 10px; border-radius: 16px; height: 290px; 
 body.compact .herotxt { left: 30px; }
 body.compact .herobtns .btn { padding: 0 22px; }
 body.portrait .hero { margin: 0 12px 8px; border-radius: 14px; height: 400px; box-shadow: none; }
+
+/* 1.41.0: banner na altura da referência */
+.hero { height: 720px; margin: 8px 48px 16px; }
+body.compact .hero { height: 340px; }

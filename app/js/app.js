@@ -187,6 +187,43 @@
     });
   }
 
+  /* filmes "de cinema" (gravação de sala, qualidade baixa): categoria com "cinema"/CAM no nome ou etiqueta [CAM]/[Cinema]/HDCAM/HDTS no título */
+  var RE_CAMCAT = /cinema|(^|[^a-z0-9])(hd-?)?cam($|[^a-z0-9])|hd-?ts|tele-?sync/i;
+  var RE_CAMTAG = /[\[(]\s*(cinema|cam|hd-?cam|hd-?ts|ts|tc|tele-?sync)\s*[\])]|(^|[^a-z0-9])(hd-?cam|hd-?ts|tele-?sync)($|[^a-z0-9])|(^|\s)[-–|]\s*(cinema|cam)\s*$/i;
+  function camOn() {
+    if (S.opts.hideCam === undefined) { S.opts.hideCam = true; store.set('opts', S.opts); }
+    return !!S.opts.hideCam;
+  }
+  function camWrap(prov) {
+    var badCats = null;
+    function bad(section) {
+      if (section !== 'movie') { return Promise.resolve({}); }
+      if (badCats) { return Promise.resolve(badCats); }
+      return prov.categories('movie').then(function (cats) {
+        badCats = {};
+        cats.forEach(function (c) { if (RE_CAMCAT.test(c.name)) { badCats[c.id] = 1; } });
+        return badCats;
+      }, function () { return {}; });
+    }
+    function clean(section, items) {
+      if (section !== 'movie' || !camOn()) { return Promise.resolve(items); }
+      return bad(section).then(function (b) {
+        return items.filter(function (it) { return !b[it.cat] && !RE_CAMTAG.test(it.name || ''); });
+      });
+    }
+    var w = {}, k;
+    for (k in prov) { if (Object.prototype.hasOwnProperty.call(prov, k)) { w[k] = prov[k]; } }
+    w.categories = function (section) {
+      return prov.categories(section).then(function (cats) {
+        if (section !== 'movie' || !camOn()) { return cats; }
+        return cats.filter(function (c) { return !RE_CAMCAT.test(c.name); });
+      });
+    };
+    w.all = function (section) { return prov.all(section).then(function (l) { return clean(section, l); }); };
+    w.items = function (section, catId) { return prov.items(section, catId).then(function (l) { return clean(section, l); }); };
+    return w;
+  }
+
   function typeLabel(t) { return { live: 'CANAL', movie: 'FILME', series: 'SÉRIE' }[t] || ''; }
 
   function imgEl(src, parent) {
@@ -1431,7 +1468,7 @@
     loginAuto(cfg).then(function (r) {
       if (!r.info.ok) { throw new Error('Usuário ou senha inválidos (ou conta inativa).'); }
       cfg = r.cfg;
-      S.provider = r.prov; S.info = r.info;
+      S.provider = camWrap(r.prov); S.info = r.info;
       S.offline = false;
       S.cfg = cfg;
       store.set('cfg', cfg);
@@ -3043,7 +3080,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.40.0']
+      ['Versão do app', '1.41.0']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
@@ -3083,6 +3120,8 @@
     ].forEach(function (t) { if (t) { page.appendChild(h('div', { cls: 'swd', style: 'margin:-6px 40px 10px 4px;white-space:normal;word-break:break-word;max-width:1500px', text: t })); } });
     page.appendChild(switchRow('Ocultar canais SD', 'Esconde da lista os canais com "SD" no nome.', 'hideSD'));
     page.appendChild(switchRow('Ocultar canais HD', 'Esconde da lista os canais com "HD" no nome (FHD e 4K continuam).', 'hideHD'));
+    camOn();
+    page.appendChild(switchRow('Ocultar filmes de cinema (gravação)', 'Esconde filmes de categoria/etiqueta Cinema ou CAM, que são gravações de sala com qualidade baixa.', 'hideCam'));
 
     page.appendChild(sgroup('Recomendações'));
     page.appendChild(tmdbBlock());
