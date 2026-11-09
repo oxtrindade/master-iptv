@@ -117,6 +117,7 @@ Promise.all([listen(api), listen(px), startSync()]).then(function () {
     }).then(function () {
       assert.ok(/^http/.test($('.herovid').getAttribute('src')) && $('.herovid').muted, 'prévia começa muda após ~4 s parado no banner');
       step('banner: prévia muda após alguns segundos');
+    }).then(function () {
       assert.ok(!$('.side'), 'sem barra lateral');
       assert.ok(!$('.hub-links') && !$$('.hub-links .btn').length, 'sem botões de atalho embaixo (Buscar/Configurações vão no topo)');
       assert.ok(!$$('.hrow-title').some(function (t) { return t.textContent === 'Favoritos'; }), 'sem favoritos: a fileira não aparece');
@@ -405,6 +406,19 @@ Promise.all([listen(api), listen(px), startSync()]).then(function () {
       assert.ok(titles.indexOf('Favoritos') >= 0, 'com favoritos: fileira na home (' + titles.join(' | ') + ')');
       var row = $$('.hrow').filter(function (r) { return r.querySelector('.hrow-title').textContent === 'Favoritos'; })[0];
       assert.strictEqual(row.querySelectorAll('.card:not(.seeall)').length, 1, 'o favorito aparece na fileira');
+    }).then(function () {
+      var cd;
+      d.body.classList.add('tv');
+      cd = $$('.hrow .hlist > .card:not(.seeall)')[0];
+      cd.querySelector('.poster')._it = { type: 'movie', id: 1, name: 'Filme Teste', url: 'http://x/a.mp4' };   // o favorito do teste é um canal: finge um filme
+      w.Nav.focus(cd);
+      return waitFor(function () { return cd.classList.contains('wide') && cd.querySelector('.wideov'); }, 'card largo ao parar o foco').then(function () {
+        assert.ok(/Filme|Série/.test(cd.querySelector('.wideh').textContent), 'título no card largo');
+        w.Nav.focus($('.hubtab'));
+        return waitFor(function () { return !cd.classList.contains('wide') && !cd.querySelector('.wideov'); }, 'card volta ao normal ao sair');
+      }).then(function () { d.body.classList.remove('tv'); step('fileira (TV): card em foco vira largo e volta ao normal'); });
+    }).then(function () {
+      var row = $$('.hrow').filter(function (r) { return r.querySelector('.hrow-title').textContent === 'Favoritos'; })[0];
       assert.ok(row.querySelector('.card.seeall'), 'Ver todos no fim da fileira');
       assert.ok(!$('.hub-links'), 'continua sem botão de atalho');
       row.querySelector('.card.seeall').click();

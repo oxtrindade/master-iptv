@@ -2395,11 +2395,75 @@
     });
   }
 
+  /* ---------- card largo (estilo Netflix): ao parar o foco numa fileira da TV, o pôster vira 16:9 e a prévia toca nele ---------- */
+  var Wide = { el: null, t: null };
+
+  function wideOn() { return isTvDevice() && pvOn() && !document.body.classList.contains('portrait'); }
+
+  function wideInfo(it, cb) {
+    var key = it.type + ':' + it.id, c = heroInfo[key];
+    if (c && c.backdrop !== undefined && c.done) { cb(c); return; }
+    var p = it.type === 'movie' ? S.provider.movieInfo(it) : S.provider.episodes(it).then(function (r) {
+      var i = r.info || {}, b = i.backdrop_path;
+      b = Object.prototype.toString.call(b) === '[object Array]' ? b[0] : b;
+      return { plot: i.plot || '', genre: i.genre || '', year: String(i.releaseDate || '').slice(0, 4), backdrop: b || '' };
+    });
+    p.then(function (i) {
+      heroInfo[key] = { plot: i.plot || '', genre: i.genre || '', year: i.year || '', duration: i.duration || '', backdrop: i.backdrop || '', done: 1 };
+      cb(heroInfo[key]);
+    }, function () { heroInfo[key] = { plot: '', genre: '', year: '', duration: '', backdrop: '', done: 1 }; cb(heroInfo[key]); });
+  }
+
+  function wideEnsureVisible(el) {
+    var sc = el.parentNode;
+    if (!sc || !sc.classList.contains('scroll')) { return; }
+    var r = el.getBoundingClientRect(), p = sc.getBoundingClientRect(), k = (p.width / sc.offsetWidth) || 1;
+    if (r.right > p.right - 40) { sc.scrollLeft += (r.right - p.right + 40) / k; }
+    else if (r.left < p.left + 10) { sc.scrollLeft -= (p.left + 10 - r.left) / k; }
+  }
+
+  function wideEnd(next) {
+    clearTimeout(Wide.t);
+    var el = Wide.el;
+    if (!el) { return; }
+    Wide.el = null;
+    var sc = el.parentNode, before = el.offsetWidth;
+    el.classList.remove('wide');
+    var ov = el.querySelector('.wideov'); if (ov) { ov.parentNode.removeChild(ov); }
+    var po = el.querySelector('.poster'); if (po) { po.style.backgroundImage = ''; po.classList.remove('wbd'); }
+    // o card que encolheu estava à esquerda do novo foco: o conteúdo andou para a esquerda, então acompanha
+    if (sc && sc.classList && sc.classList.contains('scroll') && next && next.parentNode === sc && el.compareDocumentPosition(next) & 4) {
+      var d = before - el.offsetWidth;
+      if (d > 0) { sc.scrollLeft = Math.max(0, sc.scrollLeft - d); }
+    }
+  }
+
+  function wideStart(el, host, it) {
+    wideEnd(el);
+    Wide.t = setTimeout(function () {
+      if (Nav.current() !== el || S.mode !== 'browse' || !document.body.contains(el)) { return; }
+      Wide.el = el;
+      el.classList.add('wide');
+      var ov = h('div', { cls: 'wideov' }, [h('div', { cls: 'wideh', text: it.name }), h('div', { cls: 'widem' }), h('div', { cls: 'widep' })]);
+      host.appendChild(ov);
+      setTimeout(function () { if (Wide.el === el) { wideEnsureVisible(el); } }, 280);
+      wideInfo(it, function (inf) {
+        if (Wide.el !== el) { return; }
+        if (inf.backdrop) { host.style.backgroundImage = bgUrl(inf.backdrop); host.classList.add('wbd'); }
+        ov.querySelector('.widem').textContent = metaLine([inf.year || it.year, it.rating ? 'Nota ' + it.rating : '', inf.genre, inf.duration]);
+        ov.querySelector('.widep').textContent = inf.plot || it.plot || '';
+      });
+    }, 600);
+  }
+
   function pvFocus(el) {
     pvStopCard();
     var host = el.querySelector && el.querySelector('.poster, .thumb');
     var it = host && host._it;
+    var inRow = !!(el.parentNode && el.parentNode.classList && el.parentNode.classList.contains('hlist'));
+    if (Wide.el && Wide.el !== el) { wideEnd(el); } else if (!Wide.el) { clearTimeout(Wide.t); }
     if (!it || (it.type !== 'movie' && it.type !== 'series')) { return; }
+    if (inRow && el.classList.contains('card') && S.mode === 'browse' && S.provider && wideOn()) { wideStart(el, host, it); }
     PD.foco++;
     if (!pvOn()) { PD.bloqueio = 'chave desligada'; return; }
     if (S.mode !== 'browse') { PD.bloqueio = 'modo ' + S.mode; return; }
@@ -2976,7 +3040,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.38.1']
+      ['Versão do app', '1.39.0']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {

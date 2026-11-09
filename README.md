@@ -176,3 +176,8 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 
 ## 1.38.1 — Avatares de cachorros
 - Novo grupo **Cachorros** no editor de perfil, com 8 raças diferentes: Labrador, Husky, Dálmata, Pug, Beagle, Poodle, Shih Tzu e Vira-lata caramelo.
+
+## 1.39.0 — Card largo (estilo Netflix) na TV
+- Nas fileiras da Início (TV), ao parar o foco por ~0,6 s num filme/série o pôster vira um cartão 16:9 com a imagem de fundo, título, ano/nota/gênero e sinopse; os vizinhos se afastam e a fileira acompanha o foco.
+- A prévia muda passa a tocar nesse cartão maior (antes tocava no pôster pequeno).
+- Segue a mesma chave da prévia (Configurações): desligada, tudo volta ao comportamento anterior. Celular não muda.
