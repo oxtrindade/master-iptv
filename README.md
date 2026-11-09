@@ -197,3 +197,9 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 ## 1.42.0 — Cards maiores e prévia que não desiste na LG
 - Cards (pôsteres) ~28% maiores na TV, e o card largo ao parar o foco passa a 700 px.
 - Prévia: na LG o diagnóstico mostrava `loadedmetadata@3.2 … canplay rs4` e "play recusado AbortError" — o play() era cancelado quando os metadados chegavam (o provedor leva ~3 s) e o vídeo ficava pronto, porém parado. Agora o app não desiste no AbortError e chama play() de novo em loadedmetadata/canplay/loadeddata (até 3 vezes por vídeo), no card e no banner.
+
+## 1.43.0 — Trailer na prévia
+- Nova chave **"Usar o trailer na prévia"** (Configurações, ligada por padrão; só tem efeito com a prévia de vídeo ligada).
+- O trailer vem do campo `youtube_trailer` do provedor ou, se não houver, do TMDB (precisa da chave do TMDB, a mesma das recomendações). Toca pelo player incorporado do YouTube, mudo e sem controles, cortado para preencher: no **banner** e no **card largo**.
+- Se não houver trailer, o YouTube recusar ou não começar em 9 s, volta sozinho ao trecho do filme (como antes), e esse título passa a pular o trailer. Nos pôsteres estreitos das listas em grade continua o trecho do filme.
+- Experimental na LG (Chromium 68): o diagnóstico em Configurações mostra "trailer … não iniciou" quando falha.

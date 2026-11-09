@@ -339,6 +339,7 @@
             genre: i.genre || '',
             year: String(i.releasedate || i.release_date || '').slice(0, 4),
             duration: i.duration || '',
+            trailer: i.youtube_trailer || '',
             cast: i.cast || i.actors || '',
             director: i.director || '',
             backdrop: toList(bd).length ? bd[0] : (typeof bd === 'string' ? bd : '')

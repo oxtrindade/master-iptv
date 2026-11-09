@@ -2410,9 +2410,66 @@
     v.addEventListener('loadeddata', kick);
   }
 
+  /* ---------- trailer (YouTube embed) no lugar do arquivo do filme ---------- */
+  var TR = {};
+  function trailerOn() {
+    if (S.opts.pvtrailer === undefined) { S.opts.pvtrailer = true; store.set('opts', S.opts); }
+    return !!S.opts.pvtrailer;
+  }
+  function ytId(v) {
+    v = String(v || '');
+    var m = v.match(/(?:[?&]v=|youtu\.be\/|embed\/)([\w-]{11})/);
+    if (m) { return m[1]; }
+    return /^[\w-]{11}$/.test(v) ? v : '';
+  }
+  /* promessa com a chave do vídeo no YouTube ('' se não achar): primeiro o campo do provedor, depois o TMDB */
+  function trailerFor(it) {
+    var k = it.type + ':' + it.id;
+    if (TR[k]) { return TR[k]; }
+    var p = (it.type === 'movie'
+      ? S.provider.movieInfo(it).then(function (i) { return i.trailer || ''; })
+      : S.provider.episodes(it).then(function (r) { return (r.info && r.info.youtube_trailer) || ''; })
+    ).then(ytId, function () { return ''; });
+    p = p.then(function (id) {
+      if (id) { return id; }
+      var key = tmdbKey();
+      if (!key) { return ''; }
+      var kind = it.type === 'movie' ? 'movie' : 'tv';
+      return Tmdb.findId(kind, it.name, Tmdb.yearOf(it.name) || parseInt(it.year, 10) || 0, key).then(function (tid) {
+        return tid ? Tmdb.trailer(kind, tid, key) : '';
+      }).then(null, function () { return ''; });
+    });
+    TR[k] = p;
+    return p;
+  }
+  /* player incorporado, mudo, sem controles, cortado para cobrir o espaço (host). cb: {play, fail(why)} */
+  function ytEmbed(host, id, cb) {
+    var f = document.createElement('iframe'), done = false;
+    f.className = 'cardvid ytv';
+    f.setAttribute('frameborder', '0');
+    f.setAttribute('allow', 'autoplay; encrypted-media');
+    f.setAttribute('tabindex', '-1');
+    var w = host.offsetWidth || 700, hh = host.offsetHeight || 394, fh = Math.round(w * 9 / 16), fw = w;
+    if (fh < hh) { fh = hh; fw = Math.round(hh * 16 / 9); }
+    f.style.cssText = 'left:50%;top:50%;width:' + fw + 'px;height:' + fh + 'px;margin-left:-' + Math.round(fw / 2) + 'px;margin-top:-' + Math.round(fh / 2) + 'px;border:0';
+    f.src = 'https://www.youtube.com/embed/' + id + '?autoplay=1&mute=1&controls=0&disablekb=1&fs=0&modestbranding=1&rel=0&playsinline=1&iv_load_policy=3&loop=1&playlist=' + id + '&enablejsapi=1';
+    function onMsg(e) {
+      if (e.source !== f.contentWindow || typeof e.data !== 'string') { return; }
+      var d; try { d = JSON.parse(e.data); } catch (x) { return; }
+      var st = d.event === 'onStateChange' ? d.info : (d.event === 'infoDelivery' && d.info ? d.info.playerState : null);
+      if (st === 1 && !done) { done = true; cb.play(); }
+      if (d.event === 'onError') { cb.fail('erro do YouTube ' + d.info); }
+    }
+    window.addEventListener('message', onMsg);
+    f.onload = function () { try { f.contentWindow.postMessage(JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }), '*'); } catch (x) {} };
+    host.appendChild(f);
+    return { el: f, off: function () { window.removeEventListener('message', onMsg); if (f.parentNode) { f.parentNode.removeChild(f); } } };
+  }
+
   function pvStopCard() {
     clearTimeout(Prev.t); clearTimeout(Prev.stopT); clearInterval(Prev.guard);
     var v = Prev.vid;
+    if (Prev.yt) { Prev.yt.off(); Prev.yt = null; if (Prev.host) { Prev.host.classList.remove('pv'); } v = null; }
     if (v && Prev.tr && Prev.host && !Prev.host.classList.contains('pv') && Prev.tr.age() > 3000) { PD.ultima = 'card interrompido (' + Prev.nm + ') ' + Prev.tr(); }
     if (v) {
       v.onerror = v.onplaying = v.onloadedmetadata = null;
@@ -2557,12 +2614,33 @@
       }, 700);
       setTimeout(function () { if (Prev.vid === v) { pvStopCard(); } }, 45000);
     };
-    if (en && en.ep && en.ep.url) { go(en.ep.url); return; }
-    if (it.type === 'movie') { go(it.url); return; }
-    S.provider.episodes(it).then(function (r) {
-      var ss = (r && r.seasons) || [], e = ss[0] && ss[0].episodes && ss[0].episodes[0];
-      go(e && e.url);
-    }, function () { fail('sem resposta do servidor'); });
+    var fileStart = function () {
+      if (en && en.ep && en.ep.url) { go(en.ep.url); return; }
+      if (it.type === 'movie') { go(it.url); return; }
+      S.provider.episodes(it).then(function (r) {
+        var ss = (r && r.seasons) || [], e = ss[0] && ss[0].episodes && ss[0].episodes[0];
+        go(e && e.url);
+      }, function () { fail('sem resposta do servidor'); });
+    };
+    // card largo (16:9): tenta o trailer; sem trailer ou se o YouTube não tocar, cai no arquivo do filme
+    if (trailerOn() && host.offsetWidth > host.offsetHeight * 1.3 && !(en && en.ep)) {
+      PD.iniciadas--; 
+      trailerFor(it).then(function (id) {
+        if (Prev.host || S.mode !== 'browse' || !document.body.contains(host) || !host.classList.contains('poster') || !Nav.current() || !Nav.current().contains(host)) { return; }
+        if (!id) { fileStart(); return; }
+        PD.iniciadas++;
+        var tfail = function (why) { TR[it.type + ':' + it.id] = Promise.resolve(''); PD.falha = 'trailer ' + it.name + ': ' + why; pvStopCard(); fileStart(); };
+        var yt = ytEmbed(host, id, { play: function () { host.classList.add('pv'); PD.tocando++; }, fail: tfail });
+        Prev.yt = yt; Prev.vid = yt.el; Prev.host = host; Prev.tr = null; Prev.nm = it.name;
+        Prev.stopT = setTimeout(function () { if (Prev.yt === yt && !host.classList.contains('pv')) { tfail('não iniciou em 9 s'); } }, 9000);
+        Prev.guard = setInterval(function () {
+          if (S.mode !== 'browse' || S.mini || document.hidden || !document.body.contains(host)) { pvStopCard(); }
+        }, 700);
+        setTimeout(function () { if (Prev.yt === yt) { pvStopCard(); } }, 90000);
+      }, function () { fileStart(); });
+      return;
+    }
+    fileStart();
   }
 
   /* ---------- banner de destaque (Início) ---------- */
@@ -2627,6 +2705,7 @@
     function pvAlive() { return hero.parentNode && document.body.contains(hero) && token === S.homeToken; }
     function pvEnd() {
       clearTimeout(pvStop);
+      if (hero._yt) { hero._yt.off(); hero._yt = null; }
       if (vid._tr && vid.getAttribute('src') && !hero.classList.contains('pv') && vid._tr.age() > 3000) { PD.ultima = 'banner interrompido ' + vid._tr(); }
       vid._gen = (vid._gen || 0) + 1;
       hero.classList.remove('pv');
@@ -2664,11 +2743,25 @@
         clearTimeout(pvStop);
         pvStop = setTimeout(function () { if (!hero.classList.contains('pv')) { fail('não iniciou em 20 s'); } else { pvEnd(); } }, 30000);
       };
-      if (sl.it.type === 'movie') { go(sl.it.url); return; }
-      S.provider.episodes(sl.it).then(function (r) {
-        var ss = (r && r.seasons) || [], e = ss[0] && ss[0].episodes && ss[0].episodes[0];
-        go(e && e.url);
-      }, function () { pvBad[key] = 1; });
+      var legacy = function () {
+        if (sl.it.type === 'movie') { go(sl.it.url); return; }
+        S.provider.episodes(sl.it).then(function (r) {
+          var ss = (r && r.seasons) || [], e = ss[0] && ss[0].episodes && ss[0].episodes[0];
+          go(e && e.url);
+        }, function () { pvBad[key] = 1; });
+      };
+      if (!trailerOn()) { legacy(); return; }
+      trailerFor(sl.it).then(function (id) {
+        if (!pvAlive() || slides[cur] !== sl || S.mode !== 'browse' || hero._yt) { return; }
+        if (!id) { legacy(); return; }
+        var tfail = function (why) { TR[key] = Promise.resolve(''); PD.falha = 'trailer ' + sl.it.name + ': ' + why; pvEnd(); legacy(); };
+        var yt = ytEmbed(hero, id, { play: function () { hero.classList.add('pv'); PD.tocando++; }, fail: tfail });
+        yt.el.className = 'herovid ytv';
+        hero._yt = yt;
+        hero.insertBefore(yt.el, hero.querySelector('.herofade'));
+        clearTimeout(pvStop);
+        pvStop = setTimeout(function () { if (hero._yt === yt && !hero.classList.contains('pv')) { tfail('não iniciou em 9 s'); } else if (hero._yt === yt) { pvEnd(); } }, 90000);
+      }, function () { legacy(); });
     }
     function pvIdle() { pvEnd(); pvSchedule(); }
     ['keydown', 'touchstart', 'mousedown'].forEach(function (ev) {
@@ -3097,7 +3190,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.42.0']
+      ['Versão do app', '1.43.0']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
@@ -3139,6 +3232,8 @@
     page.appendChild(switchRow('Ocultar canais HD', 'Esconde da lista os canais com "HD" no nome (FHD e 4K continuam).', 'hideHD'));
     camOn();
     page.appendChild(switchRow('Ocultar filmes de cinema (gravação)', 'Esconde filmes de categoria/etiqueta Cinema ou CAM, que são gravações de sala com qualidade baixa.', 'hideCam'));
+    trailerOn();
+    page.appendChild(switchRow('Usar o trailer na prévia', 'Toca o trailer do YouTube (pelo campo do provedor ou pelo TMDB) no banner e no card largo, em vez de um trecho do filme. Sem trailer ou se o YouTube não tocar, usa o filme como antes.', 'pvtrailer'));
 
     page.appendChild(sgroup('Recomendações'));
     page.appendChild(tmdbBlock());
