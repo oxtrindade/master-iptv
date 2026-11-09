@@ -162,6 +162,7 @@
   function metaLine(parts) { return parts.filter(function (x) { return x; }).join('  ·  '); }
   function opt(k) { return !!S.opts[k]; }
   function pvOn() {
+    if (S.opts.pvsound === undefined) { S.opts.pvsound = true; store.set('opts', S.opts); }
     if (window.__pvTest) { return true; }
     if (S.opts.pvv !== 3) { S.opts.pvv = 3; S.opts.heropv = true; store.set('opts', S.opts); }   // 1.44.0: prévia = trailer, ligada por padrão
     return !!S.opts.heropv;
@@ -2435,14 +2436,25 @@
     if (fh < hh) { fh = hh; fw = Math.round(hh * 16 / 9); }
     f.style.cssText = 'left:50%;top:50%;width:' + fw + 'px;height:' + fh + 'px;margin-left:-' + Math.round(fw / 2) + 'px;margin-top:-' + Math.round(fh / 2) + 'px;border:0';
     var direct = 'https://www.youtube.com/embed/' + id + '?autoplay=1&mute=1&controls=0&disablekb=1&fs=0&modestbranding=1&rel=0&playsinline=1&iv_load_policy=3&loop=1&playlist=' + id + '&enablejsapi=1';
+    function cmd(fn, args) { try { f.contentWindow.postMessage(JSON.stringify({ event: 'command', func: fn, args: args || [] }), '*'); } catch (x) {} }
+    var last = null, sndT = null, wantSound = S.opts.pvsound !== false && !S.pvNoSound;
     function onMsg(e) {
       if (e.source !== f.contentWindow || typeof e.data !== 'string') { return; }
       var d; try { d = JSON.parse(e.data); } catch (x) { return; }
       var st = d.event === 'onStateChange' ? d.info : (d.event === 'infoDelivery' && d.info ? d.info.playerState : null);
-      if (st === 1 && !done) { done = true; cb.play(); }
+      if (st !== null && st !== undefined) { last = st; }
+      if (st === 1 && !done) {
+        done = true; cb.play();
+        if (wantSound) {
+          // começa mudo (sempre permitido); liga o som e confere: se o aparelho travar o vídeo por causa do som, volta ao mudo
+          cmd('unMute'); cmd('setVolume', [70]);
+          sndT = setTimeout(function () { if (last !== 1 && !dead) { S.pvNoSound = true; cmd('mute'); cmd('playVideo'); } }, 1800);
+        }
+      }
       if (d.event === 'onError') { cb.fail('erro do YouTube ' + d.info); }
     }
     window.addEventListener('message', onMsg);
+    f.onload = function () { try { f.contentWindow.postMessage(JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }), '*'); } catch (x) {} };
     host.appendChild(f);
     /* o YouTube recusa (erro 153) quem embute sem endereço de origem; o app abre de file://, então na LG a página
        do player vem do proxy local (http://127.0.0.1), que dá uma origem válida */
@@ -2450,7 +2462,7 @@
       startProxy().then(function (p) { if (!dead) { f.src = 'http://127.0.0.1:' + p.port + '/yt?t=' + p.token + '&id=' + id; } },
         function () { if (!dead) { f.src = direct; } });
     } else { f.src = direct; }
-    return { el: f, off: function () { dead = true; window.removeEventListener('message', onMsg); if (f.parentNode) { f.parentNode.removeChild(f); } } };
+    return { el: f, off: function () { dead = true; clearTimeout(sndT); window.removeEventListener('message', onMsg); if (f.parentNode) { f.parentNode.removeChild(f); } } };
   }
 
   function pvStopCard() {
@@ -3083,7 +3095,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.44.0']
+      ['Versão do app', '1.44.1']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
@@ -3125,6 +3137,7 @@
     page.appendChild(switchRow('Ocultar canais HD', 'Esconde da lista os canais com "HD" no nome (FHD e 4K continuam).', 'hideHD'));
     camOn();
     page.appendChild(switchRow('Ocultar filmes de cinema (gravação)', 'Esconde filmes de categoria/etiqueta Cinema ou CAM, que são gravações de sala com qualidade baixa.', 'hideCam'));
+    page.appendChild(switchRow('Som no trailer', 'Toca o trailer com som. Se a TV não permitir som automático, volta sozinho ao mudo.', 'pvsound'));
 
     page.appendChild(sgroup('Recomendações'));
     page.appendChild(tmdbBlock());

@@ -208,3 +208,7 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 - A prévia deixou de ser "experimental" e **não toca mais um trecho do filme**: só o trailer (campo `youtube_trailer` do provedor, senão TMDB). A chave virou **"Trailer na prévia"** e vem ligada para todos. Sem trailer, nada toca.
 - Erro **153** ("erro de configuração do player"): o YouTube recusa embed sem endereço de origem, e o app abre de `file://`. Na LG a página do player agora vem do proxy local (`http://127.0.0.1:porta/yt?t=…&id=…`), que dá uma origem http válida e repassa os eventos ao app. Fora da LG usa o embed direto.
 - Trailer também nos pôsteres estreitos (cortado para preencher); banner e card largo como antes. Falhas aparecem no diagnóstico em Configurações.
+
+## 1.44.1 — Trailer em tela cheia no card e com som
+- Corrigido o trailer "minúsculo": a página do player no proxy não tinha altura (o iframe ficava com 150 px e o vídeo em tarja no meio). Agora ocupa 100% do card/banner, cortado para preencher.
+- Nova chave **"Som no trailer"** (ligada por padrão): o trailer começa mudo (sempre permitido) e o app liga o som assim que toca; se o aparelho travar o vídeo por causa do som, volta ao mudo sozinho e não tenta de novo nessa sessão.

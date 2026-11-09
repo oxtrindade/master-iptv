@@ -33,10 +33,13 @@ function codeErr(code) { var e = new Error(code); e.code = code; return e; }
 function ytPage(id, host) {
   var src = 'https://www.youtube.com/embed/' + id + '?autoplay=1&mute=1&controls=0&disablekb=1&fs=0&modestbranding=1&rel=0&playsinline=1&iv_load_policy=3&loop=1&playlist=' + id +
     '&enablejsapi=1&origin=' + encodeURIComponent('http://' + host) + '&widget_referrer=' + encodeURIComponent('http://' + host + '/');
-  return '<!doctype html><html><head><meta charset="utf-8"><meta name="referrer" content="strict-origin-when-cross-origin"></head>' +
-    '<body style="margin:0;background:#000;overflow:hidden"><iframe id="f" style="border:0;width:100%;height:100%" allow="autoplay; encrypted-media" referrerpolicy="strict-origin-when-cross-origin" src="' + src + '"></iframe>' +
+  return '<!doctype html><html><head><meta charset="utf-8"><meta name="referrer" content="strict-origin-when-cross-origin">' +
+    '<style>html,body{margin:0;width:100%;height:100%;background:#000;overflow:hidden}iframe{position:absolute;left:0;top:0;width:100%;height:100%;border:0}</style></head>' +
+    '<body><iframe id="f" allow="autoplay; encrypted-media" referrerpolicy="strict-origin-when-cross-origin" src="' + src + '"></iframe>' +
     '<script>var f=document.getElementById("f");' +
-    'window.addEventListener("message",function(e){if(e.source===f.contentWindow){parent.postMessage(e.data,"*");}});' +
+    'window.addEventListener("message",function(e){' +
+    'if(e.source===f.contentWindow){parent.postMessage(e.data,"*");}' +
+    'else if(e.source===parent&&typeof e.data==="string"&&e.data.indexOf("\\"command\\"")>0){try{f.contentWindow.postMessage(e.data,"*");}catch(x){}}});' +
     'f.onload=function(){try{f.contentWindow.postMessage(JSON.stringify({event:"listening",id:1,channel:"widget"}),"*");}catch(x){}};</script></body></html>';
 }
 
