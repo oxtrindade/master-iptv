@@ -222,6 +222,21 @@
 
   function typeLabel(t) { return { live: 'CANAL', movie: 'FILME', series: 'SÉRIE' }[t] || ''; }
 
+  /* imagens só carregam perto da tela (a TV ficava pesada baixando/decodificando centenas de capas de uma vez) */
+  var imgIO = null;
+  function lazyImg(img, src) {
+    if (!window.IntersectionObserver) { img.src = src; return; }
+    if (!imgIO) {
+      imgIO = new IntersectionObserver(function (es) {
+        es.forEach(function (e) {
+          if (e.isIntersecting || e.intersectionRatio > 0) { imgIO.unobserve(e.target); e.target.src = e.target._src; }
+        });
+      }, { rootMargin: '900px 500px' });
+    }
+    img._src = src;
+    imgIO.observe(img);
+  }
+
   function imgEl(src, parent) {
     var img = document.createElement('img');
     img.onerror = function () { if (img.parentNode) { img.parentNode.removeChild(img); } };
@@ -230,8 +245,9 @@
       var p = img.parentNode, ph = p && p.querySelector('.ph');
       if (ph) { p.removeChild(ph); }
     };
-    img.src = src;
+    img.decoding = 'async';
     parent.appendChild(img);
+    lazyImg(img, src);
   }
 
   function updateClock() {
@@ -1624,6 +1640,7 @@
     if (sec === 'search') { S.searchSec = /^(live|movie|series)$/.test(opts.backTo || '') ? opts.backTo : null; }
     S.loadToken++;
     S.homeToken++;
+    if (imgIO) { imgIO.disconnect(); }
     S.mainEl.className = 'main sec-' + sec;
     renderHead(sec);
     S.pageEl.innerHTML = '';
@@ -1701,7 +1718,7 @@
       if (!arr || arr.length < 4 || isAdultCat(c.name)) { return; }
       var seen = {}, top = [];
       arr = arr.slice().sort(function (a, b) { return (b.added || 0) - (a.added || 0) || (b.rating || 0) - (a.rating || 0); });
-      arr.forEach(function (it) { var k = Tmdb.norm(it.name); if (!seen[k] && top.length < 20) { seen[k] = 1; top.push(it); } });
+      arr.forEach(function (it) { var k = Tmdb.norm(it.name); if (!seen[k] && top.length < 16) { seen[k] = 1; top.push(it); } });
       if (top.length >= 4) { out.push({ id: c.id, title: genreTitle(c.name, sec), rank: genreRank(c.name), idx: idx, n: arr.length, items: top }); }
     });
     out.sort(function (a, b) { return a.rank - b.rank || a.idx - b.idx; });
@@ -1736,16 +1753,22 @@
       loading(false);
       var gr = genreRows(sec, r[0], r[1]), i = 0;
       if (!gr.length) { selectSection(sec, { backTo: S.backTo, classic: true }); return; }
-      (function next() {
+      // monta 4 fileiras e o resto conforme a rolagem (menos elementos na tela = TV mais leve)
+      function next(cnt) {
         if (token !== S.homeToken || !holder.parentNode) { return; }
         var n = 0;
-        while (i < gr.length && n < 3) {
+        while (i < gr.length && n < cnt) {
           var g = gr[i++];
           holder.appendChild(makeRow(g.title, g.items.map(function (it) { return posterCard(it, g.items); }).concat([genreSeeAll(sec, g)])));
           n++;
         }
-        if (i < gr.length) { setTimeout(next, 60); }
-      })();
+      }
+      next(4);
+      page.onscroll = function () {
+        if (token !== S.homeToken) { page.onscroll = null; return; }
+        if (i >= gr.length) { page.onscroll = null; return; }
+        if (page.scrollTop + page.clientHeight > page.scrollHeight - 1400) { next(2); }
+      };
     }, function (e) {
       if (token !== S.homeToken) { return; }
       loading(false);
@@ -3242,7 +3265,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.50.0']
+      ['Versão do app', '1.50.1']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {

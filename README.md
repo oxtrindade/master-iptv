@@ -252,3 +252,7 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 
 ## 1.50.0 — Cards 25% maiores
 - Todos os cards (pôsteres, Continuar assistindo, card largo, Ver todos) ficaram ~25% maiores na TV, no Android TV e no celular, para ficar mais próximo da Netflix.
+
+## 1.50.1 — App mais leve
+- Capas só carregam quando estão perto da tela (antes a Início/Filmes/Séries baixavam e decodificavam centenas de imagens de uma vez).
+- Filmes/Séries por gênero montam 4 fileiras e o resto conforme a rolagem; fileiras com até 16 títulos + "Ver todos".
