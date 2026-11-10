@@ -32,7 +32,7 @@ function create() {
         case 'get_vod_info': return json({ info: { plot: 'Um filme de teste.', genre: 'Ação', releasedate: '2020-05-01', duration: '01:40:00', youtube_trailer: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' } });
         case 'get_series_categories': return json([{ category_id: '20', category_name: 'Drama' }]);
         case 'get_series':
-          return json([{ series_id: 900, name: 'Série Teste', cover: '', category_id: '20', rating_5based: 4, releaseDate: '2019-01-01', plot: 'Sobre testes.' }]);
+          return json([{ series_id: 900, name: 'Série Teste', cover: 'http://127.0.0.1:1/c.jpg', category_id: '20', rating_5based: 4, releaseDate: '2019-01-01', plot: 'Sobre testes.' }]);
         case 'get_series_info':
           return json({ info: { plot: 'Sobre testes.', genre: 'Drama', youtube_trailer: 'abcdefghijk' }, episodes: {
             '1': [{ id: '7002', episode_num: 2, title: 'Dois', container_extension: 'mp4', season: 1, info: { duration: '00:42:00' } },

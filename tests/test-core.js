@@ -161,7 +161,7 @@ t('Proxy: troca de User-Agent e erro detalhado', function () {
     var root = 'http://127.0.0.1:' + srv.address().port + '/?t=k&u=';
     return get('http://127.0.0.1:' + srv.address().port + '/yt?t=k&id=dQw4w9WgXcQ').then(function (r) {
       assert.strictEqual(r.status, 200);
-      assert.ok(/youtube\.com\/embed\/dQw4w9WgXcQ/.test(r.body) && /origin=http/.test(r.body), 'página do trailer com origem http');
+      assert.ok(/youtube\.com\/embed\/dQw4w9WgXcQ/.test(r.body) && /origin=http/.test(r.body) && !/loop=1/.test(r.body), 'página do trailer com origem http e sem repetição');
       return get('http://127.0.0.1:' + srv.address().port + '/yt?t=k&id=../x');
     }).then(function (r) {
       assert.strictEqual(r.status, 400, 'id inválido recusado');

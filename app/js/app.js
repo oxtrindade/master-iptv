@@ -2087,7 +2087,10 @@
   }
 
   function posterCard(it, list) {
-    var el = h('div', { cls: 'f card', on: { click: function () { openItemObj(it, list); } } }, [
+    var el = h('div', { cls: 'f card', on: { click: function () {
+      if (isTvDevice() && it.type === 'movie') { startPlay({ kind: 'movie', item: it }); return; }   // TV: filme da Início começa direto
+      openItemObj(it, list);
+    } } }, [
       posterEl(it, false), h('div', { cls: 'title', text: it.name })
     ]);
     markFav(el, it);
@@ -2413,21 +2416,26 @@
     var dub = dubOn(), k = (dub ? 'd:' : 'a:') + it.type + ':' + it.id;
     if (TR[k]) { return TR[k]; }
     var key = tmdbKey(), kind = it.type === 'movie' ? 'movie' : 'tv';
-    var fromTmdb = function () {
+    var tid = null;
+    var fromTmdb = function (onlyDub) {
       if (!key) { return Promise.resolve(''); }
-      return Tmdb.findId(kind, it.name, Tmdb.yearOf(it.name) || parseInt(it.year, 10) || 0, key).then(function (tid) {
-        return tid ? Tmdb.trailer(kind, tid, key, dub) : '';
+      tid = tid || Tmdb.findId(kind, it.name, Tmdb.yearOf(it.name) || parseInt(it.year, 10) || 0, key);
+      return tid.then(function (id) {
+        return id ? Tmdb.trailer(kind, id, key, onlyDub) : '';
       }).then(null, function () { return ''; });
+    };
+    var provider = function () {
+      return (it.type === 'movie'
+        ? S.provider.movieInfo(it).then(function (i) { return i.trailer || ''; })
+        : S.provider.episodes(it).then(function (r) { return (r.info && r.info.youtube_trailer) || ''; })
+      ).then(ytId, function () { return ''; });
     };
     var p;
     if (dub) {
-      // só dublado: o campo do provedor não diz o idioma, então só vale o que o TMDB marca como português
-      p = fromTmdb();
+      // prefere dublado (TMDB marca o idioma); sem ele, cai no do provedor e depois em qualquer idioma
+      p = fromTmdb(true).then(function (id) { return id || provider(); }).then(function (id) { return id || fromTmdb(false); });
     } else {
-      p = (it.type === 'movie'
-        ? S.provider.movieInfo(it).then(function (i) { return i.trailer || ''; })
-        : S.provider.episodes(it).then(function (r) { return (r.info && r.info.youtube_trailer) || ''; })
-      ).then(ytId, function () { return ''; }).then(function (id) { return id || fromTmdb(); });
+      p = provider().then(function (id) { return id || fromTmdb(false); });
     }
     TR[k] = p;
     return p;
@@ -2553,7 +2561,7 @@
         ov.querySelector('.widem').textContent = metaLine([inf.year || it.year, it.rating ? 'Nota ' + it.rating : '', inf.genre, inf.duration]);
         ov.querySelector('.widep').textContent = inf.plot || it.plot || '';
       });
-    }, 600);
+    }, 250);
   }
 
   function pvFocus(el) {
@@ -2571,7 +2579,11 @@
     if (document.hidden) { PD.bloqueio = 'página oculta'; return; }
     if (!S.provider) { PD.bloqueio = 'sem provedor'; return; }
     PD.bloqueio = ''; PD.agendadas++;
-    Prev.t = setTimeout(function () { if (Nav.current() === el) { pvCardStart(host, it); } }, 2000);
+    [el.nextSibling, el.nextSibling && el.nextSibling.nextSibling, el.previousSibling].forEach(function (n) {
+      var po = n && n.querySelector && n.querySelector('.poster'), pi = po && po._it;
+      if (pi && (pi.type === 'movie' || pi.type === 'series')) { trailerFor(pi).then(null, function () {}); }
+    });
+    Prev.t = setTimeout(function () { if (Nav.current() === el) { pvCardStart(host, it); } }, 350);
   }
 
   function pvCardStart(host, it) {
@@ -2593,15 +2605,8 @@
   /* ---------- banner de destaque (Início) ---------- */
   var heroInfo = {};
 
-  function heroSlides() {
-    var out = [], seen = {};
-    contList().forEach(function (en) {
-      var it = en.item;
-      if (!it || (it.type !== 'movie' && it.type !== 'series') || seen[it.type + ':' + it.id] || out.length >= 3) { return; }
-      seen[it.type + ':' + it.id] = 1;
-      out.push({ it: it, cont: en });
-    });
-    return { list: out, seen: seen };
+  function heroSlides() {   // 1.46.0: o banner só mostra filmes/séries em alta; o "Continuar assistindo" fica na fileira abaixo
+    return { list: [], seen: {} };
   }
 
   function heroPlayAction(sl) {
@@ -2621,7 +2626,7 @@
     var pvT = null, pvStop = null, pvBad = {};
     hero.appendChild(bg); hero.appendChild(h('div', { cls: 'herofade' })); hero.appendChild(poster); hero.appendChild(txt); hero.appendChild(dots);
 
-    function show(i) {
+    function show(i, focusK) {
       if (!slides.length) { return; }
       cur = (i + slides.length) % slides.length;
       var sl = slides[cur], it = sl.it, key = it.type + ':' + it.id, inf = heroInfo[key] || {};
@@ -2642,6 +2647,7 @@
         btns.appendChild(h('button', { cls: 'f btn', type: 'button', text: 'Mais informações', 'data-k': 'hero-info', on: { click: function () { showDetail(it); } } }));
         [].forEach.call(dots.children, function (d, n) { d.classList.toggle('on', n === cur); });
         txt.classList.remove('swap');
+        if (focusK) { var fb = btns.querySelector('[data-k="' + focusK + '"]'); if (fb) { Nav.focus(fb); } }
         pvEnd(); pvSchedule();
         if (!heroInfo[key]) { loadInfo(sl, cur); }
       }, 220);
@@ -2656,7 +2662,7 @@
     function pvSchedule() {
       clearTimeout(pvT);
       if (!pvOn() || !slides.length) { return; }
-      pvT = setTimeout(pvStart, 4000);
+      pvT = setTimeout(pvStart, 700);
     }
     function pvStart() {
       if (!pvAlive()) { pvEnd(); return; }
@@ -2668,7 +2674,7 @@
         if (!pvAlive() || slides[cur] !== sl || S.mode !== 'browse' || hero._yt) { return; }
         if (!id) { pvBad[key] = 1; PD.bloqueio = 'sem trailer: ' + sl.it.name; return; }
         var tfail = function (why) { TR[(dubOn() ? 'd:' : 'a:') + key] = Promise.resolve(''); pvBad[key] = 1; PD.falha = 'trailer ' + sl.it.name + ': ' + why; pvEnd(); };
-        var yt = ytEmbed(hero, id, { play: function () { hero.classList.add('pv'); PD.tocando++; }, fail: tfail, end: function () { if (hero._yt === yt) { pvEnd(); } } });
+        var yt = ytEmbed(hero, id, { play: function () { hero.classList.add('pv'); PD.tocando++; }, fail: tfail, end: function () { if (hero._yt === yt) { pvEnd(); var f = Nav.current(); if (slides.length > 1 && !(f && hero.contains(f))) { show(cur + 1); } } } });
         yt.el.className = 'herovid ytv';
         hero._yt = yt;
         hero.insertBefore(yt.el, hero.querySelector('.herofade'));
@@ -2713,6 +2719,14 @@
         show(cur + 1);
       }, 8000);
     }
+    // TV: ◀ ▶ nos botões do banner trocam de destaque (no celular o banner segue como era)
+    S.heroKey = function (k) {
+      if (!isTvDevice() || slides.length < 2 || !hero.parentNode || token !== S.homeToken) { return false; }
+      var f = Nav.current(), dk = f && hero.contains(f) && f.getAttribute('data-k');
+      if (k === KEY.RIGHT && dk === 'hero-info') { show(cur + 1, 'hero-play'); return true; }
+      if (k === KEY.LEFT && dk === 'hero-play') { show(cur - 1, 'hero-play'); return true; }
+      return false;
+    };
     rows.appendChild(hero);
     if (slides.length) { start(); }
     // completa com os destaques do catálogo (em alta); se não houver histórico, o banner nasce deles
@@ -2723,7 +2737,7 @@
       })).then(function (r) {
         if (token !== S.homeToken || !hero.parentNode) { return; }
         var add = [];
-        [0, 1, 2].forEach(function (n) {
+        [0, 1, 2, 3].forEach(function (n) {
           [r[0], r[1]].forEach(function (l) {
             var it = l && l[n];
             if (it && it.logo && !base.seen[it.type + ':' + it.id]) { base.seen[it.type + ':' + it.id] = 1; add.push({ it: it, cont: null }); }
@@ -2769,9 +2783,6 @@
     trendRow(rows, 'movie', 'Filmes em alta');
     trendRow(rows, 'series', 'Séries em alta');
     if (!tmdbKey()) { forYouRow(rows); }
-    if (S.recent.length) {
-      rows.appendChild(makeRow('Canais recentes', S.recent.slice(0, 12).map(function (it) { return chanTile(it, S.recent); })));
-    }
 
     var want = S.hubFocus, target = null;
     if (want === 'cont') { target = page.querySelector('.lcard'); }
@@ -3103,7 +3114,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.45.0']
+      ['Versão do app', '1.46.0']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
@@ -3147,7 +3158,7 @@
     page.appendChild(switchRow('Ocultar filmes de cinema (gravação)', 'Esconde filmes de categoria/etiqueta Cinema ou CAM, que são gravações de sala com qualidade baixa.', 'hideCam'));
     page.appendChild(switchRow('Som no trailer', 'Toca o trailer com som. Se a TV não permitir som automático, volta sozinho ao mudo.', 'pvsound'));
     dubOn();
-    page.appendChild(switchRow('Só trailer dublado', 'Usa apenas trailers em português do Brasil (vêm do TMDB; precisa da chave do TMDB). Desligado, aceita qualquer idioma e também o trailer do provedor.', 'pvdub'));
+    page.appendChild(switchRow('Preferir trailer dublado', 'Escolhe o trailer em português do Brasil (do TMDB, precisa da chave) e, se não houver, usa o do provedor ou de qualquer idioma. Desligado, usa o do provedor primeiro.', 'pvdub'));
 
     page.appendChild(sgroup('Recomendações'));
     page.appendChild(tmdbBlock());
@@ -3202,6 +3213,16 @@
       D.seasonsEl, D.epsEl, D.castEl
     ]));
     Nav.setScope(d);
+    if (!isTvDevice() && pvOn()) {   // celular: o trailer toca no fundo da tela do filme
+      trailerFor(it).then(function (id) {
+        if (!id || S.detail !== D || S.mode !== 'detail') { return; }
+        var yt = ytEmbed(bg, id, { play: function () { bg.classList.add('pv'); }, fail: function () { yt.off(); }, end: function () { yt.off(); bg.classList.remove('pv'); } });
+        D.yt = yt;
+        var g = setInterval(function () {
+          if (S.detail !== D || S.mode !== 'detail' || document.hidden) { clearInterval(g); yt.off(); bg.classList.remove('pv'); }
+        }, 600);
+      }, function () {});
+    }
     castRow(D);
     if (vars) { renderVariants(D); }
     else {
@@ -3992,6 +4013,7 @@
       if (k === KEY.BACK || k === KEY.ESC) { a.blur(); e.preventDefault(); return; }
       if (k === KEY.UP || k === KEY.DOWN) { a.blur(); } else { return; }
     }
+    if ((k === KEY.LEFT || k === KEY.RIGHT) && S.mode === 'browse' && S.heroKey && S.heroKey(k)) { e.preventDefault(); return; }
     switch (k) {
       case KEY.LEFT: e.preventDefault(); Nav.move('left'); break;
       case KEY.RIGHT: e.preventDefault(); Nav.move('right'); break;

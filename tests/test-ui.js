@@ -36,7 +36,7 @@ Promise.all([listen(api), listen(px), startSync()]).then(function () {
   var base = 'http://127.0.0.1:' + api.address().port, pport = px.address().port;
   var errors = [];
   var vc = new jsdom.VirtualConsole();
-  vc.on('jsdomError', function (e) { if (!/mpegts|hls|Not implemented/i.test(String(e.message))) { errors.push(e.message); } });
+  vc.on('jsdomError', function (e) { if (!/mpegts|hls|Not implemented|Could not load iframe/i.test(String(e.message))) { errors.push(e.message); } });
 
   return jsdom.JSDOM.fromFile(path.join(__dirname, '../app/index.html'), {
     runScripts: 'dangerously', resources: 'usable', pretendToBeVisual: true, virtualConsole: vc,
@@ -110,7 +110,7 @@ Promise.all([listen(api), listen(px), startSync()]).then(function () {
       w.__pvTest = true;
       w.localStorage.setItem('iptv.tmdbkey', JSON.stringify('k'));   // só dublado: o trailer vem do TMDB
       w.Tmdb.findId = function () { return Promise.resolve(5); };
-      w.Tmdb.trailer = function (kind, id, key, dub) { assert.ok(dub, 'só dublado ligado por padrão'); return Promise.resolve('dQw4w9WgXcQ'); };
+      w.Tmdb.trailer = function (kind, id, key, dub) { return Promise.resolve(dub ? 'dQw4w9WgXcQ' : ''); };   // prefere dublado
       w.Tmdb.trending = function () { return Promise.reject(new Error('sem rede no teste')); };
       return waitFor(function () { return $('.herotitle') && $('.herotitle').textContent; }, 'banner de destaque');
     }).then(function () {
@@ -119,8 +119,17 @@ Promise.all([listen(api), listen(px), startSync()]).then(function () {
       step('home: banner de destaque');
       return waitFor(function () { var v = $('.herovid.ytv'); return v && v.getAttribute('src'); }, 'trailer no banner');
     }).then(function () {
-      assert.ok(/(youtube\.com\/embed\/|\/yt\?t=tok&id=)(dQw4w9WgXcQ|abcdefghijk)/.test($('.herovid').getAttribute('src')), 'trailer (página do player via proxy local) começa após ~4 s parado no banner: ' + $('.herovid').getAttribute('src'));
+      assert.ok(/(youtube\.com\/embed\/|\/yt\?t=tok&id=)(dQw4w9WgXcQ|abcdefghijk)/.test($('.herovid').getAttribute('src')), 'trailer (página do player via proxy local) começa logo no banner: ' + $('.herovid').getAttribute('src'));
       step('banner: trailer mudo após alguns segundos');
+      d.body.classList.add('tv');
+      if ($$('.herodot').length < 2) { d.body.classList.remove('tv'); return; }
+      var t0 = $('.herotitle').textContent;
+      w.Nav.focus($('[data-k="hero-info"]'));
+      key(39);   // TV: ▶ no último botão passa ao próximo destaque
+      return waitFor(function () { return $('.herotitle').textContent !== t0 && $('[data-k="hero-play"]') && $('[data-k="hero-play"]').classList.contains('focus'); }, 'TV: ▶ troca o destaque do banner').then(function () {
+        key(37);   // ◀ no primeiro botão volta
+        return waitFor(function () { return $('.herotitle').textContent === t0; }, 'TV: ◀ volta ao destaque anterior');
+      }).then(function () { d.body.classList.remove('tv'); step('banner (TV): ◀ ▶ trocam o destaque'); });
     }).then(function () {
       assert.ok(!$('.side'), 'sem barra lateral');
       assert.ok(!$('.hub-links') && !$$('.hub-links .btn').length, 'sem botões de atalho embaixo (Buscar/Configurações vão no topo)');
@@ -366,8 +375,8 @@ Promise.all([listen(api), listen(px), startSync()]).then(function () {
       var w0 = $('.lcard .pbar .fill').getAttribute('style');
       assert.ok(/width:17%/.test(w0), 'barra de progresso ~17%: ' + w0);
       assert.ok(/50 min restantes/.test($('.lcard .ls').textContent), $('.lcard .ls').textContent);
-      assert.ok($$('.hrow-title').map(function (e) { return e.textContent; }).indexOf('Canais recentes') >= 0, 'canais recentes');
-      step('menu: Continuar assistindo (progresso) + canais recentes');
+      assert.ok($$('.hrow-title').map(function (e) { return e.textContent; }).indexOf('Canais recentes') < 0, 'sem canais recentes na Início');
+      step('menu: Continuar assistindo (progresso), sem canais recentes');
       $('.lcard').click(); // Continuar
       assert.ok(/501\.mkv$/.test($('#video').getAttribute('src')), 'src: ' + $('#video').getAttribute('src') + ' | ' + $('.lcard').textContent);
       vt = 0; vd = NaN;

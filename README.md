@@ -216,3 +216,12 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 ## 1.45.0 — Só trailer dublado e trailer inteiro
 - Nova chave **"Só trailer dublado"** (ligada por padrão): usa apenas trailers em português do Brasil marcados no TMDB (idioma `pt`, país diferente de Portugal; prefere `BR`). O campo `youtube_trailer` do provedor não informa o idioma, então fica de fora nesse modo. Sem trailer em português, nada toca. Desligada, aceita qualquer idioma e também o do provedor. Precisa da chave do TMDB.
 - O trailer agora toca **inteiro**: sem limite de 90 s e sem repetir; ao acabar, volta ao pôster. Para ao mover o foco ou apertar qualquer tecla, como antes.
+
+## 1.46.0 — Lista de desejos da Netflix: banner em alta, trailer na hora, TV e celular
+- **Banner**: só filmes/séries em alta (sem "Continuar assistindo", que fica na fileira abaixo) e o trailer começa logo (~0,7 s). Ao acabar, passa ao próximo destaque. **TV:** ◀ ▶ nos botões do banner trocam o destaque; no celular segue como era.
+- **Trailer ao parar o foco**: começa em ~0,35 s (antes 2 s) e o card largo abre em 0,25 s; o app já busca o trailer dos cards vizinhos para não esperar.
+- **Dublado como preferência**: tenta o trailer em português do Brasil (TMDB); sem ele, usa o do provedor e depois qualquer idioma.
+- **TV**: clicar num filme das fileiras da Início já inicia o filme (séries continuam abrindo o detalhe).
+- **Celular**: a tela do filme/série mostra o trailer ao fundo (com som, se a chave ligar).
+- Removida a fileira "Canais recentes" da Início.
+- Corrigido: a página do player no proxy repetia o trailer (loop); agora toca uma vez.

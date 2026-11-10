@@ -993,3 +993,8 @@ body.compact .hero { height: 340px; }
 .widem { font-size: 20px; }
 .widep { font-size: 20px; max-height: 54px; }
 body.compact .hlist > .card.wide, body.compact .hlist > .card.wide .poster { width: 380px; }
+
+/* 1.46.0: trailer no fundo da tela do filme (celular) */
+#detail .bg .cardvid { z-index: 0; }
+#detail .bg.pv { opacity: 1; }
+#detail .bg.pv .cardvid { opacity: .55; }

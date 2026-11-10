@@ -31,7 +31,7 @@ function codeErr(code) { var e = new Error(code); e.code = code; return e; }
 
 /* página mínima com o player do YouTube: dá ao embed uma origem http (evita o erro 153) e repassa os eventos ao app */
 function ytPage(id, host) {
-  var src = 'https://www.youtube.com/embed/' + id + '?autoplay=1&mute=1&controls=0&disablekb=1&fs=0&modestbranding=1&rel=0&playsinline=1&iv_load_policy=3&loop=1&playlist=' + id +
+  var src = 'https://www.youtube.com/embed/' + id + '?autoplay=1&mute=1&controls=0&disablekb=1&fs=0&modestbranding=1&rel=0&playsinline=1&iv_load_policy=3' +
     '&enablejsapi=1&origin=' + encodeURIComponent('http://' + host) + '&widget_referrer=' + encodeURIComponent('http://' + host + '/');
   return '<!doctype html><html><head><meta charset="utf-8"><meta name="referrer" content="strict-origin-when-cross-origin">' +
     '<style>html,body{margin:0;width:100%;height:100%;background:#000;overflow:hidden}iframe{position:absolute;left:0;top:0;width:100%;height:100%;border:0}</style></head>' +
