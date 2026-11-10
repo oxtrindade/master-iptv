@@ -161,12 +161,7 @@
   function initial(it) { return (it.name || '?').charAt(0).toUpperCase(); }
   function metaLine(parts) { return parts.filter(function (x) { return x; }).join('  ·  '); }
   function opt(k) { return !!S.opts[k]; }
-  function pvOn() {
-    if (S.opts.pvsound === undefined) { S.opts.pvsound = true; store.set('opts', S.opts); }
-    if (window.__pvTest) { return true; }
-    if (S.opts.pvv !== 3) { S.opts.pvv = 3; S.opts.heropv = true; store.set('opts', S.opts); }   // 1.44.0: prévia = trailer, ligada por padrão
-    return !!S.opts.heropv;
-  }
+  function pvOn() { return true; }   // 1.47.0: prévia (trailer) sempre ligada, sem chave
   function setOpt(k, v) { S.opts[k] = !!v; store.set('opts', S.opts); if (k === 'bgplay') { applyBg(); } }
   /* Android (celular): tocar com a tela bloqueada / app em segundo plano (padrão: ligado) */
   function hasBg() { try { return !!(window.NativeApp && window.NativeApp.setBackground && !(window.NativeApp.isTv && window.NativeApp.isTv())); } catch (e) { return false; } }
@@ -2089,12 +2084,31 @@
   function posterCard(it, list) {
     var el = h('div', { cls: 'f card', on: { click: function () {
       if (isTvDevice() && it.type === 'movie') { startPlay({ kind: 'movie', item: it }); return; }   // TV: filme da Início começa direto
+      if (isTvDevice() && it.type === 'series') { playSeriesHome(it); return; }                       // TV: série continua do episódio em que parou
       openItemObj(it, list);
     } } }, [
       posterEl(it, false), h('div', { cls: 'title', text: it.name })
     ]);
     markFav(el, it);
     return el;
+  }
+
+  /* TV: série da Início abre direto no episódio em que parou (ou no seguinte, se o último terminou); nunca assistida abre o detalhe */
+  function playSeriesHome(it) {
+    var en = contList().filter(function (x) { return x.kind === 'ep' && x.item && x.item.id === it.id && x.item.type === it.type; })[0];
+    if (en) { resumeCont(en); return; }
+    var last = S.last[it.id];
+    if (!last) { showDetail(it); return; }
+    loading(true, 'Abrindo…');
+    S.provider.episodes(it).then(function (r) {
+      loading(false);
+      var flat = [], idx = -1;
+      r.seasons.forEach(function (sn) { flat = flat.concat(sn.episodes); });
+      flat.forEach(function (e, i) { if (e.id === last.id) { idx = i; } });
+      if (!flat.length) { showDetail(it); return; }
+      var next = idx >= 0 ? (idx + 1 < flat.length ? idx + 1 : idx) : 0;
+      startPlay({ kind: 'ep', item: it, eps: flat, idx: next });
+    }, function () { loading(false); showDetail(it); });
   }
 
   function resumeCont(en) {
@@ -2453,7 +2467,7 @@
     f.style.cssText = 'left:50%;top:50%;width:' + fw + 'px;height:' + fh + 'px;margin-left:-' + Math.round(fw / 2) + 'px;margin-top:-' + Math.round(fh / 2) + 'px;border:0';
     var direct = 'https://www.youtube.com/embed/' + id + '?autoplay=1&mute=1&controls=0&disablekb=1&fs=0&modestbranding=1&rel=0&playsinline=1&iv_load_policy=3&enablejsapi=1';
     function cmd(fn, args) { try { f.contentWindow.postMessage(JSON.stringify({ event: 'command', func: fn, args: args || [] }), '*'); } catch (x) {} }
-    var last = null, sndT = null, wantSound = S.opts.pvsound !== false && !S.pvNoSound;
+    var last = null, sndT = null, wantSound = !S.pvNoSound;   // som sempre; só volta ao mudo se o aparelho travar o vídeo
     function onMsg(e) {
       if (e.source !== f.contentWindow || typeof e.data !== 'string') { return; }
       var d; try { d = JSON.parse(e.data); } catch (x) { return; }
@@ -3114,7 +3128,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.46.0']
+      ['Versão do app', '1.47.0']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
@@ -3145,9 +3159,7 @@
     page.appendChild(switchRow('Reproduzir o último conteúdo ao abrir o app', 'Ao iniciar, retoma o último canal, filme ou episódio assistido.', 'autoplay'));
     if (hasBg()) { page.appendChild(switchRow('Continuar tocando com a tela bloqueada', 'O áudio segue tocando ao bloquear o celular ou sair do app (aparece uma notificação enquanto toca).', 'bgplay')); }
     if (isTvDevice()) { wideOn(); page.appendChild(switchRow('Card ampliado ao parar o foco', 'Na TV, o filme/série em foco nas fileiras da Início vira um cartão largo com imagem, nota e sinopse (a prévia de vídeo toca nele, se ligada).', 'widecard')); }
-    pvOn();
-    page.appendChild(switchRow('Trailer na prévia', 'Depois de alguns segundos parado no banner ou num card, toca o trailer (YouTube, pelo provedor ou pelo TMDB), mudo.', 'heropv'));
-    if (opt('heropv')) [
+    [
       'Diagnóstico do trailer — foco em filmes/séries: ' + PD.foco + ' · agendadas: ' + PD.agendadas + ' · iniciadas: ' + PD.iniciadas + ' · tocando: ' + PD.tocando + (PD.bloqueio ? ' · bloqueio: ' + PD.bloqueio : ''),
       PD.falha ? 'Última falha: ' + PD.falha : '',
       PD.ultima ? 'Interrompida: ' + PD.ultima : ''
@@ -3156,7 +3168,6 @@
     page.appendChild(switchRow('Ocultar canais HD', 'Esconde da lista os canais com "HD" no nome (FHD e 4K continuam).', 'hideHD'));
     camOn();
     page.appendChild(switchRow('Ocultar filmes de cinema (gravação)', 'Esconde filmes de categoria/etiqueta Cinema ou CAM, que são gravações de sala com qualidade baixa.', 'hideCam'));
-    page.appendChild(switchRow('Som no trailer', 'Toca o trailer com som. Se a TV não permitir som automático, volta sozinho ao mudo.', 'pvsound'));
     dubOn();
     page.appendChild(switchRow('Preferir trailer dublado', 'Escolhe o trailer em português do Brasil (do TMDB, precisa da chave) e, se não houver, usa o do provedor ou de qualquer idioma. Desligado, usa o do provedor primeiro.', 'pvdub'));
 

@@ -225,3 +225,7 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 - **Celular**: a tela do filme/série mostra o trailer ao fundo (com som, se a chave ligar).
 - Removida a fileira "Canais recentes" da Início.
 - Corrigido: a página do player no proxy repetia o trailer (loop); agora toca uma vez.
+
+## 1.47.0 — Prévia e som sempre ligados; série na TV continua de onde parou
+- Removidas as chaves "Trailer na prévia" e "Som no trailer": o trailer na prévia e o som ficam sempre ligados. Se a TV travar o vídeo por causa do som, ele volta ao mudo sozinho (nessa sessão). O diagnóstico do trailer continua em Configurações. Ficou só "Preferir trailer dublado".
+- **TV:** clicar numa série das fileiras da Início abre direto no episódio em que parou (ou no seguinte, se o último terminou). Série nunca assistida abre o detalhe.
