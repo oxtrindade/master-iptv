@@ -249,3 +249,6 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 - **Continuar assistindo** agora usa o mesmo cartão de pôster das demais fileiras (mesmo tamanho, mesmo foco/card largo), com barra de progresso e "T1 E3 · 28 min restantes" sobre o pôster.
 - **Filmes e Séries** abrem como a Início: banner de destaque (trailer) da seção, botão "Todas as categorias", "Continuar assistindo" do tipo, "em alta" e fileiras por gênero (Lançamentos, Ação, Aventura, Animação, Comédia, Drama, Suspense, Terror, Ficção, Documentário…), montadas a partir das categorias do provedor (adultas ficam de fora; mínimo de 4 títulos; os mais recentes primeiro).
 - O último cartão de cada fileira, "Ver todos", abre a lista clássica daquela categoria; "Todas as categorias" abre a visão clássica e nela o botão "Por gênero" volta às fileiras. Se o provedor não tiver categorias úteis, a visão clássica abre sozinha.
+
+## 1.50.0 — Cards 25% maiores
+- Todos os cards (pôsteres, Continuar assistindo, card largo, Ver todos) ficaram ~25% maiores na TV, no Android TV e no celular, para ficar mais próximo da Netflix.

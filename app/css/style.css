@@ -1007,3 +1007,20 @@ body.compact .genbar { padding-left: 36px; }
 body.portrait .genbar { padding: 4px 14px 0; }
 body.compact .card.cont .contsub { font-size: 13px; }
 body.portrait .card.cont .contsub { font-size: 9px; bottom: 10px; left: 4px; right: 4px; padding: 2px 4px; }
+
+/* 1.50.0: todos os cards ~25% maiores (como a Netflix) */
+.card { width: 328px; margin-right: 34px; }
+.card .poster { width: 328px; height: 492px; }
+.card .title { font-size: 28px; }
+.hlist > .card.wide, .hlist > .card.wide .poster { width: 875px; }
+.card.cont .contsub { font-size: 21px; }
+body.compact .card { width: 175px; margin: 0 18px 24px 0; }
+body.compact .card .poster { width: 175px; height: 263px; }
+body.compact .hlist > .card { margin: 0 18px 0 0; }
+body.compact .hlist > .card.wide, body.compact .hlist > .card.wide .poster { width: 475px; }
+body.compact .card.cont .contsub { font-size: 16px; }
+body.portrait .card { width: 135px; margin: 0 10px 14px 0; }
+body.portrait .card .poster { width: 135px; height: 203px; }
+body.portrait .hlist > .card { width: 135px; margin: 0 10px 0 0; }
+body.portrait .hlist > .card .poster { width: 135px; height: 203px; }
+body.portrait .card.cont .contsub { font-size: 11px; }
