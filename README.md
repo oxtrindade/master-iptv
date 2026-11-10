@@ -244,3 +244,8 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 - No Android o app abre de `file://` e o YouTube recusava o player (erro 153, o mesmo da LG). Agora o app serve a página do player ele mesmo, em `https://appassets.androidplatform.net/yt?id=…` (interceptada no WebView, `shouldInterceptRequest`), dando ao embed uma origem https; a página repassa eventos e comandos (som) ao app como a do proxy da LG. A navegação de iframes deixou de ser bloqueada (só a página principal é restrita).
 - **Só no Wi-Fi:** novo `NativeApp.isMetered()` (conexão paga/dados móveis). Em dados móveis o trailer não toca (nem no detalhe, nem no card, nem no banner); diagnóstico mostra "dados móveis: trailer só no Wi-Fi".
 - A tela do filme/série no celular toca o trailer ao fundo assim que abre (já existia desde a 1.46.0, mas dependia desse player).
+
+## 1.49.0 — Cards do mesmo tamanho e Filmes/Séries por gênero (estilo Netflix)
+- **Continuar assistindo** agora usa o mesmo cartão de pôster das demais fileiras (mesmo tamanho, mesmo foco/card largo), com barra de progresso e "T1 E3 · 28 min restantes" sobre o pôster.
+- **Filmes e Séries** abrem como a Início: banner de destaque (trailer) da seção, botão "Todas as categorias", "Continuar assistindo" do tipo, "em alta" e fileiras por gênero (Lançamentos, Ação, Aventura, Animação, Comédia, Drama, Suspense, Terror, Ficção, Documentário…), montadas a partir das categorias do provedor (adultas ficam de fora; mínimo de 4 títulos; os mais recentes primeiro).
+- O último cartão de cada fileira, "Ver todos", abre a lista clássica daquela categoria; "Todas as categorias" abre a visão clássica e nela o botão "Por gênero" volta às fileiras. Se o provedor não tiver categorias úteis, a visão clássica abre sozinha.

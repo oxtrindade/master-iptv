@@ -378,13 +378,13 @@ Promise.all([listen(api), listen(px), startSync()]).then(function () {
       return waitFor(function () { return $$('.hrow-title').map(function (e) { return e.textContent; }).indexOf('Continuar assistindo') >= 0; }, 'continuar assistindo');
     }).then(function () {
       assert.ok($('.hubtab'), 'voltou ao menu');
-      var w0 = $('.lcard .pbar .fill').getAttribute('style');
+      var w0 = $('.card.cont .pbar .fill').getAttribute('style');
       assert.ok(/width:17%/.test(w0), 'barra de progresso ~17%: ' + w0);
-      assert.ok(/50 min restantes/.test($('.lcard .ls').textContent), $('.lcard .ls').textContent);
+      assert.ok(/50 min restantes/.test($('.card.cont .contsub').textContent), $('.card.cont .contsub').textContent);
       assert.ok($$('.hrow-title').map(function (e) { return e.textContent; }).indexOf('Canais recentes') < 0, 'sem canais recentes na Início');
       step('menu: Continuar assistindo (progresso), sem canais recentes');
-      $('.lcard').click(); // Continuar
-      assert.ok(/501\.mkv$/.test($('#video').getAttribute('src')), 'src: ' + $('#video').getAttribute('src') + ' | ' + $('.lcard').textContent);
+      $('.card.cont').click(); // Continuar
+      assert.ok(/501\.mkv$/.test($('#video').getAttribute('src')), 'src: ' + $('#video').getAttribute('src') + ' | ' + $('.card.cont').textContent);
       vt = 0; vd = NaN;
       key(27);
       go('live'); // a lupa saiu da home: a busca agora fica dentro de cada seção
@@ -444,6 +444,13 @@ Promise.all([listen(api), listen(px), startSync()]).then(function () {
       return waitFor(function () { return $$('.card').length === 1 && $('.sectitle') && /Favoritos/.test($('.sectitle').textContent); }, 'ver todos abre a lista');
     }).then(function () {
       step('Favoritos na home como fileira (+ Ver todos), sem botão');
+      (function () {
+        var lst = [], i;
+        for (i = 0; i < 6; i++) { lst.push({ type: 'movie', id: 'a' + i, name: 'Aventura ' + i, logo: 'x', cat: '1', added: i }); lst.push({ type: 'movie', id: 'd' + i, name: 'Drama ' + i, logo: 'x', cat: '2' }); lst.push({ type: 'movie', id: 't' + i, name: 'Terror ' + i, logo: 'x', cat: '3' }); lst.push({ type: 'movie', id: 'x' + i, name: 'Adulto ' + i, logo: 'x', cat: '4' }); }
+        var g = w.__genreRows('movie', [{ id: '3', name: 'FILMES | TERROR' }, { id: '4', name: 'Filmes Adultos +18' }, { id: '2', name: 'Filmes - Drama' }, { id: '1', name: 'Aventura' }], lst);
+        assert.strictEqual(g.map(function (r) { return r.title; }).join(','), 'Aventura,Drama,Terror', 'gêneros em ordem Netflix, sem adulto');
+        assert.strictEqual(g[0].items[0].id, 'a5', 'mais novos primeiro');
+      })();
       go('settings');
       return waitFor(function () { return $('.settings .sgroup'); }, 'config');
     }).then(function () {

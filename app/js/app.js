@@ -1595,6 +1595,9 @@
     hd.appendChild(h('button', { cls: 'f btn backbtn', on: { click: headBack } },
       [icon('back', 26), S.backTo && S.backTo !== 'home' ? 'Voltar' : 'Menu']));
     hd.appendChild(h('div', { cls: 'sectitle' }, [icon(sec, 44), SECT[sec]]));
+    if (S.classic && (sec === 'movie' || sec === 'series')) {
+      hd.appendChild(h('button', { cls: 'f btn', 'data-k': 'bygenre', on: { click: function () { selectSection(sec, { backTo: S.backTo }); } } }, ['Por gênero']));
+    }
     if (sec === 'live' || sec === 'movie' || sec === 'series') {
       hd.appendChild(h('button', { cls: 'f btn', on: { click: function () { selectSection('search', { backTo: sec }); } } },
         [icon('search', 26), 'Buscar']));
@@ -1616,6 +1619,7 @@
     if (S.offline && sec !== 'dl') { sec = 'dl'; }
     S.section = sec;
     S.backTo = opts.backTo || 'home';
+    S.classic = !!opts.classic;
     if (sec !== 'home') { S.hubFocus = sec === 'search' && opts.backTo ? opts.backTo : sec; }
     if (sec === 'search') { S.searchSec = /^(live|movie|series)$/.test(opts.backTo || '') ? opts.backTo : null; }
     S.loadToken++;
@@ -1638,6 +1642,7 @@
     if (sec === 'search') { buildContentOnly(); renderSearch(); return; }
     if (sec === 'fav') { buildContentOnly(); renderFavs(); return; }
 
+    if ((sec === 'movie' || sec === 'series') && !opts.classic) { renderGenreHome(sec); return; }
     buildTwoCol();
     var token = S.loadToken;
     loading(true, 'Carregando categorias…');
@@ -1654,6 +1659,97 @@
       if (token !== S.loadToken) { return; }
       loading(false);
       S.contentEl.appendChild(h('div', { cls: 'empty', text: 'Erro ao carregar: ' + (e && e.message) }));
+    });
+  }
+
+  /* ---------- Filmes / Séries estilo Netflix: banner + fileiras por gênero ---------- */
+
+  var GENRES = [
+    ['lanc|novid|estreia|recente', 'Lançamentos'], ['acao', 'Ação'], ['aventura', 'Aventura'], ['anima|desenho|infantil|kids', 'Animação'],
+    ['comedia', 'Comédia'], ['drama', 'Drama'], ['suspense|thriller|misterio', 'Suspense'], ['terror|horror', 'Terror'],
+    ['ficcao|sci', 'Ficção científica'], ['fantasia', 'Fantasia'], ['romance|romant', 'Romance'], ['crime|policial', 'Crime'],
+    ['document', 'Documentário'], ['familia', 'Família'], ['guerra|belic', 'Guerra'], ['faroeste|western', 'Faroeste'],
+    ['musical|musica', 'Musical'], ['anime', 'Anime'], ['biograf|historia', 'Biografia e história'], ['nacional|brasil', 'Nacionais']
+  ];
+
+  function plainName(n) {
+    var x = String(n || '').toLowerCase();
+    try { x = x.normalize('NFD').replace(/[\u0300-\u036f]/g, ''); } catch (e) {}
+    return x;
+  }
+
+  function genreRank(name) {
+    var n = plainName(name), i;
+    for (i = 0; i < GENRES.length; i++) { if (new RegExp(GENRES[i][0]).test(n)) { return i; } }
+    return 99;
+  }
+
+  function genreTitle(name, sec) {
+    var t = String(name || '').replace(/^\s*(filmes?|series?|s[eé]ries?|movies?)\s*[|:\-–»>]+\s*/i, '').replace(/^[\s|:\-–»>]+|[\s|:\-–»>]+$/g, '');
+    t = t || String(name || '');
+    if (t.length > 3 && t === t.toUpperCase()) { t = t.charAt(0) + t.slice(1).toLowerCase(); }   // CATEGORIA EM CAIXA ALTA vira Categoria
+    return t;
+  }
+
+  function isAdultCat(name) { return /adult|xxx|\+18|18\+|porn|er[oó]tic|hentai/.test(plainName(name)); }
+
+  function genreRows(sec, cats, list) {
+    var by = {}, out = [];
+    list.forEach(function (it) { if (it.logo) { (by[it.cat] = by[it.cat] || []).push(it); } });
+    cats.forEach(function (c, idx) {
+      var arr = by[c.id];
+      if (!arr || arr.length < 4 || isAdultCat(c.name)) { return; }
+      var seen = {}, top = [];
+      arr = arr.slice().sort(function (a, b) { return (b.added || 0) - (a.added || 0) || (b.rating || 0) - (a.rating || 0); });
+      arr.forEach(function (it) { var k = Tmdb.norm(it.name); if (!seen[k] && top.length < 20) { seen[k] = 1; top.push(it); } });
+      if (top.length >= 4) { out.push({ id: c.id, title: genreTitle(c.name, sec), rank: genreRank(c.name), idx: idx, n: arr.length, items: top }); }
+    });
+    out.sort(function (a, b) { return a.rank - b.rank || a.idx - b.idx; });
+    return out.slice(0, 18);
+  }
+
+  function genreSeeAll(sec, r) {
+    return h('div', { cls: 'f card seeall', on: { click: function () { store.set('cat:' + sec, r.id); selectSection(sec, { backTo: S.backTo, classic: true }); } } }, [
+      h('div', { cls: 'poster seeall-p' }, [icon('movie', 44), h('div', { cls: 'seeall-t', text: 'Ver todos' }), h('div', { cls: 'seeall-n', text: r.n + (r.n === 1 ? ' título' : ' títulos') })]),
+      h('div', { cls: 'title', text: '' })
+    ]);
+  }
+
+  function renderGenreHome(sec) {
+    var page = S.pageEl, token = S.homeToken;
+    page.className = 'page scroll home genrehome';
+    var rows = h('div', { cls: 'hrows' });
+    page.appendChild(rows);
+    heroBanner(rows, { secs: [sec] });
+    var bar = h('div', { cls: 'genbar' }, [h('button', { cls: 'f btn', type: 'button', 'data-k': 'allcats', text: 'Todas as categorias',
+      on: { click: function () { selectSection(sec, { backTo: S.backTo, classic: true }); } } })]);
+    rows.appendChild(bar);
+    var conts = contList().filter(function (x) { return x.item && x.item.type === sec; }).slice(0, 12);
+    if (conts.length) { rows.appendChild(makeRow('Continuar assistindo', conts.map(contCard))); }
+    trendRow(rows, sec, sec === 'movie' ? 'Filmes em alta' : 'Séries em alta');
+    var holder = h('div', { cls: 'gnrows' });
+    rows.appendChild(holder);
+    Nav.focus(bar.querySelector('.f'));
+    loading(true, 'Carregando…');
+    Promise.all([S.provider.categories(sec), S.provider.all(sec)]).then(function (r) {
+      if (token !== S.homeToken) { return; }
+      loading(false);
+      var gr = genreRows(sec, r[0], r[1]), i = 0;
+      if (!gr.length) { selectSection(sec, { backTo: S.backTo, classic: true }); return; }
+      (function next() {
+        if (token !== S.homeToken || !holder.parentNode) { return; }
+        var n = 0;
+        while (i < gr.length && n < 3) {
+          var g = gr[i++];
+          holder.appendChild(makeRow(g.title, g.items.map(function (it) { return posterCard(it, g.items); }).concat([genreSeeAll(sec, g)])));
+          n++;
+        }
+        if (i < gr.length) { setTimeout(next, 60); }
+      })();
+    }, function (e) {
+      if (token !== S.homeToken) { return; }
+      loading(false);
+      rows.appendChild(h('div', { cls: 'empty', text: 'Erro ao carregar: ' + (e && e.message) }));
     });
   }
 
@@ -2046,19 +2142,15 @@
     return h('div', { cls: 'hrow' }, [h('div', { cls: 'hrow-title', text: title }), h('div', { cls: 'hlist scroll' }, cards)]);
   }
 
+  /* 1.49.0: "Continuar assistindo" usa o mesmo cartão (tamanho/pôster) das outras fileiras */
   function contCard(en) {
-    var it = en.item, thumb = h('div', { cls: 'thumb' });
-    thumb._it = it; thumb._en = en;
-    var img = (en.ep && en.ep.logo) || it.logo;
-    if (img) { thumb.style.backgroundImage = bgUrl(img); } else { thumb.appendChild(h('div', { cls: 'ph', text: initial(it) })); }
-    var rb = ratingBadge(it);
-    if (rb) { thumb.appendChild(rb); }
-    thumb.appendChild(h('div', { cls: 'pbar' }, [h('div', { cls: 'fill', style: 'width:' + Math.min(100, Math.round(en.t / en.d * 100)) + '%' })]));
+    var it = en.item, poster = posterEl(it, false);
+    poster._en = en;
+    poster.appendChild(h('div', { cls: 'pbar' }, [h('div', { cls: 'fill', style: 'width:' + Math.min(100, Math.round(en.t / en.d * 100)) + '%' })]));
     var left = Math.max(1, Math.round((en.d - en.t) / 60));
-    var sub = (en.ep ? 'T' + en.ep.season + ' E' + en.ep.num + '  ·  ' : '') + left + ' min restantes';
-    var el = h('div', { cls: 'f lcard', on: { click: function () { resumeCont(en); } } }, [
-      thumb, h('div', { cls: 'lt', text: it.name }), h('div', { cls: 'ls', text: sub })
-    ]);
+    var sub = (en.ep ? 'T' + en.ep.season + ' E' + en.ep.num + ' · ' : '') + left + ' min restantes';
+    poster.appendChild(h('div', { cls: 'contsub', text: sub }));
+    var el = h('div', { cls: 'f card cont', on: { click: function () { resumeCont(en); } } }, [poster, h('div', { cls: 'title', text: it.name })]);
     el._item = it;
     return el;
   }
@@ -2637,7 +2729,8 @@
     return function () { showDetail(sl.it); };
   }
 
-  function heroBanner(rows) {
+  function heroBanner(rows, hopts) {
+    var secs = (hopts && hopts.secs) || ['movie', 'series'];
     if (S.heroTimer) { clearInterval(S.heroTimer); S.heroTimer = null; }
     var token = S.homeToken;
     var base = heroSlides(), slides = base.list, cur = 0, hero = h('div', { cls: 'hero hidden' });
@@ -2767,13 +2860,13 @@
     // completa com os destaques do catálogo (em alta); se não houver histórico, o banner nasce deles
     setTimeout(function () {
       if (token !== S.homeToken || !S.provider) { return; }
-      Promise.all(['movie', 'series'].map(function (sec) {
+      Promise.all(secs.map(function (sec) {
         return S.provider.all(sec).then(function (l) { return trendList(sec, l); }, function () { return []; });
       })).then(function (r) {
         if (token !== S.homeToken || !hero.parentNode) { return; }
         var add = [];
         [0, 1, 2, 3].forEach(function (n) {
-          [r[0], r[1]].forEach(function (l) {
+          r.forEach(function (l) {
             var it = l && l[n];
             if (it && it.logo && !base.seen[it.type + ':' + it.id]) { base.seen[it.type + ':' + it.id] = 1; add.push({ it: it, cont: null }); }
           });
@@ -2820,7 +2913,7 @@
     if (!tmdbKey()) { forYouRow(rows); }
 
     var want = S.hubFocus, target = null;
-    if (want === 'cont') { target = page.querySelector('.lcard'); }
+    if (want === 'cont') { target = page.querySelector('.card.cont'); }
     else if (want === 'settings' || want === 'dl') { target = S.headEl.querySelector('.menubtn'); }
     else if (want) { target = S.mainEl.querySelector('[data-sec="' + want + '"]'); }
     Nav.focus(target || page.querySelector('.hubtab, .hubtile'));
@@ -3149,7 +3242,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.48.0']
+      ['Versão do app', '1.49.0']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
@@ -4134,6 +4227,7 @@
       if (el && sc && sc.contains(el)) { Nav.focus(el); }
     });
     document.addEventListener('click', function () { if (S.mode === 'player' && !S.tracksOpen) { showOsd(); } });
+    window.__genreRows = function (sec, cats, list) { return genreRows(sec, cats, list); };
     window.__pip = function (on) { document.body.classList.toggle('pip', !!on); };
     var miniX = h('button', { id: 'mini-x', cls: 'f', type: 'button', title: 'Fechar', 'aria-label': 'Fechar' }, [icon('xmark', 22)]);
     var miniO = h('button', { id: 'mini-open', cls: 'f', type: 'button', title: 'Ampliar', 'aria-label': 'Ampliar' }, [icon('expand', 22), h('span', { text: 'Ampliar' })]);
