@@ -294,6 +294,11 @@ Promise.all([listen(api), listen(px), startSync()]).then(function () {
       assert.ok(!$('#detail').classList.contains('hidden'));
       step('elenco + filmografia do ator');
       step('filmes + detalhe com sinopse');
+      // celular: a tela do filme mostra o trailer ao fundo (só Wi-Fi: dados móveis não tocam)
+      return waitFor(function () { var v = $('#detail .bg .ytv'); return v && v.getAttribute('src'); }, 'trailer na tela do filme (celular)');
+    }).then(function () {
+      assert.ok(/(youtube\.com\/embed\/|\/yt\?t=tok&id=)dQw4w9WgXcQ/.test($('#detail .bg .ytv').getAttribute('src')), 'trailer certo no fundo do detalhe');
+      step('celular: trailer ao fundo da tela do filme');
       $('#detail .btn.primary').click();
       assert.ok(/501\.mkv$/.test($('#video').getAttribute('src')));
       vd = 3600; vt = 600; // simula 10 min assistidos de 1h

@@ -49,7 +49,7 @@ var gest = { bri: [], vol: [] };
 var memRef = null;
 function open(seed) {
   var vc = new jsdom.VirtualConsole(), errors = [];
-  vc.on('jsdomError', function (e) { if (!/mpegts|hls|Not implemented/i.test(String(e.message))) { errors.push(e.message); } });
+  vc.on('jsdomError', function (e) { if (!/mpegts|hls|Not implemented|Could not load iframe|responseStart/i.test(String(e.message))) { errors.push(e.message); } });
   return jsdom.JSDOM.fromFile(path.join(__dirname, '../app/index.html'), {
     runScripts: 'dangerously', resources: 'usable', pretendToBeVisual: true, virtualConsole: vc,
     beforeParse: function (w) {

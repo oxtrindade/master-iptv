@@ -10,13 +10,19 @@ import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.media.AudioManager;
+import android.net.ConnectivityManager;
 import android.provider.Settings;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.regex.Pattern;
 import android.webkit.JavascriptInterface;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -30,6 +36,24 @@ import android.webkit.WebViewClient;
 public class MainActivity extends Activity {
 
     private static final String START_URL = "file:///android_asset/www/index.html";
+    private static final String YT_HOST = "appassets.androidplatform.net";
+    private static final Pattern YT_ID = Pattern.compile("^[\\w-]{11}$");
+
+    /** Mesma página que o proxy local serve na LG: dá origem https ao embed e repassa eventos/comandos ao app. */
+    private static String ytPage(String id) {
+        String origin = "https://" + YT_HOST;
+        String src = "https://www.youtube.com/embed/" + id
+                + "?autoplay=1&mute=1&controls=0&disablekb=1&fs=0&modestbranding=1&rel=0&playsinline=1&iv_load_policy=3"
+                + "&enablejsapi=1&origin=" + origin + "&widget_referrer=" + origin + "/";
+        return "<!doctype html><html><head><meta charset=\"utf-8\"><meta name=\"referrer\" content=\"strict-origin-when-cross-origin\">"
+                + "<style>html,body{margin:0;width:100%;height:100%;background:#000;overflow:hidden}iframe{position:absolute;left:0;top:0;width:100%;height:100%;border:0}</style></head>"
+                + "<body><iframe id=\"f\" allow=\"autoplay; encrypted-media\" referrerpolicy=\"strict-origin-when-cross-origin\" src=\"" + src + "\"></iframe>"
+                + "<script>var f=document.getElementById(\"f\");"
+                + "window.addEventListener(\"message\",function(e){"
+                + "if(e.source===f.contentWindow){parent.postMessage(e.data,\"*\");}"
+                + "else if(e.source===parent&&typeof e.data===\"string\"&&e.data.indexOf('\"command\"')>0){try{f.contentWindow.postMessage(e.data,\"*\");}catch(x){}}});"
+                + "f.onload=function(){try{f.contentWindow.postMessage(JSON.stringify({event:\"listening\",id:1,channel:\"widget\"}),\"*\");}catch(x){}};</script></body></html>";
+    }
 
     private WebView web;
     private boolean tv;
@@ -96,6 +120,27 @@ public class MainActivity extends Activity {
             }
         });
         web.setWebViewClient(new WebViewClient() {
+            /** Página do player do YouTube com origem https (o app abre de file://, e o YouTube recusa embed sem origem: erro 153). */
+            @Override
+            public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                android.net.Uri u = request.getUrl();
+                if (u != null && YT_HOST.equals(u.getHost()) && "/yt".equals(u.getPath())) {
+                    String id = u.getQueryParameter("id");
+                    if (id != null && YT_ID.matcher(id).matches()) {
+                        return new WebResourceResponse("text/html", "utf-8",
+                                new ByteArrayInputStream(ytPage(id).getBytes(StandardCharsets.UTF_8)));
+                    }
+                }
+                return super.shouldInterceptRequest(view, request);
+            }
+
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                // só a navegação da página principal é restrita; o player do YouTube roda dentro de um iframe
+                if (!request.isForMainFrame()) { return false; }
+                return shouldOverrideUrlLoading(view, request.getUrl().toString());
+            }
+
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
                 // nunca sai das páginas do próprio app
@@ -114,6 +159,17 @@ public class MainActivity extends Activity {
 
     /** Ponte exposta ao JavaScript como window.NativeApp. */
     public class Bridge {
+        /** true se a conexão ativa é paga/limitada (dados móveis): o trailer só toca no Wi-Fi. */
+        @JavascriptInterface
+        public boolean isMetered() {
+            try {
+                ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+                return cm != null && cm.isActiveNetworkMetered();
+            } catch (Exception e) {
+                return false;
+            }
+        }
+
         /** Abre um endereço fora do app (YouTube). Tenta o app do YouTube e, se não houver, o que o sistema escolher. */
         @JavascriptInterface
         public boolean openUrl(String url) {

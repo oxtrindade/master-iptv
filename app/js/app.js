@@ -2426,7 +2426,12 @@
     if (S.opts.pvdub === undefined) { S.opts.pvdub = true; store.set('opts', S.opts); }
     return !!S.opts.pvdub;
   }
+  /* celular em dados móveis (conexão paga): sem trailer, só no Wi-Fi */
+  function onMetered() {
+    try { return !!(window.NativeApp && NativeApp.isMetered && NativeApp.isMetered()); } catch (e) { return false; }
+  }
   function trailerFor(it) {
+    if (onMetered()) { PD.bloqueio = 'dados móveis: trailer só no Wi-Fi'; return Promise.resolve(''); }
     var dub = dubOn(), k = (dub ? 'd:' : 'a:') + it.type + ':' + it.id;
     if (TR[k]) { return TR[k]; }
     var key = tmdbKey(), kind = it.type === 'movie' ? 'movie' : 'tv';
@@ -2489,7 +2494,9 @@
     host.appendChild(f);
     /* o YouTube recusa (erro 153) quem embute sem endereço de origem; o app abre de file://, então na LG a página
        do player vem do proxy local (http://127.0.0.1), que dá uma origem válida */
-    if (window.PalmServiceBridge) {
+    if (window.NativeApp && location.protocol === 'file:') {
+      f.src = 'https://appassets.androidplatform.net/yt?id=' + id;   // Android: a página do player vem do próprio app, com origem https
+    } else if (window.PalmServiceBridge) {
       startProxy().then(function (p) { if (!dead) { f.src = 'http://127.0.0.1:' + p.port + '/yt?t=' + p.token + '&id=' + id; } },
         function () { if (!dead) { f.src = direct; } });
     } else { f.src = direct; }
@@ -3142,7 +3149,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.47.3']
+      ['Versão do app', '1.48.0']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {

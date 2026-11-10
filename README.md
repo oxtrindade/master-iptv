@@ -239,3 +239,8 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 
 ## 1.47.3 — Correção do teste no GitHub
 - O teste de interface falhava no CI (e só lá): com internet, o jsdom carregava o player do YouTube dentro do iframe do trailer e o script do YouTube lançava `responseStart` indefinido. O teste agora ignora erros que nascem dentro desse iframe. Nenhuma mudança no app.
+
+## 1.48.0 — Trailer no Android (celular e TV) e só no Wi-Fi
+- No Android o app abre de `file://` e o YouTube recusava o player (erro 153, o mesmo da LG). Agora o app serve a página do player ele mesmo, em `https://appassets.androidplatform.net/yt?id=…` (interceptada no WebView, `shouldInterceptRequest`), dando ao embed uma origem https; a página repassa eventos e comandos (som) ao app como a do proxy da LG. A navegação de iframes deixou de ser bloqueada (só a página principal é restrita).
+- **Só no Wi-Fi:** novo `NativeApp.isMetered()` (conexão paga/dados móveis). Em dados móveis o trailer não toca (nem no detalhe, nem no card, nem no banner); diagnóstico mostra "dados móveis: trailer só no Wi-Fi".
+- A tela do filme/série no celular toca o trailer ao fundo assim que abre (já existia desde a 1.46.0, mas dependia desse player).
