@@ -212,3 +212,7 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 ## 1.44.1 — Trailer em tela cheia no card e com som
 - Corrigido o trailer "minúsculo": a página do player no proxy não tinha altura (o iframe ficava com 150 px e o vídeo em tarja no meio). Agora ocupa 100% do card/banner, cortado para preencher.
 - Nova chave **"Som no trailer"** (ligada por padrão): o trailer começa mudo (sempre permitido) e o app liga o som assim que toca; se o aparelho travar o vídeo por causa do som, volta ao mudo sozinho e não tenta de novo nessa sessão.
+
+## 1.45.0 — Só trailer dublado e trailer inteiro
+- Nova chave **"Só trailer dublado"** (ligada por padrão): usa apenas trailers em português do Brasil marcados no TMDB (idioma `pt`, país diferente de Portugal; prefere `BR`). O campo `youtube_trailer` do provedor não informa o idioma, então fica de fora nesse modo. Sem trailer em português, nada toca. Desligada, aceita qualquer idioma e também o do provedor. Precisa da chave do TMDB.
+- O trailer agora toca **inteiro**: sem limite de 90 s e sem repetir; ao acabar, volta ao pôster. Para ao mover o foco ou apertar qualquer tecla, como antes.

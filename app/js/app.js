@@ -2405,22 +2405,30 @@
     return /^[\w-]{11}$/.test(v) ? v : '';
   }
   /* promessa com a chave do vídeo no YouTube ('' se não achar): primeiro o campo do provedor, depois o TMDB */
+  function dubOn() {
+    if (S.opts.pvdub === undefined) { S.opts.pvdub = true; store.set('opts', S.opts); }
+    return !!S.opts.pvdub;
+  }
   function trailerFor(it) {
-    var k = it.type + ':' + it.id;
+    var dub = dubOn(), k = (dub ? 'd:' : 'a:') + it.type + ':' + it.id;
     if (TR[k]) { return TR[k]; }
-    var p = (it.type === 'movie'
-      ? S.provider.movieInfo(it).then(function (i) { return i.trailer || ''; })
-      : S.provider.episodes(it).then(function (r) { return (r.info && r.info.youtube_trailer) || ''; })
-    ).then(ytId, function () { return ''; });
-    p = p.then(function (id) {
-      if (id) { return id; }
-      var key = tmdbKey();
-      if (!key) { return ''; }
-      var kind = it.type === 'movie' ? 'movie' : 'tv';
+    var key = tmdbKey(), kind = it.type === 'movie' ? 'movie' : 'tv';
+    var fromTmdb = function () {
+      if (!key) { return Promise.resolve(''); }
       return Tmdb.findId(kind, it.name, Tmdb.yearOf(it.name) || parseInt(it.year, 10) || 0, key).then(function (tid) {
-        return tid ? Tmdb.trailer(kind, tid, key) : '';
+        return tid ? Tmdb.trailer(kind, tid, key, dub) : '';
       }).then(null, function () { return ''; });
-    });
+    };
+    var p;
+    if (dub) {
+      // só dublado: o campo do provedor não diz o idioma, então só vale o que o TMDB marca como português
+      p = fromTmdb();
+    } else {
+      p = (it.type === 'movie'
+        ? S.provider.movieInfo(it).then(function (i) { return i.trailer || ''; })
+        : S.provider.episodes(it).then(function (r) { return (r.info && r.info.youtube_trailer) || ''; })
+      ).then(ytId, function () { return ''; }).then(function (id) { return id || fromTmdb(); });
+    }
     TR[k] = p;
     return p;
   }
@@ -2435,7 +2443,7 @@
     var w = host.offsetWidth || 700, hh = host.offsetHeight || 394, fh = Math.round(w * 9 / 16), fw = w;
     if (fh < hh) { fh = hh; fw = Math.round(hh * 16 / 9); }
     f.style.cssText = 'left:50%;top:50%;width:' + fw + 'px;height:' + fh + 'px;margin-left:-' + Math.round(fw / 2) + 'px;margin-top:-' + Math.round(fh / 2) + 'px;border:0';
-    var direct = 'https://www.youtube.com/embed/' + id + '?autoplay=1&mute=1&controls=0&disablekb=1&fs=0&modestbranding=1&rel=0&playsinline=1&iv_load_policy=3&loop=1&playlist=' + id + '&enablejsapi=1';
+    var direct = 'https://www.youtube.com/embed/' + id + '?autoplay=1&mute=1&controls=0&disablekb=1&fs=0&modestbranding=1&rel=0&playsinline=1&iv_load_policy=3&enablejsapi=1';
     function cmd(fn, args) { try { f.contentWindow.postMessage(JSON.stringify({ event: 'command', func: fn, args: args || [] }), '*'); } catch (x) {} }
     var last = null, sndT = null, wantSound = S.opts.pvsound !== false && !S.pvNoSound;
     function onMsg(e) {
@@ -2451,6 +2459,7 @@
           sndT = setTimeout(function () { if (last !== 1 && !dead) { S.pvNoSound = true; cmd('mute'); cmd('playVideo'); } }, 1800);
         }
       }
+      if (st === 0 && cb.end) { cb.end(); }
       if (d.event === 'onError') { cb.fail('erro do YouTube ' + d.info); }
     }
     window.addEventListener('message', onMsg);
@@ -2571,14 +2580,13 @@
     trailerFor(it).then(function (id) {
       if (Prev.host || S.mode !== 'browse' || !document.body.contains(host) || !Nav.current() || !Nav.current().contains(host)) { return; }
       if (!id) { PD.bloqueio = 'sem trailer: ' + it.name; return; }
-      var tfail = function (why) { TR[key] = Promise.resolve(''); PD.falha = 'trailer ' + it.name + ': ' + why; S.pvLast = PD.falha; pvStopCard(); };
-      var yt = ytEmbed(host, id, { play: function () { host.classList.add('pv'); S.pvLast = ''; PD.tocando++; }, fail: tfail });
+      var tfail = function (why) { TR[(dubOn() ? 'd:' : 'a:') + key] = Promise.resolve(''); PD.falha = 'trailer ' + it.name + ': ' + why; S.pvLast = PD.falha; pvStopCard(); };
+      var yt = ytEmbed(host, id, { play: function () { host.classList.add('pv'); S.pvLast = ''; PD.tocando++; }, fail: tfail, end: function () { if (Prev.yt === yt) { pvStopCard(); } } });
       Prev.yt = yt; Prev.vid = yt.el; Prev.host = host; Prev.tr = null; Prev.nm = it.name;
       Prev.stopT = setTimeout(function () { if (Prev.yt === yt && !host.classList.contains('pv')) { tfail('não iniciou em 12 s'); } }, 12000);
       Prev.guard = setInterval(function () {
         if (S.mode !== 'browse' || S.mini || document.hidden || !document.body.contains(host)) { pvStopCard(); }
       }, 700);
-      setTimeout(function () { if (Prev.yt === yt) { pvStopCard(); } }, 90000);
     }, function () { PD.bloqueio = 'sem resposta do servidor'; });
   }
 
@@ -2659,13 +2667,13 @@
       trailerFor(sl.it).then(function (id) {
         if (!pvAlive() || slides[cur] !== sl || S.mode !== 'browse' || hero._yt) { return; }
         if (!id) { pvBad[key] = 1; PD.bloqueio = 'sem trailer: ' + sl.it.name; return; }
-        var tfail = function (why) { TR[key] = Promise.resolve(''); pvBad[key] = 1; PD.falha = 'trailer ' + sl.it.name + ': ' + why; pvEnd(); };
-        var yt = ytEmbed(hero, id, { play: function () { hero.classList.add('pv'); PD.tocando++; }, fail: tfail });
+        var tfail = function (why) { TR[(dubOn() ? 'd:' : 'a:') + key] = Promise.resolve(''); pvBad[key] = 1; PD.falha = 'trailer ' + sl.it.name + ': ' + why; pvEnd(); };
+        var yt = ytEmbed(hero, id, { play: function () { hero.classList.add('pv'); PD.tocando++; }, fail: tfail, end: function () { if (hero._yt === yt) { pvEnd(); } } });
         yt.el.className = 'herovid ytv';
         hero._yt = yt;
         hero.insertBefore(yt.el, hero.querySelector('.herofade'));
         clearTimeout(pvStop);
-        pvStop = setTimeout(function () { if (hero._yt === yt && !hero.classList.contains('pv')) { tfail('não iniciou em 12 s'); } else if (hero._yt === yt) { pvEnd(); } }, 90000);
+        pvStop = setTimeout(function () { if (hero._yt === yt && !hero.classList.contains('pv')) { tfail('não iniciou em 12 s'); } }, 12000);
       }, function () { pvBad[key] = 1; });
     }
     function pvIdle() { pvEnd(); pvSchedule(); }
@@ -3095,7 +3103,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.44.1']
+      ['Versão do app', '1.45.0']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
@@ -3138,6 +3146,8 @@
     camOn();
     page.appendChild(switchRow('Ocultar filmes de cinema (gravação)', 'Esconde filmes de categoria/etiqueta Cinema ou CAM, que são gravações de sala com qualidade baixa.', 'hideCam'));
     page.appendChild(switchRow('Som no trailer', 'Toca o trailer com som. Se a TV não permitir som automático, volta sozinho ao mudo.', 'pvsound'));
+    dubOn();
+    page.appendChild(switchRow('Só trailer dublado', 'Usa apenas trailers em português do Brasil (vêm do TMDB; precisa da chave do TMDB). Desligado, aceita qualquer idioma e também o trailer do provedor.', 'pvdub'));
 
     page.appendChild(sgroup('Recomendações'));
     page.appendChild(tmdbBlock());

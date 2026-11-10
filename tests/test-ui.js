@@ -108,6 +108,10 @@ Promise.all([listen(api), listen(px), startSync()]).then(function () {
       assert.deepStrictEqual($$('.hubtab').map(function (e) { return e.textContent; }), ['TV ao vivo', 'Filmes', 'Séries', 'Esportes']);
       assert.ok($('.hubtab.focus'), 'foco no primeiro item do menu');
       w.__pvTest = true;
+      w.localStorage.setItem('iptv.tmdbkey', JSON.stringify('k'));   // só dublado: o trailer vem do TMDB
+      w.Tmdb.findId = function () { return Promise.resolve(5); };
+      w.Tmdb.trailer = function (kind, id, key, dub) { assert.ok(dub, 'só dublado ligado por padrão'); return Promise.resolve('dQw4w9WgXcQ'); };
+      w.Tmdb.trending = function () { return Promise.reject(new Error('sem rede no teste')); };
       return waitFor(function () { return $('.herotitle') && $('.herotitle').textContent; }, 'banner de destaque');
     }).then(function () {
       assert.ok(/Filme Teste/.test($('.herotitle').textContent), 'banner mostra um destaque do catálogo');
@@ -432,7 +436,7 @@ Promise.all([listen(api), listen(px), startSync()]).then(function () {
       assert.ok(/127\.0\.0\.1/.test(txt) && /joao/.test(txt));
       var ver = require('../app/appinfo.json').version;
       assert.ok(txt.indexOf('Versão do app') >= 0 && txt.indexOf(ver) >= 0, 'versão do app em Configurações deve ser a do appinfo.json (' + ver + ')');
-      assert.strictEqual($$('.swrow').length, 6, 'seis chaves');
+      assert.strictEqual($$('.swrow').length, 7, 'sete chaves');
       step('configurações');
       // ocultar SD / HD: a categoria "Filmes e séries 24h" tem Cine HD, Cine SD e Cine FHD
       $$('.swrow')[2].click(); // SD

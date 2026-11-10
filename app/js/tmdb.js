@@ -150,12 +150,13 @@ var Tmdb = (function () {
         return x ? x.id : 0;
       });
     },
-    /* trailer no YouTube: devolve a chave do vídeo ('' se não houver) */
-    trailer: function (kind, id, key) {
+    /* trailer no YouTube: devolve a chave do vídeo ('' se não houver). dub=true: só trailer em português do Brasil (dublado/legendado em pt, não de Portugal) */
+    trailer: function (kind, id, key, dub) {
       return getJson('/' + kind + '/' + id + '/videos', key, '&include_video_language=pt%2Cen%2Cnull').then(function (r) {
         var l = (r.results || []).filter(function (v) { return v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser'); });
+        if (dub) { l = l.filter(function (v) { return v.iso_639_1 === 'pt' && v.iso_3166_1 !== 'PT'; }); }
         l.sort(function (a, b) {
-          function sc(v) { return (v.type === 'Trailer' ? 4 : 0) + (v.official ? 2 : 0) + (v.iso_639_1 === 'pt' ? 1 : 0); }
+          function sc(v) { return (v.type === 'Trailer' ? 8 : 0) + (v.iso_3166_1 === 'BR' ? 4 : 0) + (v.official ? 2 : 0) + (v.iso_639_1 === 'pt' ? 1 : 0); }
           return sc(b) - sc(a);
         });
         return l[0] ? l[0].key : '';
