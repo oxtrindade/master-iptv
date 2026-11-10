@@ -36,7 +36,8 @@ Promise.all([listen(api), listen(px), startSync()]).then(function () {
   var base = 'http://127.0.0.1:' + api.address().port, pport = px.address().port;
   var errors = [];
   var vc = new jsdom.VirtualConsole();
-  vc.on('jsdomError', function (e) { if (!/mpegts|hls|Not implemented|Could not load iframe/i.test(String(e.message))) { errors.push(e.message); } });
+  // o jsdom carrega o iframe do trailer; com internet (CI) o script do YouTube roda dentro dele e falha (performance.timing) — não é do app
+  vc.on('jsdomError', function (e) { if (!/mpegts|hls|Not implemented|Could not load iframe|responseStart/i.test(String(e.message))) { errors.push(e.message); } });
 
   return jsdom.JSDOM.fromFile(path.join(__dirname, '../app/index.html'), {
     runScripts: 'dangerously', resources: 'usable', pretendToBeVisual: true, virtualConsole: vc,

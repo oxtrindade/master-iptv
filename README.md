@@ -236,3 +236,6 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 ## 1.47.2 — Trailer sem atraso
 - O trailer começa no mesmo instante em que o foco para (card e banner): tirados os atrasos de 350 ms/700 ms e a espera de 250 ms para o card largo abrir. Ao mover o foco, o trailer anterior é derrubado na hora.
 - Inclui a correção da 1.47.1 (banner fora da tela não toca).
+
+## 1.47.3 — Correção do teste no GitHub
+- O teste de interface falhava no CI (e só lá): com internet, o jsdom carregava o player do YouTube dentro do iframe do trailer e o script do YouTube lançava `responseStart` indefinido. O teste agora ignora erros que nascem dentro desse iframe. Nenhuma mudança no app.
