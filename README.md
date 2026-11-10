@@ -229,3 +229,10 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 ## 1.47.0 — Prévia e som sempre ligados; série na TV continua de onde parou
 - Removidas as chaves "Trailer na prévia" e "Som no trailer": o trailer na prévia e o som ficam sempre ligados. Se a TV travar o vídeo por causa do som, ele volta ao mudo sozinho (nessa sessão). O diagnóstico do trailer continua em Configurações. Ficou só "Preferir trailer dublado".
 - **TV:** clicar numa série das fileiras da Início abre direto no episódio em que parou (ou no seguinte, se o último terminou). Série nunca assistida abre o detalhe.
+
+## 1.47.1 — Trailer só com som
+- Causa provável: o trailer do banner seguia tocando depois de descer para as fileiras (banner fora da tela), ficando só o som. Agora o banner só toca se estiver visível e o foco não estiver numa fileira; é interrompido ao sair da tela, ao focar uma fileira e quando um card começa o seu trailer.
+
+## 1.47.2 — Trailer sem atraso
+- O trailer começa no mesmo instante em que o foco para (card e banner): tirados os atrasos de 350 ms/700 ms e a espera de 250 ms para o card largo abrir. Ao mover o foco, o trailer anterior é derrubado na hora.
+- Inclui a correção da 1.47.1 (banner fora da tela não toca).

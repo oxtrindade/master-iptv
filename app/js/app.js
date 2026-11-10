@@ -2575,7 +2575,7 @@
         ov.querySelector('.widem').textContent = metaLine([inf.year || it.year, it.rating ? 'Nota ' + it.rating : '', inf.genre, inf.duration]);
         ov.querySelector('.widep').textContent = inf.plot || it.plot || '';
       });
-    }, 250);
+    }, 0);
   }
 
   function pvFocus(el) {
@@ -2597,7 +2597,7 @@
       var po = n && n.querySelector && n.querySelector('.poster'), pi = po && po._it;
       if (pi && (pi.type === 'movie' || pi.type === 'series')) { trailerFor(pi).then(null, function () {}); }
     });
-    Prev.t = setTimeout(function () { if (Nav.current() === el) { pvCardStart(host, it); } }, 350);
+    Prev.t = setTimeout(function () { if (Nav.current() === el) { pvCardStart(host, it); } }, 0);
   }
 
   function pvCardStart(host, it) {
@@ -2607,6 +2607,7 @@
       if (Prev.host || S.mode !== 'browse' || !document.body.contains(host) || !Nav.current() || !Nav.current().contains(host)) { return; }
       if (!id) { PD.bloqueio = 'sem trailer: ' + it.name; return; }
       var tfail = function (why) { TR[(dubOn() ? 'd:' : 'a:') + key] = Promise.resolve(''); PD.falha = 'trailer ' + it.name + ': ' + why; S.pvLast = PD.falha; pvStopCard(); };
+      if (S.heroEnd) { S.heroEnd(); }
       var yt = ytEmbed(host, id, { play: function () { host.classList.add('pv'); S.pvLast = ''; PD.tocando++; }, fail: tfail, end: function () { if (Prev.yt === yt) { pvStopCard(); } } });
       Prev.yt = yt; Prev.vid = yt.el; Prev.host = host; Prev.tr = null; Prev.nm = it.name;
       Prev.stopT = setTimeout(function () { if (Prev.yt === yt && !host.classList.contains('pv')) { tfail('não iniciou em 12 s'); } }, 12000);
@@ -2668,6 +2669,14 @@
     }
     /* preview mudo (estilo Netflix): depois de ~4 s parado no banner, toca um trecho do filme/série */
     function pvAlive() { return hero.parentNode && document.body.contains(hero) && token === S.homeToken; }
+    /* o banner só toca se estiver na tela e o foco não estiver numa fileira (senão ficava só o som, com o banner fora da vista) */
+    function heroSeen() {
+      var r = hero.getBoundingClientRect(), f = Nav.current();
+      if (!window.__pvTest && (r.bottom < 160 || r.top > window.innerHeight * 0.6)) { return false; }
+      if (f && !hero.contains(f) && f.closest && f.closest('.hrow')) { return false; }
+      return true;
+    }
+    S.heroEnd = function () { pvEnd(); };
     function pvEnd() {
       clearTimeout(pvStop);
       if (hero._yt) { hero._yt.off(); hero._yt = null; }
@@ -2676,13 +2685,14 @@
     function pvSchedule() {
       clearTimeout(pvT);
       if (!pvOn() || !slides.length) { return; }
-      pvT = setTimeout(pvStart, 700);
+      pvT = setTimeout(pvStart, 0);
     }
     function pvStart() {
       if (!pvAlive()) { pvEnd(); return; }
       var sl = slides[cur];
       PD.player = 'banner tentou ' + (++PD.agendadas);
       if (S.mode !== 'browse' || S.mini || document.hidden || !sl || pvBad[sl.it.type + ':' + sl.it.id]) { return; }
+      if (!heroSeen()) { PD.bloqueio = 'banner fora da tela / foco numa fileira'; return; }
       var key = sl.it.type + ':' + sl.it.id;
       trailerFor(sl.it).then(function (id) {
         if (!pvAlive() || slides[cur] !== sl || S.mode !== 'browse' || hero._yt) { return; }
@@ -2692,6 +2702,10 @@
         yt.el.className = 'herovid ytv';
         hero._yt = yt;
         hero.insertBefore(yt.el, hero.querySelector('.herofade'));
+        var hg = setInterval(function () {
+          if (hero._yt !== yt) { clearInterval(hg); return; }
+          if (!pvAlive() || S.mode !== 'browse' || S.mini || document.hidden || !heroSeen()) { clearInterval(hg); pvEnd(); }
+        }, 500);
         clearTimeout(pvStop);
         pvStop = setTimeout(function () { if (hero._yt === yt && !hero.classList.contains('pv')) { tfail('não iniciou em 12 s'); } }, 12000);
       }, function () { pvBad[key] = 1; });
@@ -3128,7 +3142,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.47.0']
+      ['Versão do app', '1.47.2']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
