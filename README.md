@@ -263,3 +263,6 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 ## 1.50.3 — Banner com troca fácil de destaque
 - **TV:** ◀ ▶ em qualquer botão do banner troca de filme/série (o foco fica no botão); "Assistir" e "Mais informações" agora ficam um sobre o outro. O trailer do primeiro destaque toca ao abrir e o do novo destaque começa ao trocar.
 - **Celular:** arrastar o banner para o lado troca de destaque, e o trailer do novo começa (só no Wi-Fi). Animação curta de deslize na troca.
+
+## 1.50.4 — Texto do card largo
+- Enquanto o card largo mostra o pôster, o texto (título, dados, sinopse) volta ao tamanho grande de antes; quando o trailer entra, encolhe (só título e dados, sem sinopse).
