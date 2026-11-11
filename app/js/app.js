@@ -1517,7 +1517,7 @@
 
   /* ---------- estrutura: menu inicial + uma tela por seção ---------- */
 
-  var SECT = { live: 'TV ao vivo', movie: 'Filmes', series: 'Séries', search: 'Buscar', fav: 'Favoritos', settings: 'Configurações', dl: 'Downloads', sports: 'Esportes', guide: 'Guia de TV' };
+  var SECT = { home: 'Início', live: 'TV ao vivo', movie: 'Filmes', series: 'Séries', search: 'Buscar', fav: 'Favoritos', settings: 'Configurações', dl: 'Downloads', sports: 'Esportes', guide: 'Guia de TV' };
 
   function showBrowse() {
     S.mode = 'browse';
@@ -2259,6 +2259,11 @@
   }
 
   function hubTab(sec) {
+    if (sec === 'home') {   // "Início": a aba da tela atual; OK volta ao banner
+      return h('button', { cls: 'f hubtab on', type: 'button', 'data-sec': 'home', text: SECT.home, on: { click: function () {
+        S.pageEl.scrollTop = 0; var b = S.pageEl.querySelector('[data-k="hero-play"]'); if (b) { Nav.focus(b); }
+      } } });
+    }
     return h('button', { cls: 'f hubtab', type: 'button', 'data-sec': sec, text: SECT[sec], on: { click: function () { selectSection(sec); } } });
   }
 
@@ -2863,6 +2868,8 @@
       hero.classList.remove('hidden');
       rebuildDots();
       show(0);
+      // a seleção começa no banner (▲ sobe ao menu: Início / TV ao vivo / Filmes / Séries)
+      if (hopts && hopts.focusHero && S.homeFocus0 && Nav.current() === S.homeFocus0) { var pb = hero.querySelector('[data-k="hero-play"]'); if (pb) { Nav.focus(pb); } }
       S.heroTimer = setInterval(function () {
         if (!document.body.contains(hero) || token !== S.homeToken) { clearInterval(S.heroTimer); S.heroTimer = null; return; }
         var f = Nav.current();
@@ -2881,7 +2888,6 @@
       if (k === KEY.LEFT) { show(cur - 1, dk, -1); return true; }
       return false;
     };
-    if (isTvDevice()) { hero.classList.add('tvh'); }
     // celular: arrastar o banner de lado troca de destaque (e o trailer do novo começa)
     var tx = 0, ty = 0;
     hero.addEventListener('touchstart', function (e) { var t = e.touches[0]; tx = t.clientX; ty = t.clientY; }, { passive: true });
@@ -2906,8 +2912,12 @@
           });
         });
         if (!add.length) { return; }
+        // 1.51.0: um banner só, sorteado entre os filmes/séries em alta a cada abertura do app (volta à Início = mesmo banner)
+        var pk = S.heroPick = S.heroPick || {}, ky = secs.join(), one = null;
+        if (pk[ky]) { add.forEach(function (a) { if (a.it.type + ':' + a.it.id === pk[ky]) { one = a; } }); }
+        if (!one) { one = add[window.__pvTest ? 0 : Math.floor(Math.random() * Math.min(add.length, 8))]; pk[ky] = one.it.type + ':' + one.it.id; }
         var was = slides.length;
-        slides = slides.concat(add).slice(0, 8);
+        slides = slides.concat([one]);
         if (!was) { start(); } else { rebuildDots(); }
       }, function () {});
     }, 300);
@@ -2921,11 +2931,11 @@
         hubTile('live', 'Canais e programação'), hubTile('movie', 'Catálogo de filmes'), hubTile('series', 'Séries e episódios'), hubTile('sports', 'Placares e jogos')
       ]));
     } else {
-      page.appendChild(h('div', { cls: 'hubtabs' }, [hubTab('live'), hubTab('movie'), hubTab('series'), hubTab('sports')]));
+      page.appendChild(h('div', { cls: 'hubtabs' }, [hubTab('home'), hubTab('live'), hubTab('movie'), hubTab('series'), hubTab('sports')]));
     }
     var rows = h('div', { cls: 'hrows' });
     page.appendChild(rows);
-    heroBanner(rows);
+    heroBanner(rows, { focusHero: !S.hubFocus });
 
     var conts = contList().slice(0, 12);
     if (conts.length) { rows.appendChild(makeRow('Continuar assistindo', conts.map(contCard))); }
@@ -2950,7 +2960,8 @@
     if (want === 'cont') { target = page.querySelector('.card.cont'); }
     else if (want === 'settings' || want === 'dl') { target = S.headEl.querySelector('.menubtn'); }
     else if (want) { target = S.mainEl.querySelector('[data-sec="' + want + '"]'); }
-    Nav.focus(target || page.querySelector('.hubtab, .hubtile'));
+    Nav.focus(target || page.querySelector('.hubtab:not(.on), .hubtile'));
+    S.homeFocus0 = Nav.current();
   }
 
   /* "em alta": novidades do catálogo com boa nota (o Xtream não tem ranking; usamos data de adição + nota) */
@@ -3276,7 +3287,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.50.4']
+      ['Versão do app', '1.51.0']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {

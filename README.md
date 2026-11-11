@@ -266,3 +266,8 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 
 ## 1.50.4 — Texto do card largo
 - Enquanto o card largo mostra o pôster, o texto (título, dados, sinopse) volta ao tamanho grande de antes; quando o trailer entra, encolhe (só título e dados, sem sinopse).
+
+## 1.51.0 — Início como a Netflix (menu no topo + banner único)
+- Menu superior: **Início · TV ao vivo · Filmes · Séries · Esportes** (Início é a aba atual).
+- **Um banner só**, sorteado entre os filmes/séries em alta a cada abertura do app (voltar à Início mantém o mesmo). A capa aparece e o trailer começa logo em seguida.
+- A seleção já começa no **banner** (Assistir); ▲ sobe ao menu para trocar de seção, ▼ volta ao banner. Fim da troca de destaque por ◀ ▶ (os botões voltam lado a lado).

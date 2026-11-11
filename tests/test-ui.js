@@ -104,10 +104,10 @@ Promise.all([listen(api), listen(px), startSync()]).then(function () {
       step('erro de login mantém os dados nos campos');
       inputs[2].value = 'segredo';
       $('.btn.primary').click();
-      return waitFor(function () { return $$('.hubtab').length === 4; }, 'menu inicial');
+      return waitFor(function () { return $$('.hubtab').length === 5; }, 'menu inicial');
     }).then(function () {
-      assert.deepStrictEqual($$('.hubtab').map(function (e) { return e.textContent; }), ['TV ao vivo', 'Filmes', 'Séries', 'Esportes']);
-      assert.ok($('.hubtab.focus'), 'foco no primeiro item do menu');
+      assert.deepStrictEqual($$('.hubtab').map(function (e) { return e.textContent; }), ['Início', 'TV ao vivo', 'Filmes', 'Séries', 'Esportes']);
+      assert.ok($('.hubtab.focus') || $('.herobtns .focus'), 'foco no menu ou no banner');
       w.__pvTest = true;
       w.localStorage.setItem('iptv.tmdbkey', JSON.stringify('k'));   // só dublado: o trailer vem do TMDB
       w.Tmdb.findId = function () { return Promise.resolve(5); };
@@ -543,7 +543,7 @@ Promise.all([listen(api), listen(px), startSync()]).then(function () {
     }).then(function () {
       $$('.settings .btn').filter(function (x) { return x.textContent === 'Abas no topo'; })[0].click();
       $('.backbtn').click();
-      return waitFor(function () { return $$('.hubtab').length === 4 && !$('.hubtile'); }, 'abas de novo');
+      return waitFor(function () { return $$('.hubtab').length === 5 && !$('.hubtile'); }, 'abas de novo');
     }).then(function () {
       go('settings');
       return waitFor(function () { return $('.settings .sgroup'); }, 'config 6');
