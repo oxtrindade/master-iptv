@@ -259,3 +259,7 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 
 ## 1.50.2 — Texto menor no card com trailer
 - No card largo, o texto (título, dados, sinopse) ficou menor e, enquanto o trailer toca, mostra só título e dados numa linha, sem a sinopse, para cobrir menos o vídeo.
+
+## 1.50.3 — Banner com troca fácil de destaque
+- **TV:** ◀ ▶ em qualquer botão do banner troca de filme/série (o foco fica no botão); "Assistir" e "Mais informações" agora ficam um sobre o outro. O trailer do primeiro destaque toca ao abrir e o do novo destaque começa ao trocar.
+- **Celular:** arrastar o banner para o lado troca de destaque, e o trailer do novo começa (só no Wi-Fi). Animação curta de deslize na troca.

@@ -2764,8 +2764,9 @@
     var pvT = null, pvStop = null, pvBad = {};
     hero.appendChild(bg); hero.appendChild(h('div', { cls: 'herofade' })); hero.appendChild(poster); hero.appendChild(txt); hero.appendChild(dots);
 
-    function show(i, focusK) {
+    function show(i, focusK, dir) {
       if (!slides.length) { return; }
+      if (dir) { hero.classList.remove('slr', 'sll'); void hero.offsetWidth; hero.classList.add(dir > 0 ? 'slr' : 'sll'); }
       cur = (i + slides.length) % slides.length;
       var sl = slides[cur], it = sl.it, key = it.type + ':' + it.id, inf = heroInfo[key] || {};
       txt.classList.add('swap');
@@ -2874,10 +2875,20 @@
     S.heroKey = function (k) {
       if (!isTvDevice() || slides.length < 2 || !hero.parentNode || token !== S.homeToken) { return false; }
       var f = Nav.current(), dk = f && hero.contains(f) && f.getAttribute('data-k');
-      if (k === KEY.RIGHT && dk === 'hero-info') { show(cur + 1, 'hero-play'); return true; }
-      if (k === KEY.LEFT && dk === 'hero-play') { show(cur - 1, 'hero-play'); return true; }
+      if (!dk) { return false; }
+      // ▶ / ◀ em qualquer botão do banner trocam de destaque (o foco fica no mesmo botão); os botões ficam um sobre o outro
+      if (k === KEY.RIGHT) { show(cur + 1, dk, 1); return true; }
+      if (k === KEY.LEFT) { show(cur - 1, dk, -1); return true; }
       return false;
     };
+    if (isTvDevice()) { hero.classList.add('tvh'); }
+    // celular: arrastar o banner de lado troca de destaque (e o trailer do novo começa)
+    var tx = 0, ty = 0;
+    hero.addEventListener('touchstart', function (e) { var t = e.touches[0]; tx = t.clientX; ty = t.clientY; }, { passive: true });
+    hero.addEventListener('touchend', function (e) {
+      var t = e.changedTouches[0], dx = t.clientX - tx, dy = t.clientY - ty;
+      if (slides.length > 1 && Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) { show(cur + (dx < 0 ? 1 : -1), null, dx < 0 ? 1 : -1); }
+    }, { passive: true });
     rows.appendChild(hero);
     if (slides.length) { start(); }
     // completa com os destaques do catálogo (em alta); se não houver histórico, o banner nasce deles
@@ -3265,7 +3276,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.50.2']
+      ['Versão do app', '1.50.3']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {

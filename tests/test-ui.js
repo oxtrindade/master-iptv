@@ -126,9 +126,9 @@ Promise.all([listen(api), listen(px), startSync()]).then(function () {
       if ($$('.herodot').length < 2) { d.body.classList.remove('tv'); return; }
       var t0 = $('.herotitle').textContent;
       w.Nav.focus($('[data-k="hero-info"]'));
-      key(39);   // TV: ▶ no último botão passa ao próximo destaque
-      return waitFor(function () { return $('.herotitle').textContent !== t0 && $('[data-k="hero-play"]') && $('[data-k="hero-play"]').classList.contains('focus'); }, 'TV: ▶ troca o destaque do banner').then(function () {
-        key(37);   // ◀ no primeiro botão volta
+      key(39);   // TV: ▶ em qualquer botão passa ao próximo destaque (foco fica no botão)
+      return waitFor(function () { return $('.herotitle').textContent !== t0 && $('[data-k="hero-info"]') && $('[data-k="hero-info"]').classList.contains('focus'); }, 'TV: ▶ troca o destaque do banner').then(function () {
+        key(37);   // ◀ volta
         return waitFor(function () { return $('.herotitle').textContent === t0; }, 'TV: ◀ volta ao destaque anterior');
       }).then(function () { d.body.classList.remove('tv'); step('banner (TV): ◀ ▶ trocam o destaque'); });
     }).then(function () {
