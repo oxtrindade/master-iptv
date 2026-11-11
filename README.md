@@ -276,3 +276,7 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 - **Voltar** no player (botão ‹, tecla Voltar) agora sai do vídeo e volta à tela anterior, salvando o ponto para "Continuar assistindo". Acabou o mini player dentro do app (Ampliar/Fechar).
 - O **PiP do Android** (janelinha do sistema) continua só ao sair do app (Início do Android) com algo tocando.
 - Única exceção: na aba **Guia**, o canal continua tocando na janela ao lado da grade.
+
+## 1.51.2 / 1.51.3
+- **Voltar** em Início/Filmes/Séries com o foco numa fileira sobe primeiro ao banner (superfície); só depois volta/sai (Voltar de novo).
+- **Filmes e Séries** ficam iguais à Início: menu no topo (Início · TV ao vivo · Filmes · Séries · Esportes), banner com trailer e a seleção começando no botão "Assistir" (o foco nunca chegava ao banner porque os botões só aparecem após a animação do 1º destaque; isso valia também para a Início).

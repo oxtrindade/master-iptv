@@ -1735,9 +1735,10 @@
   function renderGenreHome(sec) {
     var page = S.pageEl, token = S.homeToken;
     page.className = 'page scroll home genrehome';
+    page.appendChild(h('div', { cls: 'hubtabs' }, ['home', 'live', 'movie', 'series', 'sports'].map(function (k) { return hubTab(k, sec); })));
     var rows = h('div', { cls: 'hrows' });
     page.appendChild(rows);
-    heroBanner(rows, { secs: [sec] });
+    heroBanner(rows, { secs: [sec], focusHero: true });
     var bar = h('div', { cls: 'genbar' }, [h('button', { cls: 'f btn', type: 'button', 'data-k': 'allcats', text: 'Todas as categorias',
       on: { click: function () { selectSection(sec, { backTo: S.backTo, classic: true }); } } })]);
     rows.appendChild(bar);
@@ -1746,7 +1747,8 @@
     trendRow(rows, sec, sec === 'movie' ? 'Filmes em alta' : 'Séries em alta');
     var holder = h('div', { cls: 'gnrows' });
     rows.appendChild(holder);
-    Nav.focus(bar.querySelector('.f'));
+    Nav.focus(page.querySelector('.hubtab:not(.on)'));
+    S.homeFocus0 = Nav.current();
     loading(true, 'Carregando…');
     Promise.all([S.provider.categories(sec), S.provider.all(sec)]).then(function (r) {
       if (token !== S.homeToken) { return; }
@@ -2258,13 +2260,13 @@
     ]);
   }
 
-  function hubTab(sec) {
-    if (sec === 'home') {   // "Início": a aba da tela atual; OK volta ao banner
-      return h('button', { cls: 'f hubtab on', type: 'button', 'data-sec': 'home', text: SECT.home, on: { click: function () {
-        S.pageEl.scrollTop = 0; var b = S.pageEl.querySelector('[data-k="hero-play"]'); if (b) { Nav.focus(b); }
-      } } });
-    }
-    return h('button', { cls: 'f hubtab', type: 'button', 'data-sec': sec, text: SECT[sec], on: { click: function () { selectSection(sec); } } });
+  function hubTab(sec, cur) {
+    cur = cur || 'home';
+    var on = sec === cur;
+    return h('button', { cls: 'f hubtab' + (on ? ' on' : ''), type: 'button', 'data-sec': sec, text: SECT[sec], on: { click: function () {
+      if (!on) { selectSection(sec); return; }   // aba atual: OK volta ao banner
+      S.pageEl.scrollTop = 0; var b = S.pageEl.querySelector('[data-k="hero-play"]'); if (b) { Nav.focus(b); }
+    } } });
   }
 
   /* ---------- guia de TV (grade por horário) ---------- */
@@ -2766,7 +2768,7 @@
     var tag = h('div', { cls: 'herotag' }), title = h('div', { cls: 'herotitle' }), meta = h('div', { cls: 'herometa' }), plot = h('div', { cls: 'heroplot' });
     var btns = h('div', { cls: 'herobtns' }), dots = h('div', { cls: 'herodots' });
     var txt = h('div', { cls: 'herotxt' }, [tag, title, meta, plot, btns]);
-    var pvT = null, pvStop = null, pvBad = {};
+    var pvT = null, pvStop = null, pvBad = {}, wantFocus = false;
     hero.appendChild(bg); hero.appendChild(h('div', { cls: 'herofade' })); hero.appendChild(poster); hero.appendChild(txt); hero.appendChild(dots);
 
     function show(i, focusK, dir) {
@@ -2792,6 +2794,8 @@
         [].forEach.call(dots.children, function (d, n) { d.classList.toggle('on', n === cur); });
         txt.classList.remove('swap');
         if (focusK) { var fb = btns.querySelector('[data-k="' + focusK + '"]'); if (fb) { Nav.focus(fb); } }
+        // 1º destaque: a seleção sai do menu e vai para o botão Assistir (só se o usuário ainda não mexeu no foco)
+        if (wantFocus) { wantFocus = false; if (Nav.current() === S.homeFocus0) { var pb = btns.querySelector('[data-k="hero-play"]'); if (pb) { Nav.focus(pb); } } }
         pvEnd(); pvSchedule();
         if (!heroInfo[key]) { loadInfo(sl, cur); }
       }, 220);
@@ -2869,7 +2873,7 @@
       rebuildDots();
       show(0);
       // a seleção começa no banner (▲ sobe ao menu: Início / TV ao vivo / Filmes / Séries)
-      if (hopts && hopts.focusHero && S.homeFocus0 && Nav.current() === S.homeFocus0) { var pb = hero.querySelector('[data-k="hero-play"]'); if (pb) { Nav.focus(pb); } }
+      wantFocus = !!(hopts && hopts.focusHero && S.homeFocus0 && Nav.current() === S.homeFocus0);
       S.heroTimer = setInterval(function () {
         if (!document.body.contains(hero) || token !== S.homeToken) { clearInterval(S.heroTimer); S.heroTimer = null; return; }
         var f = Nav.current();
@@ -3287,7 +3291,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.51.1']
+      ['Versão do app', '1.51.3']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
@@ -4152,6 +4156,12 @@
     if (S.mode === 'browse') {
       if (S.drawerOpen) { closeDrawer(); return; }
       if (S.section === 'sports' && S.sp && S.sp.game) { S.sp.game = null; renderSports(); return; }
+      // Início/Filmes/Séries: com o foco numa fileira, o 1º Voltar sobe à "superfície" (banner/menu); só então sai da tela ou do app
+      var fcur = Nav.current();
+      if (S.pageEl && fcur && fcur.closest && fcur.closest('.hrow') && S.pageEl.contains(fcur)) {
+        var topEl = S.pageEl.querySelector('[data-k="hero-play"]') || S.pageEl.querySelector('.hubtab:not(.on), .genbar .f');
+        if (topEl) { S.pageEl.scrollTop = 0; Nav.focus(topEl); return; }
+      }
       if (S.section !== 'home' && !S.offline) {
         var cur = Nav.current();
         if (S.catsEl && S.contentEl && cur && S.contentEl.contains(cur)) {

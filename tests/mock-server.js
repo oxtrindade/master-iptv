@@ -28,6 +28,11 @@ function create() {
           return json(q.category_id ? all.filter(function (c) { return c.category_id === q.category_id; }) : all);
         case 'get_vod_categories': return json([{ category_id: '10', category_name: 'Ação' }]);
         case 'get_vod_streams':
+          if (module.exports.many) {   // catálogo "grande": a tela de Filmes vira fileiras por gênero
+            var mv = [];
+            for (var i = 0; i < 6; i++) { mv.push({ stream_id: 600 + i, name: 'Filme Gênero ' + i, stream_icon: 'http://127.0.0.1:9/p' + i + '.jpg', category_id: '10', rating: '7.4', container_extension: 'mkv', added: String(1700000000 + i) }); }
+            return json(mv);
+          }
           return json([{ stream_id: 501, name: 'Filme Teste', stream_icon: 'http://127.0.0.1:9/poster.jpg', category_id: '10', rating: '7.4', container_extension: 'mkv' }]);
         case 'get_vod_info': return json({ info: { plot: 'Um filme de teste.', genre: 'Ação', releasedate: '2020-05-01', duration: '01:40:00', youtube_trailer: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' } });
         case 'get_series_categories': return json([{ category_id: '20', category_name: 'Drama' }]);

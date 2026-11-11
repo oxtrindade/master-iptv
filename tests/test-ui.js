@@ -637,6 +637,7 @@ Promise.all([listen(api), listen(px), startSync()]).then(function () {
       assert.ok(/MASTER IPTV/.test($('.login .logo').textContent));
 
       step('logout volta ao login (sem demonstração, nome Master IPTV)');
+      mock.many = true;   // a partir daqui o catálogo de filmes é grande (testa Filmes por gênero)
       // http x https: o servidor de teste só fala http; digitar https:// deve cair sozinho em http:// e guardar o que funcionou
       $$('.login input')[0].value = base.replace('http://', 'https://');
       $$('.login input')[2].value = 'segredo';
@@ -652,6 +653,22 @@ Promise.all([listen(api), listen(px), startSync()]).then(function () {
       }, 'jogos, canais e programação guardados no aparelho');
     }).then(function () {
       step('esportes: cache no aparelho (jogos, canais, programação)');
+      // Filmes por gênero (catálogo grande): banner de destaque com trailer, igual à Início
+      w.__pvTest = true;
+      w.Tmdb.findId = function () { return Promise.resolve(5); };
+      w.Tmdb.trailer = function () { return Promise.resolve('dQw4w9WgXcQ'); };
+      w.localStorage.setItem('iptv.tmdbkey', JSON.stringify('k'));
+      go('home');
+      $('[data-sec="movie"]').click();
+      return waitFor(function () { return $('.genrehome .hero:not(.hidden)'); }, 'banner na tela de Filmes').then(function () {
+        return waitFor(function () { var v = $('.genrehome .herovid.ytv'); return v && v.getAttribute('src'); }, 'trailer no banner de Filmes');
+      }).then(function () {
+        assert.ok($$('.genrehome .gnrows .hrow').length >= 1, 'fileira por gênero');
+        assert.ok(w.Nav.current() && w.Nav.current().getAttribute('data-k') === 'hero-play', 'foco começa no banner (Assistir)');
+        step('Filmes: banner com trailer como a Início');
+        mock.many = false;
+      });
+    }).then(function () {
       assert.deepStrictEqual(errors, [], 'erros de script: ' + errors.join(' | '));
       console.log('UI ok');
     });
