@@ -170,17 +170,12 @@ listen(api).then(function () {
     touch('touchstart', 20, 25); touch('touchend'); touch('touchstart', 20, 25); touch('touchend');
     assert.strictEqual(vt, 954, 'toque duplo na esquerda volta 10 s: ' + vt);
     assert.ok(!$('#osd-ctl [data-act="rew"]') && !$('#osd-ctl [data-act="ff"]'), 'sem botões de 10 s no meio da tela');
-    // botão ‹ da tela: minimiza e o mesmo clique não pode ampliar de volta
+    // botão ‹ da tela: sai do vídeo (sem mini player)
     var bk = $('#osd [data-act="back"]');
     assert.ok(bk, 'botão voltar na tela');
     bk.dispatchEvent(new w.MouseEvent('click', { bubbles: true }));
-    assert.ok($('#player').classList.contains('mini'), 'botão voltar vira mini player e continua mini');
-    $('#player').click();
-    assert.ok($('#player').classList.contains('mini'), 'toque logo após minimizar não amplia');
-    $('#mini-open').click();
-    assert.ok(!$('#player').classList.contains('mini'), 'Ampliar volta à tela cheia');
+    assert.ok($('#player').classList.contains('hidden'), 'botão voltar fecha o vídeo');
     step('gestos: brilho (esq.), volume (dir.) e avançar/voltar');
-    key(413);   // Parar
     assert.ok($('#player').classList.contains('hidden'), 'player fechou');
     assert.ok(T.ls('resume')['m:501'] && T.ls('resume')['m:501'].t === 954, 'o ponto de "continuar assistindo" é salvo');
     step('tocar do arquivo baixado e salvar o ponto');

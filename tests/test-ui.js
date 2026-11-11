@@ -232,20 +232,9 @@ Promise.all([listen(api), listen(px), startSync()]).then(function () {
       assert.ok($('#osd-tracks').classList.contains('hidden') && !$('#osd-guide').classList.contains('hidden'), 'menu do ao vivo: só Guia de TV');
       step('ao vivo sem áudio e legenda');
       key(27);
-      assert.ok(!$('#player').classList.contains('hidden') && $('#player').classList.contains('mini'), 'Voltar minimiza o player');
-      assert.ok(d.body.classList.contains('mini-on') && !$('#app').classList.contains('hidden'), 'lista visível com o mini player');
-      // controle sem botões coloridos (Android TV): os botões do mini player entram na navegação do direcional
-      assert.ok(w.Nav.all().indexOf($('#mini-open')) >= 0 && w.Nav.all().indexOf($('#mini-x')) >= 0, 'botões do mini player são navegáveis');
-      w.Nav.focus($('#mini-open'));
-      assert.strictEqual(w.Nav.current(), $('#mini-open'), 'foco no botão Ampliar');
-      key(13);
-      assert.ok(!$('#player').classList.contains('mini'), 'OK em "Ampliar" volta ao player em tela cheia');
-      key(27);
-      w.Nav.focus($('#mini-x'));
-      key(13);
-      assert.ok($('#player').classList.contains('hidden'), 'OK no X fecha o mini player');
-      assert.ok(w.Nav.current(), 'o foco volta para a lista');
-      step('mini player alcançável só com o direcional (Ampliar e Fechar)');
+      assert.ok($('#player').classList.contains('hidden') && !$('#player').classList.contains('mini') && !d.body.classList.contains('mini-on'), 'Voltar fecha o vídeo (sem mini player no app)');
+      assert.ok(!$('#app').classList.contains('hidden') && w.Nav.current(), 'lista visível e com foco');
+      step('Voltar no player sai do vídeo');
       go('live');
       return waitFor(function () { return $$('.row').length > 0; }, 'canais de novo').then(function () {
         $$('.row')[0].click();
@@ -253,10 +242,7 @@ Promise.all([listen(api), listen(px), startSync()]).then(function () {
       });
     }).then(function () {
       key(27);
-      key(405);
-      assert.ok(!$('#player').classList.contains('mini'), 'Amarelo amplia');
-      key(27); key(406);
-      assert.ok($('#player').classList.contains('hidden') && !$('#player').classList.contains('mini'), 'Azul fecha o mini player');
+      assert.ok($('#player').classList.contains('hidden') && !$('#player').classList.contains('mini'), 'Voltar fecha o player');
       go('movie');
       return waitFor(function () { return $$('.card').length === 1; }, 'filmes');
     }).then(function () {
@@ -302,7 +288,7 @@ Promise.all([listen(api), listen(px), startSync()]).then(function () {
       $('#detail .btn.primary').click();
       assert.ok(/501\.mkv$/.test($('#video').getAttribute('src')));
       vd = 3600; vt = 600; // simula 10 min assistidos de 1h
-      key(27); assert.ok($("#player").classList.contains("mini"), "filme: Voltar minimiza"); key(406);
+      key(27); assert.ok($("#player").classList.contains("hidden"), "filme: Voltar sai do vídeo");
       assert.ok($('#player').classList.contains('hidden'));
       assert.ok(!$('#detail').classList.contains('hidden'), 'volta ao detalhe');
       assert.ok(/Continuar/.test($('#detail .btn.primary') ? $('#detail').textContent : ''), 'botão vira Continuar');

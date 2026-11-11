@@ -3287,7 +3287,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.51.0']
+      ['Versão do app', '1.51.1']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
@@ -3731,7 +3731,7 @@
     if (logo) { imgEl(logo, l); }
     $('osd-bar').classList.toggle('hidden', !vod);
     $('osd').classList.toggle('vod', !!vod);
-    $('osd-hint').textContent = vod ? 'OK: pausar · ←/→: ±10 s · Cima/Baixo: menu (áudio e legenda) · Voltar: mini player · Parar: sair'
+    $('osd-hint').textContent = vod ? 'OK: pausar · ←/→: ±10 s · Cima/Baixo: menu (áudio e legenda) · Voltar: sair do vídeo'
       : 'Cima/Baixo: canal · 0-9: número · Verde: áudio e legenda · Vermelho: favorito';
     $('osd-fill').style.width = '0';
     $('osd-cur').textContent = '0:00';
@@ -4009,11 +4009,12 @@
     if (S.mini) { $('mini-title').textContent = $('osd-title').textContent; }
   }
 
+  /* 1.51.1: "Voltar" no player sai do vídeo (sem mini player dentro do app; o PiP do Android só entra ao sair do app).
+     Única exceção: a aba Guia, que toca o canal numa janela ao lado. */
   function minimizePlayer() {
     if (!S.ctx) { return; }
-    S.miniAt = Date.now();
-    leavePlayer(true);
-    toast('Mini player — ' + (document.body.classList.contains('touch') ? 'toque nele para ampliar' : 'Amarelo: ampliar · Azul: fechar'), 2500);
+    if (G && G.body && document.body.contains(G.body)) { S.miniAt = Date.now(); leavePlayer(true); return; }
+    closePlayer();
   }
 
   function expandPlayer() {

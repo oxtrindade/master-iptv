@@ -271,3 +271,8 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 - Menu superior: **Início · TV ao vivo · Filmes · Séries · Esportes** (Início é a aba atual).
 - **Um banner só**, sorteado entre os filmes/séries em alta a cada abertura do app (voltar à Início mantém o mesmo). A capa aparece e o trailer começa logo em seguida.
 - A seleção já começa no **banner** (Assistir); ▲ sobe ao menu para trocar de seção, ▼ volta ao banner. Fim da troca de destaque por ◀ ▶ (os botões voltam lado a lado).
+
+## 1.51.1 — Sem mini player dentro do app
+- **Voltar** no player (botão ‹, tecla Voltar) agora sai do vídeo e volta à tela anterior, salvando o ponto para "Continuar assistindo". Acabou o mini player dentro do app (Ampliar/Fechar).
+- O **PiP do Android** (janelinha do sistema) continua só ao sair do app (Início do Android) com algo tocando.
+- Única exceção: na aba **Guia**, o canal continua tocando na janela ao lado da grade.
