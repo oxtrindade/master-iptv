@@ -1024,3 +1024,15 @@ body.portrait .card .poster { width: 135px; height: 203px; }
 body.portrait .hlist > .card { width: 135px; margin: 0 10px 0 0; }
 body.portrait .hlist > .card .poster { width: 135px; height: 203px; }
 body.portrait .card.cont .contsub { font-size: 11px; }
+
+/* 1.50.2: com o trailer tocando, o texto do card largo encolhe (só título + dados numa linha) para não cobrir o vídeo */
+.wideh { font-size: 26px; }
+.widem { font-size: 16px; }
+.widep { font-size: 16px; max-height: 42px; }
+.pv .wideov, .wideov.pv { padding: 36px 20px 12px; background: linear-gradient(0deg, rgba(8,13,24,.85) 0%, rgba(8,13,24,0) 100%); }
+.pv .wideov .wideh, .pv.wide .wideh { font-size: 20px; }
+.pv .wideov .widem { font-size: 14px; margin-top: 2px; }
+.pv .wideov .widep { display: none; }
+body.compact .wideh { font-size: 20px; }
+body.compact .widem, body.compact .widep { font-size: 13px; }
+body.compact .pv .wideov .wideh { font-size: 16px; }

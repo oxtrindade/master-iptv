@@ -256,3 +256,6 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 ## 1.50.1 — App mais leve
 - Capas só carregam quando estão perto da tela (antes a Início/Filmes/Séries baixavam e decodificavam centenas de imagens de uma vez).
 - Filmes/Séries por gênero montam 4 fileiras e o resto conforme a rolagem; fileiras com até 16 títulos + "Ver todos".
+
+## 1.50.2 — Texto menor no card com trailer
+- No card largo, o texto (título, dados, sinopse) ficou menor e, enquanto o trailer toca, mostra só título e dados numa linha, sem a sinopse, para cobrir menos o vídeo.
