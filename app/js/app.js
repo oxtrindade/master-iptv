@@ -650,6 +650,11 @@
   }
 
   function switchProfile(id) {
+    if (S.quietBoot && !S.ready) {   // perfis na tela, conexão ainda em andamento: entra assim que conectar
+      S.pendProf = id;
+      loading(true, 'Entrando…');
+      return;
+    }
     var wasBoot = S.profBoot; S.profBoot = false;
     if (S.ctx) { closePlayer(); }   // salva o ponto no perfil que estava assistindo
     curProf = id;
@@ -695,6 +700,7 @@
   function renderProfiles() {
     var box = $('profiles'), list = profiles(), cards = [];
     box.innerHTML = '';
+    box.classList.toggle('pin', !!S.profBoot);   // animação de entrada só ao abrir o app
     Nav.setScope(box);
     if (S.profEdit) { renderProfileEdit(box, list); return; }
     list.forEach(function (p) {
@@ -1474,9 +1480,10 @@
     // guarda o que foi digitado: se falhar, o login volta preenchido para editar
     S.draft = cfg;
     store.set('draft', cfg);
-    S.splashMin = !!(o && o.boot);
+    if (!(o && o.quiet)) { S.quietBoot = false; }
+    S.splashMin = !!(o && o.boot && !o.quiet);
     S.splashNow = false;
-    loading(true, 'Conectando…');
+    if (!(o && o.quiet)) { loading(true, 'Conectando…'); }
     loginAuto(cfg).then(function (r) {
       if (!r.info.ok) { throw new Error('Usuário ou senha inválidos (ou conta inativa).'); }
       cfg = r.cfg;
@@ -1487,12 +1494,19 @@
       if (r.switched) { toast('Servidor ajustado para ' + cfg.server, 4000); }
       loading(false);
       epgCache = {};
+      if (o && o.quiet) {   // 1.53.0: os perfis já estão na tela; a conexão terminou por trás
+        S.ready = true;
+        if (S.pendProf) { var pp = S.pendProf; S.pendProf = null; switchProfile(pp); }
+        return;
+      }
       showBrowse();
       if (o && o.boot && profiles().length > 1) { showProfiles(false); }
       else if (o && o.boot && opt('autoplay')) { autoOpenLast(); }
     }).then(null, function (e) {
       S.splashNow = true;   // erro: não segura a tela de login
       loading(false);
+      S.pendProf = null; S.quietBoot = false;
+      if (o && o.quiet) { $('profiles').classList.add('hidden'); }
       S.splashNow = false;
       S.provider = null;
       if (o && o.boot && e && e.status === 0 && hasDl() && dlCount()) {   // abriu sem internet: vai direto aos downloads
@@ -2919,6 +2933,15 @@
     }, { passive: true });
     rows.appendChild(hero);
     if (slides.length) { start(); }
+    // abertura rápida: mostra já os destaques da última vez (a lista completa do catálogo é pesada na TV); depois só atualiza o cache
+    var ckey = 'herocache:' + secs.join(), cached = !slides.length ? store.get(ckey, null) : null, usedCache = false;
+    if (cached && cached.length) {
+      var pk0 = S.heroPick = S.heroPick || {}, ky0 = secs.join(), one0 = null;
+      cached.forEach(function (a) { if (a.it && a.it.type + ':' + a.it.id === pk0[ky0]) { one0 = a; } });
+      if (!one0) { one0 = cached[window.__pvTest ? 0 : Math.floor(Math.random() * cached.length)]; pk0[ky0] = one0.it.type + ':' + one0.it.id; }
+      slides = [one0].concat(cached.filter(function (a) { return a !== one0; })).slice(0, 8);
+      usedCache = true;
+    }
     // completa com os destaques do catálogo (em alta); se não houver histórico, o banner nasce deles
     setTimeout(function () {
       if (token !== S.homeToken || !S.provider) { return; }
@@ -2934,6 +2957,8 @@
           });
         });
         if (!add.length) { return; }
+        store.set(ckey, add.slice(0, 8));
+        if (usedCache) { return; }
         // 1.51.0: um banner só, sorteado entre os filmes/séries em alta a cada abertura do app (volta à Início = mesmo banner)
         var pk = S.heroPick = S.heroPick || {}, ky = secs.join(), one = null;
         if (pk[ky]) { add.forEach(function (a) { if (a.it.type + ':' + a.it.id === pk[ky]) { one = a; } }); }
@@ -3310,7 +3335,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.52.1']
+      ['Versão do app', '1.53.0']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
@@ -4378,7 +4403,11 @@
     $('osd-nextep').addEventListener('click', function (e) { e.stopPropagation(); stepEpisode(1); });
 
     var cfg = store.get('cfg', null);
-    if (cfg && cfg.server) { S.cfg = cfg; connect(cfg, { boot: true }); } else { showLogin(); }
+    if (cfg && cfg.server && profiles().length > 1) {   // 1.53.0: abre direto nos perfis (animados); conecta por trás
+      S.cfg = cfg; S.quietBoot = true; S.ready = false;
+      showProfiles(false);
+      connect(cfg, { boot: true, quiet: true });
+    } else if (cfg && cfg.server) { S.cfg = cfg; connect(cfg, { boot: true }); } else { showLogin(); }
   }
 
   setInterval(gwTick, 45000);

@@ -32,6 +32,51 @@ function startSync() {
   });
 }
 
+// abre o app já configurado e com 2 perfis: tem de ir direto ao seletor de perfis (sem a abertura "Conectando…"), conectar por trás e entrar ao escolher
+function bootWithProfiles(base, pport) {
+  var vc2 = new jsdom.VirtualConsole();
+  vc2.on('jsdomError', function () {});
+  return jsdom.JSDOM.fromFile(path.join(__dirname, '../app/index.html'), {
+    runScripts: 'dangerously', resources: 'usable', pretendToBeVisual: true, virtualConsole: vc2,
+    beforeParse: function (w) {
+      w.Element.prototype.getBoundingClientRect = function () { return { left: 0, top: 0, right: 100, bottom: 50, width: 100, height: 50 }; };
+      w.HTMLMediaElement.prototype.play = function () { return Promise.resolve(); };
+      w.HTMLMediaElement.prototype.pause = function () {};
+      w.HTMLMediaElement.prototype.load = function () {};
+      var mem = { 'iptv.cfg': JSON.stringify({ server: base, user: 'joao', pass: 'segredo' }),
+        'iptv.profiles': JSON.stringify([{ id: 'p1', name: 'Perfil 1', color: 0 }, { id: 'p2', name: 'Ana', color: 1 }]) };
+      Object.defineProperty(w, 'localStorage', { configurable: true, value: {
+        getItem: function (k) { return Object.prototype.hasOwnProperty.call(mem, k) ? mem[k] : null; },
+        setItem: function (k, v) { mem[k] = String(v); },
+        removeItem: function (k) { delete mem[k]; }
+      } });
+      w.PalmServiceBridge = function () {
+        var self = this;
+        this.call = function () { setTimeout(function () { self.onservicecallback(JSON.stringify({ returnValue: true, port: pport, token: 'tok' })); }, 0); };
+      };
+    }
+  }).then(function (dom) {
+    var w = dom.window, d = w.document, $ = function (s) { return d.querySelector(s); };
+    function until(fn, what) {
+      var n = 0;
+      return new Promise(function (res, rej) {
+        (function tick() { if (fn()) { res(); } else if (++n > 150) { rej(new Error('timeout: ' + what)); } else { setTimeout(tick, 50); } })();
+      });
+    }
+    return until(function () { return $('#profiles .pcard'); }, 'perfis na abertura').then(function () {
+      assert.ok(!$('#profiles').classList.contains('hidden'), 'perfis visíveis');
+      assert.ok($('#splash').classList.contains('hidden'), 'sem a animação Conectando…');
+      assert.ok($('#profiles').classList.contains('pin'), 'animação de entrada dos perfis');
+      $('#profiles .pcard').click();   // escolhe antes de terminar (ou logo depois de) conectar
+      return until(function () { return $('#profiles').classList.contains('hidden') && $('.hubtab, .hubtile'); }, 'entra na Início depois de escolher o perfil');
+    }).then(function () {
+      assert.ok(!$('#loader') || $('#loader').classList.contains('hidden'), 'sem carregando preso');
+      console.log('  ok   abertura: perfis direto, conecta por trás e entra ao escolher');
+      w.close();
+    });
+  });
+}
+
 Promise.all([listen(api), listen(px), startSync()]).then(function () {
   var base = 'http://127.0.0.1:' + api.address().port, pport = px.address().port;
   var errors = [];
@@ -675,6 +720,8 @@ Promise.all([listen(api), listen(px), startSync()]).then(function () {
       });
     }).then(function () {
       assert.deepStrictEqual(errors, [], 'erros de script: ' + errors.join(' | '));
+      return bootWithProfiles(base, pport);
+    }).then(function () {
       console.log('UI ok');
     });
   });

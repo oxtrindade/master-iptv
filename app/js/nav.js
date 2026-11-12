@@ -9,13 +9,8 @@ var Nav = (function () {
   function visible(el) {
     var r = el.getBoundingClientRect();
     if (r.width <= 0 || r.height <= 0) { return false; }
-    var p = el, st;
-    while (p && p !== document.body) {
-      st = window.getComputedStyle(p);
-      if (st.display === 'none' || st.visibility === 'hidden') { return false; }
-      p = p.parentNode;
-    }
-    return true;
+    // 1.53.0: sem percorrer os ancestrais com getComputedStyle (lento na TV): display:none já dá caixa vazia; só vê a visibilidade do próprio elemento
+    return window.getComputedStyle(el).visibility !== 'hidden';
   }
 
   // o mini player fica fora da tela atual: seus botões entram na navegação para dar para chegar neles só com o direcional

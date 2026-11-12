@@ -1095,3 +1095,17 @@ body.portrait #detail .bg.pv .cardvid { opacity: 1; }
 body.portrait #detail .bgfade { bottom: auto; height: 56.25vw; background: linear-gradient(180deg, rgba(11,16,26,.25) 0%, rgba(11,16,26,0) 30%, rgba(11,16,26,0) 62%, #0b101a 100%); }
 body.portrait #detail .dwrap { padding-top: calc(56.25vw - 28px); }
 body.portrait #detail .dposter { width: 104px; height: 156px; margin: 0 0 12px 0; position: relative; box-shadow: 0 6px 18px rgba(0,0,0,.6); }
+
+/* 1.53.0: seleção do banner mais leve (sem sombra com blur nem transição) */
+.hero { transition: none; }
+.hero.sel { box-shadow: 0 0 0 5px #fff; }
+#profiles.pin .ptitle { animation: pfade .6s ease-out backwards; }
+#profiles.pin .pcard { animation: ppop .55s cubic-bezier(.2,.9,.3,1.2) backwards; }
+#profiles.pin .pcard:nth-child(1) { animation-delay: .10s; }
+#profiles.pin .pcard:nth-child(2) { animation-delay: .22s; }
+#profiles.pin .pcard:nth-child(3) { animation-delay: .34s; }
+#profiles.pin .pcard:nth-child(4) { animation-delay: .46s; }
+#profiles.pin .pcard:nth-child(5) { animation-delay: .58s; }
+#profiles.pin .pcard:nth-child(6) { animation-delay: .70s; }
+@keyframes pfade { from { opacity: 0; transform: translateY(-14px); } to { opacity: 1; transform: none; } }
+@keyframes ppop { from { opacity: 0; transform: scale(.6) translateY(24px); } to { opacity: 1; transform: none; } }

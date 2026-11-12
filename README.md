@@ -292,3 +292,8 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 
 ## 1.52.1 — Trailer visível no detalhe (celular)
 - Na tela do filme/série no celular (retrato), o trailer agora aparece em 16:9 no topo (capa até o vídeo começar, só no Wi-Fi); o pôster desceu e ficou menor, ao lado do conteúdo, em vez de cobrir o vídeo.
+
+## 1.53.0 — Abertura direto nos perfis + app mais leve na TV
+- Com mais de um perfil, o app abre **direto no seletor de perfis**, com animação de entrada (sem a tela "MASTER IPTV · Conectando…"): a conexão acontece por trás e, ao escolher o perfil, entra na Início (se ainda estiver conectando, mostra "Entrando…" e entra assim que terminar). Com um perfil só, continua a abertura animada de antes.
+- **Banner instantâneo:** os destaques da última abertura ficam guardados e aparecem na hora; a lista completa do catálogo (pesada na TV) só atualiza o cache em segundo plano.
+- **Navegação mais leve:** cada ▲▼◀▶ deixou de consultar o estilo de todos os ancestrais de todos os itens; contorno do banner sem sombra com blur.
