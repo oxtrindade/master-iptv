@@ -705,18 +705,27 @@ Promise.all([listen(api), listen(px), startSync()]).then(function () {
       w.localStorage.setItem('iptv.tmdbkey', JSON.stringify('k'));
       go('home');
       $('[data-sec="movie"]').click();
-      return waitFor(function () { return $('.genrehome .hero:not(.hidden)'); }, 'banner na tela de Filmes').then(function () {
-        return waitFor(function () { var v = $('.genrehome .herovid.ytv'); return v && v.getAttribute('src'); }, 'trailer no banner de Filmes');
-      }).then(function () {
-        assert.ok($$('.genrehome .gnrows .hrow').length >= 1, 'fileira por gênero');
-        assert.ok(w.Nav.current() && w.Nav.current().getAttribute('data-k') === 'hero-play', 'foco começa no banner (Assistir)');
-        step('Filmes: banner com trailer como a Início');
+      return waitFor(function () { return $$('.genrehome .gnrows .hrow').length >= 1; }, 'fileiras por gênero em Filmes').then(function () {
+        assert.ok(!$('.genrehome .hero'), 'banner só na Início (Filmes/Séries não têm)');
+        assert.ok($('.genrehome .hubtab'), 'menu no topo');
+        step('Filmes: fileiras por gênero, sem banner');
         w.__itemSheet({ type: 'movie', id: 'zz1', name: 'Filme Folha', url: 'http://x/a.mp4' });
         assert.ok($('#isheet .isbtn'), 'folha de ações abre');
         assert.ok(/favoritos/.test($('#isheet .isbtn').textContent), 'folha: favoritar');
         $('#isheet .isbtn').click();
         assert.ok(!$('#isheet'), 'folha fecha ao escolher');
         mock.many = false;
+        return sleep(2700);   // o aviso de "sair" de um Voltar anterior já venceu
+      }).then(function () {
+        // Voltar na Início com 2+ perfis: passa pela seleção de perfis antes do aviso de sair
+        w.localStorage.setItem('iptv.profiles', JSON.stringify([{ id: 'p1', name: 'Perfil 1', color: 0 }, { id: 'p2', name: 'Ana', color: 1 }]));
+        go('home');
+        d.dispatchEvent(new w.KeyboardEvent('keydown', { keyCode: 27, bubbles: true, cancelable: true }));
+        if ($('#profiles').classList.contains('hidden')) { d.dispatchEvent(new w.KeyboardEvent('keydown', { keyCode: 27, bubbles: true, cancelable: true })); }   // o 1º pode só subir ao banner
+        assert.ok(!$('#profiles').classList.contains('hidden'), 'Voltar na Início abre a seleção de perfis');
+        $('#profiles .pcard').click();
+        assert.ok($('#profiles').classList.contains('hidden'), 'escolher o perfil volta ao app');
+        w.localStorage.removeItem('iptv.profiles');
       });
     }).then(function () {
       assert.deepStrictEqual(errors, [], 'erros de script: ' + errors.join(' | '));

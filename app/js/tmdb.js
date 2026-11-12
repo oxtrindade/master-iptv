@@ -23,6 +23,34 @@ var Tmdb = (function () {
     return t;
   }
 
+  function plain(s) {
+    var t = String(s || '').toLowerCase();
+    try { t = t.normalize('NFD').replace(/[̀-ͯ]/g, ''); } catch (e) {}
+    return t;
+  }
+
+  /* outra fonte de trailers: busca no YouTube ("<filme> <ano> trailer dublado") e escolhe o 1º resultado que é trailer,
+     diz "dublado" (se dub) e traz as palavras do nome do filme (evita outro filme). Devolve a chave do vídeo ou ''. */
+  function ytSearch(title, year, dub) {
+    if (!http) { return Promise.resolve(''); }
+    var t = norm(title);
+    if (!t) { return Promise.resolve(''); }
+    var words = t.split(' ').filter(function (w) { return w.length >= 3; }).slice(0, 5);
+    var url = 'https://www.youtube.com/results?hl=pt-BR&gl=BR&sp=EgIQAQ%253D%253D&search_query=' + encodeURIComponent(t + (year ? ' ' + year : '') + ' trailer' + (dub ? ' dublado' : ''));
+    return Promise.resolve(http(url)).then(function (html) {
+      html = String(html || '');
+      var re = /"videoRenderer":\{"videoId":"([\w-]{11})"[\s\S]{0,2500}?"title":\{"runs":\[\{"text":"((?:[^"\\]|\\.)*)"/g, m;
+      while ((m = re.exec(html))) {
+        var tt = plain(m[2]);
+        if (!/trailer|teaser/.test(tt) || (dub && !/dublad/.test(tt))) { continue; }
+        var all = true, i;
+        for (i = 0; i < words.length; i++) { if (tt.indexOf(words[i]) < 0) { all = false; break; } }
+        if (all) { return m[1]; }
+      }
+      return '';
+    }).then(null, function () { return ''; });
+  }
+
   function yearOf(name) {
     var m = String(name || '').match(/\((\d{4})\)|\b(19\d{2}|20\d{2})\b/);
     return m ? parseInt(m[1] || m[2], 10) : 0;
@@ -140,6 +168,7 @@ var Tmdb = (function () {
     },
     setPref: function (p) { pref = p === 'leg' || p === 'any' ? p : 'dub'; },
     yearOf: yearOf,
+    ytSearch: ytSearch,
     match: match,
     trending: function (kind, key) { return list(kind, '/trending/' + kind + '/week', key, 2); },
     recommend: function (kind, id, key) { return list(kind, '/' + kind + '/' + id + '/recommendations', key, 1); },
@@ -150,11 +179,12 @@ var Tmdb = (function () {
         return x ? x.id : 0;
       });
     },
-    /* trailer no YouTube: devolve a chave do vídeo ('' se não houver). dub=true: só trailer em português do Brasil (dublado/legendado em pt, não de Portugal) */
+    /* trailer no YouTube: devolve a chave do vídeo ('' se não houver). dub=true: só trailer em português do Brasil
+       cujo nome diz "dublado" (o idioma "pt" do TMDB também marca trailers só legendados) */
     trailer: function (kind, id, key, dub) {
       return getJson('/' + kind + '/' + id + '/videos', key, '&include_video_language=pt%2Cen%2Cnull').then(function (r) {
         var l = (r.results || []).filter(function (v) { return v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser'); });
-        if (dub) { l = l.filter(function (v) { return v.iso_639_1 === 'pt' && v.iso_3166_1 !== 'PT'; }); }
+        if (dub) { l = l.filter(function (v) { return v.iso_639_1 === 'pt' && v.iso_3166_1 !== 'PT' && /dublad/.test(plain(v.name)); }); }
         l.sort(function (a, b) {
           function sc(v) { return (v.type === 'Trailer' ? 8 : 0) + (v.iso_3166_1 === 'BR' ? 4 : 0) + (v.official ? 2 : 0) + (v.iso_639_1 === 'pt' ? 1 : 0); }
           return sc(b) - sc(a);

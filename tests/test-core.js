@@ -27,6 +27,16 @@ t('TMDB: versões do mesmo título (dublado, legendado, 4K) e preferência', fun
   var d = { type: 'movie', id: '1', name: 'Duna (2024) Dublado', logo: 'x' }, l = { type: 'movie', id: '2', name: 'Duna (2024) [L]', logo: 'x' }, k = { type: 'movie', id: '3', name: 'Duna (2024) 4K', logo: 'x' };
   var list = [l, k, d];
   Tmdb.setPref('dub');
+  // busca de trailer dublado no YouTube: ignora legendado e outro filme, escolhe o dublado
+  var html = '"videoRenderer":{"videoId":"LEGLEGLEG11","t":1,"title":{"runs":[{"text":"Duna - Trailer Legendado"}]}} ' +
+    '"videoRenderer":{"videoId":"OUTROFILME1","t":1,"title":{"runs":[{"text":"Marte - Trailer Dublado"}]}} ' +
+    '"videoRenderer":{"videoId":"DUBDUBDUB11","t":1,"title":{"runs":[{"text":"DUNA (2024) | Trailer Oficial Dublado"}]}}';
+  var seenUrl = '';
+  Tmdb.init(function (u) { seenUrl = u; return Promise.resolve(html); });
+  Tmdb.ytSearch('Duna (2024) 4K', 2024, true).then(function (id) {
+    assert.strictEqual(id, 'DUBDUBDUB11', 'trailer dublado do YouTube');
+    assert.ok(/search_query=duna%202024%20trailer%20dublado/.test(seenUrl), 'consulta: ' + seenUrl);
+  }).then(function () { return Tmdb.ytSearch('Filme Inexistente', 0, true); }).then(function (id) { assert.strictEqual(id, '', 'sem dublado, sem trailer'); }).then(null, function (e) { console.error('FAIL ytSearch', e); process.exit(1); });
   var v = Tmdb.variants(list, l);
   assert.strictEqual(v.length, 3, 'três versões, sem duplicar a própria');
   assert.strictEqual(v[0].id, '1', 'dublado primeiro');

@@ -1752,7 +1752,6 @@
     page.appendChild(h('div', { cls: 'hubtabs' }, ['home', 'live', 'movie', 'series', 'sports'].map(function (k) { return hubTab(k, sec); })));
     var rows = h('div', { cls: 'hrows' });
     page.appendChild(rows);
-    heroBanner(rows, { secs: [sec], focusHero: true });
     var bar = h('div', { cls: 'genbar' }, [h('button', { cls: 'f btn', type: 'button', 'data-k': 'allcats', text: 'Todas as categorias',
       on: { click: function () { selectSection(sec, { backTo: S.backTo, classic: true }); } } })]);
     rows.appendChild(bar);
@@ -1761,8 +1760,7 @@
     trendRow(rows, sec, sec === 'movie' ? 'Filmes em alta' : 'Séries em alta');
     var holder = h('div', { cls: 'gnrows' });
     rows.appendChild(holder);
-    Nav.focus(page.querySelector('.hubtab:not(.on)'));
-    S.homeFocus0 = Nav.current();
+    Nav.focus(bar.querySelector('.f'));
     loading(true, 'Carregando…');
     Promise.all([S.provider.categories(sec), S.provider.all(sec)]).then(function (r) {
       if (token !== S.homeToken) { return; }
@@ -2591,8 +2589,11 @@
     };
     var p;
     if (dub) {
-      // prefere dublado (TMDB marca o idioma); sem ele, cai no do provedor e depois em qualquer idioma
-      p = fromTmdb(true).then(function (id) { return id || provider(); }).then(function (id) { return id || fromTmdb(false); });
+      // prefere dublado: 1) TMDB (vídeo pt-BR cujo nome diz "dublado"), 2) busca no YouTube por "<filme> trailer dublado";
+      // sem dublado, usa o do provedor e depois qualquer idioma (original)
+      p = fromTmdb(true).then(function (id) {
+        return id || Tmdb.ytSearch(it.name, Tmdb.yearOf(it.name) || parseInt(it.year, 10) || 0, true);
+      }).then(function (id) { return id || provider(); }).then(function (id) { return id || fromTmdb(false); });
     } else {
       p = provider().then(function (id) { return id || fromTmdb(false); });
     }
@@ -3335,7 +3336,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.53.0']
+      ['Versão do app', '1.54.1']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
@@ -3376,7 +3377,7 @@
     camOn();
     page.appendChild(switchRow('Ocultar filmes de cinema (gravação)', 'Esconde filmes de categoria/etiqueta Cinema ou CAM, que são gravações de sala com qualidade baixa.', 'hideCam'));
     dubOn();
-    page.appendChild(switchRow('Preferir trailer dublado', 'Escolhe o trailer em português do Brasil (do TMDB, precisa da chave) e, se não houver, usa o do provedor ou de qualquer idioma. Desligado, usa o do provedor primeiro.', 'pvdub'));
+    page.appendChild(switchRow('Preferir trailer dublado', 'Procura trailer dublado em português (TMDB e YouTube); se não achar, usa o do provedor ou o de qualquer idioma (original). Desligado, usa o do provedor primeiro.', 'pvdub'));
 
     page.appendChild(sgroup('Recomendações'));
     page.appendChild(tmdbBlock());
@@ -4236,12 +4237,19 @@
     window.close();
   }
 
+  function armExit() {
+    if (S.exitArmed) { exitApp(); return; }
+    S.exitArmed = true;
+    toast('Pressione Voltar novamente para sair');
+    setTimeout(function () { S.exitArmed = false; }, 2500);
+  }
+
   function goBack() {
     if (S.mode === 'profiles') {
       if (S.profEdit) { S.profEdit = null; renderProfiles(); return; }
       if (S.profManage) { S.profManage = false; renderProfiles(); return; }
       if (S.profFrom) { closeProfiles(); return; }
-      exitApp();
+      armExit();
       return;
     }
     if (S.mode === 'detail') { closeDetail(); return; }
@@ -4263,10 +4271,9 @@
         headBack();
         return;
       }
-      if (S.exitArmed) { exitApp(); return; }
-      S.exitArmed = true;
-      toast('Pressione Voltar novamente para sair');
-      setTimeout(function () { S.exitArmed = false; }, 2500);
+      // 1.54.0: com mais de um perfil, o Voltar da Início passa antes pela seleção de perfis; só depois vem o aviso de sair
+      if (profiles().length > 1 && !S.exitArmed && !S.offline) { showProfiles(false); S.profBoot = false; return; }
+      armExit();
       return;
     }
     exitApp();

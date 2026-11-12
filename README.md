@@ -297,3 +297,8 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 - Com mais de um perfil, o app abre **direto no seletor de perfis**, com animação de entrada (sem a tela "MASTER IPTV · Conectando…"): a conexão acontece por trás e, ao escolher o perfil, entra na Início (se ainda estiver conectando, mostra "Entrando…" e entra assim que terminar). Com um perfil só, continua a abertura animada de antes.
 - **Banner instantâneo:** os destaques da última abertura ficam guardados e aparecem na hora; a lista completa do catálogo (pesada na TV) só atualiza o cache em segundo plano.
 - **Navegação mais leve:** cada ▲▼◀▶ deixou de consultar o estilo de todos os ancestrais de todos os itens; contorno do banner sem sombra com blur.
+
+## 1.54.0 — Só trailer dublado (nova fonte), banner só na Início, Voltar passa pelos perfis
+- **Trailer dublado:** por padrão prefere o trailer **dublado**. Fontes: 1) TMDB (vídeo pt-BR cujo nome diz "dublado" — o idioma "pt" do TMDB também marca trailers só legendados); 2) **busca no YouTube** por "<filme> <ano> trailer dublado", aceitando só resultados que sejam trailer, digam "dublado" e tenham o nome do filme (ajuda nos filmes antigos). Sem dublado, cai no trailer do provedor e depois em qualquer idioma (original) — 1.54.1.
+- **Banner só na Início:** Filmes e Séries ficam só com o menu, "Todas as categorias" e as fileiras por gênero.
+- **Voltar na Início** (com mais de um perfil): abre a seleção de perfis; Voltar de novo mostra o aviso para sair.
