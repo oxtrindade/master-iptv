@@ -1088,3 +1088,10 @@ body.portrait .oc.opt.dl { right: 68px; }
 #isheet .isbtn { display: flex; align-items: center; width: 100%; margin-top: 8px; padding: 14px 16px; border: 0; border-radius: 12px; background: #22304c; color: #fff; font-size: 17px; text-align: left; }
 #isheet .isbtn svg { margin-right: 14px; }
 #isheet .isbtn.cancel { justify-content: center; background: transparent; color: #9fb0cc; }
+
+/* 1.52.1: detalhe no celular (retrato): o trailer aparece em 16:9 no topo, o pôster desce */
+body.portrait #detail .bg { height: 56.25vw; top: 0; opacity: 1; background-position: center; }
+body.portrait #detail .bg.pv .cardvid { opacity: 1; }
+body.portrait #detail .bgfade { bottom: auto; height: 56.25vw; background: linear-gradient(180deg, rgba(11,16,26,.25) 0%, rgba(11,16,26,0) 30%, rgba(11,16,26,0) 62%, #0b101a 100%); }
+body.portrait #detail .dwrap { padding-top: calc(56.25vw - 28px); }
+body.portrait #detail .dposter { width: 104px; height: 156px; margin: 0 0 12px 0; position: relative; box-shadow: 0 6px 18px rgba(0,0,0,.6); }

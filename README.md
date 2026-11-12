@@ -289,3 +289,6 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 - **Banner (TV):** selecionado = contorno branco e o trailer só toca com o foco no banner (Assistir/Ver episódios/Mais informações); ao sair dele o trailer para. Com o trailer tocando o texto encolhe (título e dados menores, sem sinopse).
 - **Celular:** toque longo num filme/série abre uma folha com **Favoritar** e **Baixar** (série: abre os episódios para baixar). No **player** há botões ★ e ⬇ no topo.
 - **Celular:** o 1º toque num card agora vira mesmo 16:9 (capa + trailer, só Wi-Fi) — antes o CSS do modo retrato deixava o card estreito; o 2º toque abre.
+
+## 1.52.1 — Trailer visível no detalhe (celular)
+- Na tela do filme/série no celular (retrato), o trailer agora aparece em 16:9 no topo (capa até o vídeo começar, só no Wi-Fi); o pôster desceu e ficou menor, ao lado do conteúdo, em vez de cobrir o vídeo.
