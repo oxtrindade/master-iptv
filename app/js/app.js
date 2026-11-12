@@ -1998,9 +1998,11 @@
     function fire() {
       timer = null;
       if (!target || !target._item || S.mode !== 'browse') { return; }
-      var el = target, on = toggleFav(el._item);
-      el.classList.toggle('isfav', on);
+      var el = target;
       fired = true;
+      if (el._item.type === 'movie' || el._item.type === 'series') { try { if (navigator.vibrate) { navigator.vibrate(30); } } catch (e) {} openItemSheet(el._item); return; }
+      var on = toggleFav(el._item);
+      el.classList.toggle('isfav', on);
       try { if (navigator.vibrate) { navigator.vibrate(30); } } catch (e) {}
       if (S.section === 'fav' && !on) { renderFavs(); }
     }
@@ -2200,6 +2202,8 @@
 
   function posterCard(it, list) {
     var el = h('div', { cls: 'f card', on: { click: function () {
+      // celular: 1º toque coloca o card em foco (vira 16:9, mostra a capa e inicia o trailer); 2º toque abre
+      if (!isTvDevice() && el.parentNode && el.parentNode.classList.contains('hlist') && (it.type === 'movie' || it.type === 'series') && wideOn() && !el.classList.contains('focus')) { Nav.focus(el); return; }
       if (isTvDevice() && it.type === 'movie') { startPlay({ kind: 'movie', item: it }); return; }   // TV: filme da Início começa direto
       if (isTvDevice() && it.type === 'series') { playSeriesHome(it); return; }                       // TV: série continua do episódio em que parou
       openItemObj(it, list);
@@ -2648,7 +2652,8 @@
 
   function wideOn() {
     if (S.opts.widecard === undefined) { S.opts.widecard = true; store.set('opts', S.opts); }   // 1.39.1: chave própria, ligada por padrão
-    return isTvDevice() && S.opts.widecard && !document.body.classList.contains('portrait');
+    var touch = !isTvDevice() && document.body.classList.contains('touch');
+    return (touch || (isTvDevice() && !document.body.classList.contains('portrait'))) && S.opts.widecard;
   }
 
   function wideInfo(it, cb) {
@@ -2806,10 +2811,14 @@
     function heroSeen() {
       var r = hero.getBoundingClientRect(), f = Nav.current();
       if (!window.__pvTest && (r.bottom < 160 || r.top > window.innerHeight * 0.6)) { return false; }
+      if (isTvDevice() && !(f && hero.contains(f))) { return false; }   // TV: o trailer só toca com o banner selecionado (foco em Assistir / Mais informações)
       if (f && !hero.contains(f) && f.closest && f.closest('.hrow')) { return false; }
+      // TV: o trailer do banner só toca com a seleção em "Assistir"/"Ver episódios"/"Mais informações" (no celular, basta estar à vista)
+      if (!window.__pvTest && isTvDevice() && !(f && hero.contains(f))) { return false; }
       return true;
     }
     S.heroEnd = function () { pvEnd(); };
+    S.heroSel = function (on) { if (!isTvDevice() || token !== S.homeToken) { return; } if (on) { pvSchedule(); } else { pvEnd(); } };
     function pvEnd() {
       clearTimeout(pvStop);
       if (hero._yt) { hero._yt.off(); hero._yt = null; }
@@ -3301,7 +3310,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.51.4']
+      ['Versão do app', '1.52.0']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
@@ -3872,6 +3881,49 @@
 
   var oPlay = null;
 
+  /* folha de ações de um filme/série (toque longo no card; botões do player): Favoritar, Baixar */
+  function openItemSheet(it, ep) {
+    var old = document.getElementById('isheet');
+    if (old) { old.parentNode.removeChild(old); }
+    var canDl = !!(window.NativeApp && window.NativeApp.dlStart) && (it.type === 'movie' || it.type === 'series' || ep);
+    var box = h('div', { cls: 'isbox' });
+    var ov = h('div', { id: 'isheet', on: { click: function (e) { if (e.target === ov) { close(); } } } }, [box]);
+    function close() { if (ov.parentNode) { ov.parentNode.removeChild(ov); } }
+    function add(ico, label, fn) {
+      box.appendChild(h('button', { cls: 'isbtn', type: 'button', on: { click: function () { close(); fn(); } } }, [icon(ico, 30), h('span', { text: label })]));
+    }
+    box.appendChild(h('div', { cls: 'istitle', text: it.name }));
+    add(S.favs[fk(it)] ? 'starfill' : 'star', S.favs[fk(it)] ? 'Remover dos favoritos' : 'Adicionar aos favoritos', function () {
+      var on = toggleFav(it), els = document.querySelectorAll('.f'), i;
+      for (i = 0; i < els.length; i++) { if (els[i]._item && fk(els[i]._item) === fk(it)) { els[i].classList.toggle('isfav', on); } }
+      updateOptBtns();
+      if (S.section === 'fav' && !on) { renderFavs(); }
+    });
+    if (canDl) {
+      if (it.type === 'series' && !ep) { add('dl', 'Baixar episódios…', function () { showDetail(it); }); }
+      else { add('dl', 'Baixar', function () { dlStart(it, ep || null); }); }
+    }
+    box.appendChild(h('button', { cls: 'isbtn cancel', type: 'button', on: { click: close } }, [h('span', { text: 'Cancelar' })]));
+    document.body.appendChild(ov);
+  }
+
+  /* player (celular): botões Favoritar / Baixar no topo */
+  function ctxItem() {
+    var c = S.ctx;
+    if (!c) { return null; }
+    return c.kind === 'live' ? (c.list && c.list[c.idx]) : c.item;
+  }
+
+  function updateOptBtns() {
+    var fb = document.querySelector('#osd [data-act="fav"]'), db = document.querySelector('#osd [data-act="dl"]'), c = S.ctx, it = ctxItem();
+    if (!fb || !db) { return; }
+    var fav = !!(it && S.favs[fk(it)]);
+    fb.innerHTML = '';
+    fb.appendChild(icon(fav ? 'starfill' : 'star', 34));
+    fb.classList.toggle('hidden', !it);
+    db.classList.toggle('hidden', !(c && c.kind !== 'live' && window.NativeApp && window.NativeApp.dlStart && !c.local));
+  }
+
   function buildTouchCtl() {
     var osd = $('osd');
     function btn(act, ico, cls, label) {
@@ -3881,6 +3933,8 @@
     }
     oPlay = btn('toggle', 'pause', 'big vod-only');
     osd.appendChild(btn('back', 'back', 'back'));
+    osd.appendChild(btn('dl', 'dl', 'opt dl hidden'));
+    osd.appendChild(btn('fav', 'star', 'opt fav hidden'));
     osd.appendChild(h('div', { id: 'osd-ctl' }, [
       btn('prev', 'chdn', 'live-only'), btn('next', 'chup', 'live-only'),
       btn('prevep', 'skipprev', 'ep-only'), oPlay, btn('nextep', 'skipnext', 'ep-only')
@@ -3894,6 +3948,8 @@
         var act = b.getAttribute('data-act');
         if (act === 'back') { minimizePlayer(); return; }
         if (act === 'tracks') { openTracks(); return; }
+        if (act === 'fav') { var fi = ctxItem(); if (fi) { toggleFav(fi); updateOptBtns(); } showOsd(); return; }
+        if (act === 'dl') { var di = ctxItem(); if (di) { dlStart(di, c.kind === 'ep' ? c.eps[c.idx] : null); } showOsd(); return; }
         if (act === 'prevep') { stepEpisode(-1); return; }
         if (act === 'nextep') { stepEpisode(1); return; }
         if (act === 'next') { zap(1); return; }
@@ -3964,6 +4020,7 @@
     if (pv) { $('osd-prevep').lastChild.textContent = 'Anterior · T' + pv.season + ' E' + pv.num; }
     if (nx) { $('osd-nextep').lastChild.textContent = 'Próximo · T' + nx.season + ' E' + nx.num; }
     setOsdMenu(S.osdMenu);
+    updateOptBtns();
   }
 
   function showOsd(menu) {
@@ -4268,6 +4325,8 @@
     });
 
     Nav.onFocus(function (el) {
+      var hr = document.querySelector('.hero');
+      if (hr) { var hs = hr.contains(el); if (hs !== hr.classList.contains('sel')) { hr.classList.toggle('sel', hs); if (S.heroSel) { S.heroSel(hs); } } }   // indicador de banner selecionado
       if (el._gp && G && (G.over || S.section === 'guide')) { gFocus(el._gp); }
       pvFocus(el);
       var i = el.getAttribute('data-i');
@@ -4293,6 +4352,7 @@
       if (el && sc && sc.contains(el)) { Nav.focus(el); }
     });
     document.addEventListener('click', function () { if (S.mode === 'player' && !S.tracksOpen) { showOsd(); } });
+    window.__itemSheet = openItemSheet;
     window.__genreRows = function (sec, cats, list) { return genreRows(sec, cats, list); };
     window.__pip = function (on) { document.body.classList.toggle('pip', !!on); };
     var miniX = h('button', { id: 'mini-x', cls: 'f', type: 'button', title: 'Fechar', 'aria-label': 'Fechar' }, [icon('xmark', 22)]);

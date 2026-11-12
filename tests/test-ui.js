@@ -666,6 +666,11 @@ Promise.all([listen(api), listen(px), startSync()]).then(function () {
         assert.ok($$('.genrehome .gnrows .hrow').length >= 1, 'fileira por gênero');
         assert.ok(w.Nav.current() && w.Nav.current().getAttribute('data-k') === 'hero-play', 'foco começa no banner (Assistir)');
         step('Filmes: banner com trailer como a Início');
+        w.__itemSheet({ type: 'movie', id: 'zz1', name: 'Filme Folha', url: 'http://x/a.mp4' });
+        assert.ok($('#isheet .isbtn'), 'folha de ações abre');
+        assert.ok(/favoritos/.test($('#isheet .isbtn').textContent), 'folha: favoritar');
+        $('#isheet .isbtn').click();
+        assert.ok(!$('#isheet'), 'folha fecha ao escolher');
         mock.many = false;
       });
     }).then(function () {

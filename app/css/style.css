@@ -1051,3 +1051,40 @@ body.compact .pv .wideov .wideh { font-size: 16px; }
 .hubtab.on.f.focus { background: #fff; color: #0b101a; }
 body.compact .hubtab { min-width: 150px; }
 body:not(.compact):not(.portrait) .hubtab { min-width: 250px; }
+
+/* 1.52.0 */
+/* banner selecionado: contorno branco; com trailer o texto encolhe */
+.hero { transition: box-shadow .15s; }
+.hero.sel { box-shadow: 0 0 0 5px #fff, 0 14px 44px rgba(0,0,0,.65); }
+.hero.pv .heroplot { display: none; }
+.hero.pv .herotitle { font-size: 44px; margin-bottom: 8px; }
+.hero.pv .herometa { font-size: 20px; margin-bottom: 12px; }
+.hero.pv .herotag { font-size: 16px; margin-bottom: 4px; }
+body.compact .hero.pv .herotitle { font-size: 26px; }
+body.compact .hero.pv .herometa { font-size: 13px; }
+body.portrait .hero.pv .herotitle { font-size: 22px; }
+/* card 16:9 no celular (retrato) */
+body.portrait .hlist > .card.wide, body.portrait .hlist > .card.wide .poster { width: 330px; }
+body.portrait .wideh { font-size: 17px; }
+body.portrait .widem { font-size: 12px; }
+body.portrait .widep { display: none; }
+body.portrait .pv .wideov .wideh { font-size: 14px; }
+/* botões Favoritar / Baixar no player (celular) */
+.oc.opt { display: none; position: absolute; top: 34px; width: 76px; height: 76px; margin: 0; }
+.touch .oc.opt { display: flex; }
+.touch .oc.opt.hidden { display: none; }
+.oc.opt.fav { right: 40px; }
+.oc.opt.dl { right: 130px; }
+body.compact .oc.opt { top: 16px; width: 64px; height: 64px; }
+body.compact .oc.opt.fav { right: 24px; }
+body.compact .oc.opt.dl { right: 100px; }
+body.portrait .oc.opt { top: 14px; width: 44px; height: 44px; }
+body.portrait .oc.opt.fav { right: 14px; }
+body.portrait .oc.opt.dl { right: 68px; }
+/* folha de ações (toque longo) */
+#isheet { position: fixed; left: 0; top: 0; right: 0; bottom: 0; z-index: 300; background: rgba(0,0,0,.55); display: flex; align-items: flex-end; justify-content: center; }
+#isheet .isbox { width: 100%; max-width: 520px; padding: 14px 14px 22px; background: #172036; border-radius: 18px 18px 0 0; }
+#isheet .istitle { padding: 8px 10px 12px; font-size: 16px; font-weight: 700; color: #c3cfe2; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#isheet .isbtn { display: flex; align-items: center; width: 100%; margin-top: 8px; padding: 14px 16px; border: 0; border-radius: 12px; background: #22304c; color: #fff; font-size: 17px; text-align: left; }
+#isheet .isbtn svg { margin-right: 14px; }
+#isheet .isbtn.cancel { justify-content: center; background: transparent; color: #9fb0cc; }

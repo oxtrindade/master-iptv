@@ -284,3 +284,8 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 ## 1.51.4 — Banner com várias opções de volta
 - O banner volta a ter até 8 destaques (filmes e séries em alta); o sorteado a cada abertura do app vem primeiro. Na TV: ◀ ▶ trocam de destaque (botões um sobre o outro; ▲ sobe ao menu). No celular: arrastar o banner de lado troca; os cards continuam rolando com o dedo e tocar num card abre a capa/detalhe com o trailer (só no Wi-Fi).
 - LG: se o trailer do destaque não iniciou na largada (acontecia só funcionar depois de navegar e voltar ao topo), o banner tenta de novo a cada 1,5 s enquanto está à vista.
+
+## 1.52.0 — Banner selecionado, ações no celular, card 16:9 no celular
+- **Banner (TV):** selecionado = contorno branco e o trailer só toca com o foco no banner (Assistir/Ver episódios/Mais informações); ao sair dele o trailer para. Com o trailer tocando o texto encolhe (título e dados menores, sem sinopse).
+- **Celular:** toque longo num filme/série abre uma folha com **Favoritar** e **Baixar** (série: abre os episódios para baixar). No **player** há botões ★ e ⬇ no topo.
+- **Celular:** o 1º toque num card agora vira mesmo 16:9 (capa + trailer, só Wi-Fi) — antes o CSS do modo retrato deixava o card estreito; o 2º toque abre.
