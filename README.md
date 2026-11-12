@@ -280,3 +280,7 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 ## 1.51.2 / 1.51.3
 - **Voltar** em Início/Filmes/Séries com o foco numa fileira sobe primeiro ao banner (superfície); só depois volta/sai (Voltar de novo).
 - **Filmes e Séries** ficam iguais à Início: menu no topo (Início · TV ao vivo · Filmes · Séries · Esportes), banner com trailer e a seleção começando no botão "Assistir" (o foco nunca chegava ao banner porque os botões só aparecem após a animação do 1º destaque; isso valia também para a Início).
+
+## 1.51.4 — Banner com várias opções de volta
+- O banner volta a ter até 8 destaques (filmes e séries em alta); o sorteado a cada abertura do app vem primeiro. Na TV: ◀ ▶ trocam de destaque (botões um sobre o outro; ▲ sobe ao menu). No celular: arrastar o banner de lado troca; os cards continuam rolando com o dedo e tocar num card abre a capa/detalhe com o trailer (só no Wi-Fi).
+- LG: se o trailer do destaque não iniciou na largada (acontecia só funcionar depois de navegar e voltar ao topo), o banner tenta de novo a cada 1,5 s enquanto está à vista.

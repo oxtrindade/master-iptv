@@ -2874,6 +2874,15 @@
       show(0);
       // a seleção começa no banner (▲ sobe ao menu: Início / TV ao vivo / Filmes / Séries)
       wantFocus = !!(hopts && hopts.focusHero && S.homeFocus0 && Nav.current() === S.homeFocus0);
+      if (isTvDevice() && slides.length > 1) { hero.classList.add('tvh'); }
+      // garantia (LG): se o trailer do destaque não iniciou na largada (tela ainda se acomodando), tenta de novo enquanto o banner está à vista
+      clearInterval(S.heroRetry);
+      S.heroRetry = setInterval(function () {
+        if (!document.body.contains(hero) || token !== S.homeToken) { clearInterval(S.heroRetry); return; }
+        var sl = slides[cur];
+        if (!pvAlive() || hero._yt || hero.classList.contains('pv') || S.mode !== 'browse' || !sl || pvBad[sl.it.type + ':' + sl.it.id] || !heroSeen()) { return; }
+        pvSchedule();
+      }, 1500);
       S.heroTimer = setInterval(function () {
         if (!document.body.contains(hero) || token !== S.homeToken) { clearInterval(S.heroTimer); S.heroTimer = null; return; }
         var f = Nav.current();
@@ -2920,8 +2929,9 @@
         var pk = S.heroPick = S.heroPick || {}, ky = secs.join(), one = null;
         if (pk[ky]) { add.forEach(function (a) { if (a.it.type + ':' + a.it.id === pk[ky]) { one = a; } }); }
         if (!one) { one = add[window.__pvTest ? 0 : Math.floor(Math.random() * Math.min(add.length, 8))]; pk[ky] = one.it.type + ':' + one.it.id; }
-        var was = slides.length;
-        slides = slides.concat([one]);
+        // 1.51.4: volta o carrossel (filmes e séries em alta); o sorteado da abertura vem primeiro
+        var was = slides.length, rest = add.filter(function (a) { return a !== one; });
+        slides = slides.concat([one], rest).slice(0, 8);
         if (!was) { start(); } else { rebuildDots(); }
       }, function () {});
     }, 300);
@@ -3291,7 +3301,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.51.3']
+      ['Versão do app', '1.51.4']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
