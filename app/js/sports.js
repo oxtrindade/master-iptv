@@ -313,8 +313,21 @@
   };
 
   var GENERIC = { club: 1, city: 1, united: 1, real: 1, sporting: 1, team: 1, futebol: 1, football: 1, clube: 1 };
+  /* a ESPN devolve seleções em inglês; os canais brasileiros escrevem em português */
+  var PT = { serbia: 'servia', germany: 'alemanha', spain: 'espanha', france: 'franca', england: 'inglaterra', italy: 'italia', netherlands: 'holanda', 'holland': 'holanda',
+    belgium: 'belgica', croatia: 'croacia', switzerland: 'suica', denmark: 'dinamarca', sweden: 'suecia', norway: 'noruega', poland: 'polonia', 'czech republic': 'tchequia', czechia: 'tchequia',
+    austria: 'austria', hungary: 'hungria', scotland: 'escocia', wales: 'pais de gales', ireland: 'irlanda', 'republic of ireland': 'irlanda', 'northern ireland': 'irlanda do norte',
+    turkey: 'turquia', 'turkiye': 'turquia', greece: 'grecia', romania: 'romenia', bulgaria: 'bulgaria', slovakia: 'eslovaquia', slovenia: 'eslovenia', ukraine: 'ucrania', russia: 'russia',
+    finland: 'finlandia', iceland: 'islandia', albania: 'albania', georgia: 'georgia', israel: 'israel', 'bosnia and herzegovina': 'bosnia', kosovo: 'kosovo', luxembourg: 'luxemburgo',
+    'north macedonia': 'macedonia', montenegro: 'montenegro', japan: 'japao', 'south korea': 'coreia do sul', 'united states': 'estados unidos', usa: 'estados unidos', mexico: 'mexico',
+    brazil: 'brasil', argentina: 'argentina', uruguay: 'uruguai', paraguay: 'paraguai', colombia: 'colombia', chile: 'chile', ecuador: 'equador', peru: 'peru', bolivia: 'bolivia',
+    venezuela: 'venezuela', morocco: 'marrocos', egypt: 'egito', 'saudi arabia': 'arabia saudita', iran: 'ira', qatar: 'catar', australia: 'australia', 'ivory coast': 'costa do marfim',
+    'cote d ivoire': 'costa do marfim', 'south africa': 'africa do sul', algeria: 'argelia', tunisia: 'tunisia', 'costa rica': 'costa rica', panama: 'panama', canada: 'canada' };
+  Sp.ptName = function (name) { var n = Sp.norm(name); return PT[n] ? PT[n].replace(/\b\w/g, function (c) { return c.toUpperCase(); }) : name; };
   function teamWords(name) {
-    return Sp.norm(name).split(' ').filter(function (w) { return w.length >= 4 && !GENERIC[w]; });
+    var n = Sp.norm(name), l = n.split(' ').filter(function (w) { return w.length >= 4 && !GENERIC[w]; });
+    if (PT[n]) { l = l.concat(PT[n].split(' ').filter(function (w) { return w.length >= 4; })); }
+    return l;
   }
   /* entre as transmissões AO VIVO, a que cita os times do jogo (e, de preferência, é do canal pedido) */
   Sp.pickLive = function (html, g, chan) {

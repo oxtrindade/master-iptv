@@ -1281,7 +1281,7 @@
   }
   function openYouTube(y, g) {
     var label = y.label, android = !!(window.NativeApp && window.NativeApp.openUrl), webos = !android && !!window.PalmServiceBridge;
-    var searchUrl = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(g.home.name + ' ' + g.away.name + ' ' + label + ' ao vivo') + '&sp=EgJAAQ%3D%3D';
+    var searchUrl = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(Sports.ptName(g.home.name) + ' x ' + Sports.ptName(g.away.name) + ' ' + label + ' ao vivo') + '&sp=EgJAAQ%3D%3D';
     var failMsg = 'Abra o YouTube e procure por ' + label + '.';
     if (!android && !webos) { toast(failMsg, 5000); return; }
     var lunaCall = function (uri, params, cb) {
@@ -3430,7 +3430,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.55.1']
+      ['Versão do app', '1.55.2']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {

@@ -311,3 +311,6 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 
 ## 1.55.1
 - **Esportes:** Nations League agora lista Premiere + ge tv (YouTube). Em qualquer jogo sem fonte do YouTube listada (e não encerrado), aparecem os botões "Procurar ao vivo na ge tv / CazéTV (YouTube)", que acham a transmissão oficial que cita os dois times.
+
+## 1.55.2
+- **YouTube direto no jogo:** a ESPN traz seleções em inglês (Serbia, Germany) e os canais escrevem em português (Sérvia x Alemanha), então a busca não achava a live e caía na página do canal. Agora há tradução de ~70 seleções, usada na busca e no casamento do título.
