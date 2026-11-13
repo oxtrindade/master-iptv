@@ -1257,11 +1257,11 @@
         h('div', { cls: 'spnote small', text: 'Serviços como HBO Max, Paramount+, Prime Video e YouTube não têm guia de programação no seu servidor, por isso não viram botão de canal. Direitos conforme a imprensa (nov/2026); podem variar por jogo.' })
       ])));
     }
-    var yts = wr ? Sports.youtubeLinks(wr) : [];
+    var yts = Sports.youtubeLinks(wr, g.state !== 'post');
     if (yts.length) {
       body.appendChild(h('div', { cls: 'spwatch' }, yts.map(function (y) {
         return h('button', { cls: 'f btn primary', type: 'button', 'data-k': 'yt:' + y.label, on: { click: function () { openYouTube(y, g); } } },
-          [icon('play', 22), 'Abrir ' + y.label + ' no YouTube']);
+          [icon('play', 22), 'Procurar ao vivo na ' + y.label + ' (YouTube)']);
       })));
     }
     body.appendChild(h('div', { cls: 'spwatch' }, [g.home, g.away].map(function (t) {
@@ -3430,7 +3430,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.55.0']
+      ['Versão do app', '1.55.1']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {

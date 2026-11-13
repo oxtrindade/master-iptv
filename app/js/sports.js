@@ -231,6 +231,7 @@
     'esp.1': { short: 'CazéTV', lines: ['CazéTV (YouTube, grátis) — todos os jogos'] },
     'fra.1': { short: 'CazéTV · Xsports', lines: ['CazéTV (YouTube, grátis)', 'Xsports (TV aberta) — 3 jogos por rodada'] },
     'ita.1': { short: 'SportyNet', lines: ['SportyNet (YouTube, aberto)'] },
+    'uefa.nations': { short: 'Premiere · ge tv', lines: ['Premiere (TV paga) — jogos selecionados', 'ge tv (YouTube, grátis) — jogos selecionados'] },
     'ger.1': { short: 'SportyNet', lines: ['SportyNet (YouTube, aberto)'] }
   };
   var LIBRA = ['atletico mg', 'atletico mineiro', 'bahia', 'gremio', 'flamengo', 'palmeiras', 'bragantino', 'remo', 'santos', 'sao paulo', 'vitoria'];
@@ -261,9 +262,11 @@
     { re: /SportyNet/, label: 'SportyNet', url: 'https://www.youtube.com/channel/UCMcc9elPZGpg6eU4i3YaCpA/live', streams: 'https://www.youtube.com/channel/UCMcc9elPZGpg6eU4i3YaCpA/streams', cid: 'UCMcc9elPZGpg6eU4i3YaCpA',
       tries: ['https://www.youtube.com/channel/UCMcc9elPZGpg6eU4i3YaCpA/live'] }
   ];
-  Sp.youtubeLinks = function (wr) {
+  Sp.youtubeLinks = function (wr, any) {
     var txt = wr && wr.lines ? wr.lines.join('\n') : '', out = [];
     YT.forEach(function (y) { if (y.re.test(txt)) { out.push({ label: y.label, url: y.url, tries: y.tries, streams: y.streams, cid: y.cid }); } });
+    /* direitos mudam por jogo: sem fonte listada, oferece os canais abertos que mais transmitem (ge tv, CazéTV) */
+    if (!out.length && any) { YT.forEach(function (y) { if (/ge tv|CazéTV/.test(y.label)) { out.push({ label: y.label, url: y.url, tries: y.tries, streams: y.streams, cid: y.cid }); } }); }
     return out;
   };
 

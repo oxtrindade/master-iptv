@@ -308,3 +308,6 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 - **Voltar encerra o trailer:** ao voltar do detalhe/trailer para a Home, o áudio é parado na hora.
 - **Perfil infantil:** no editor de perfil, opção "Perfil infantil". Mostra só categorias/itens infantis (desenho, animação, família, Disney…), bloqueia adultos e esconde Esportes. Selo "INFANTIL" na escolha de perfis.
 - **Esportes → Times:** escolha de times favoritos por campeonato (Brasileirão, Libertadores, Premier League, Champions, La Liga etc.) e seleções, via ESPN.
+
+## 1.55.1
+- **Esportes:** Nations League agora lista Premiere + ge tv (YouTube). Em qualquer jogo sem fonte do YouTube listada (e não encerrado), aparecem os botões "Procurar ao vivo na ge tv / CazéTV (YouTube)", que acham a transmissão oficial que cita os dois times.
