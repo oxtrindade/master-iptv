@@ -171,6 +171,23 @@
     });
   };
 
+  /* times de uma liga/competição: [{id, name, logo}] ordenados por nome (seleções incluídas: fifa.world) */
+  Sp.parseTeams = function (d) {
+    var out = [], seen = {};
+    var lg = d && d.sports && d.sports[0] && d.sports[0].leagues && d.sports[0].leagues[0];
+    ((lg && lg.teams) || []).forEach(function (x) {
+      var t = x && x.team;
+      if (!t || !t.id || seen[t.id]) { return; }
+      seen[t.id] = 1;
+      out.push({ id: String(t.id), name: t.displayName || t.name || t.shortDisplayName || '', logo: (t.logos && t.logos[0] && t.logos[0].href) || '' });
+    });
+    out.sort(function (a, b) { return a.name < b.name ? -1 : a.name > b.name ? 1 : 0; });
+    return out;
+  };
+  Sp.fetchTeams = function (http, leagueId) {
+    return getJson(http, Sp.BASE + '/' + leagueId + '/teams?limit=200').then(Sp.parseTeams);
+  };
+
   /* amistosos: só os do Brasil (ou de times que você segue) para não encher a tela */
   Sp.visible = function (g, follow) {
     var lg = Sp.league(g.league);

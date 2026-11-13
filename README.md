@@ -302,3 +302,9 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 - **Trailer dublado:** por padrão prefere o trailer **dublado**. Fontes: 1) TMDB (vídeo pt-BR cujo nome diz "dublado" — o idioma "pt" do TMDB também marca trailers só legendados); 2) **busca no YouTube** por "<filme> <ano> trailer dublado", aceitando só resultados que sejam trailer, digam "dublado" e tenham o nome do filme (ajuda nos filmes antigos). Sem dublado, cai no trailer do provedor e depois em qualquer idioma (original) — 1.54.1.
 - **Banner só na Início:** Filmes e Séries ficam só com o menu, "Todas as categorias" e as fileiras por gênero.
 - **Voltar na Início** (com mais de um perfil): abre a seleção de perfis; Voltar de novo mostra o aviso para sair.
+
+## 1.55.0
+- **Celular:** menu superior cabe na tela; toque longo no card expande para 16:9 com trailer; um toque abre o filme (Favoritar/Baixar ficam na tela de detalhes); cache de trailers persistente.
+- **Voltar encerra o trailer:** ao voltar do detalhe/trailer para a Home, o áudio é parado na hora.
+- **Perfil infantil:** no editor de perfil, opção "Perfil infantil". Mostra só categorias/itens infantis (desenho, animação, família, Disney…), bloqueia adultos e esconde Esportes. Selo "INFANTIL" na escolha de perfis.
+- **Esportes → Times:** escolha de times favoritos por campeonato (Brasileirão, Libertadores, Premier League, Champions, La Liga etc.) e seleções, via ESPN.

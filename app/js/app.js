@@ -220,6 +220,38 @@
     return w;
   }
 
+  /* perfil infantil: só categorias/canais infantis (desenho, animação, família, Disney, Gloob…), nunca adultas */
+  var RE_KIDS = /infantil|kids?|crian[cç]|desenho|anima[cç]|cartoon|disney|pixar|dreamworks|nickelodeon|\bnick\b|gloob|boomerang|baby|junior|\bjr\b|ra.?tim.?bum|fam[ií]lia|turma|peppa|bluey|discovery k/i;
+  var RE_ADULT = /adult|xxx|\+18|18\+|porn|er[oó]tic|hentai|sexy/i;
+  function isKids() { var p = curProfile(); return !!(p && p.kids); }
+  function kidsWrap(prov) {
+    var okC = {};
+    function ok(section) {
+      if (okC[section]) { return okC[section]; }
+      okC[section] = prov.categories(section).then(function (cats) {
+        var m = {};
+        cats.forEach(function (c) { if (RE_KIDS.test(c.name || '') && !RE_ADULT.test(c.name || '')) { m[c.id] = 1; } });
+        return m;
+      }, function () { delete okC[section]; return {}; });
+      return okC[section];
+    }
+    var w = {}, k;
+    for (k in prov) { if (Object.prototype.hasOwnProperty.call(prov, k)) { w[k] = prov[k]; } }
+    w.categories = function (section) {
+      if (!isKids()) { return prov.categories(section); }
+      return Promise.all([prov.categories(section), ok(section)]).then(function (r) { return r[0].filter(function (c) { return r[1][c.id]; }); });
+    };
+    function keep(section, l) {
+      return ok(section).then(function (m) { return l.filter(function (it) { return m[it.cat] && !RE_ADULT.test(it.name || ''); }); });
+    }
+    w.all = function (section) { return prov.all(section).then(function (l) { return isKids() ? keep(section, l) : l; }); };
+    w.items = function (section, catId) {
+      if (!isKids()) { return prov.items(section, catId); }
+      return ok(section).then(function (m) { return m[catId] ? prov.items(section, catId).then(function (l) { return keep(section, l); }) : []; });
+    };
+    return w;
+  }
+
   function typeLabel(t) { return { live: 'CANAL', movie: 'FILME', series: 'SÉRIE' }[t] || ''; }
 
   /* imagens só carregam perto da tela (a TV ficava pesada baixando/decodificando centenas de capas de uma vez) */
@@ -708,7 +740,7 @@
         if (S.profManage) { S.profEdit = { p: p, isNew: false }; renderProfiles(); }
         else if (p.id === curProf) { if (S.profFrom) { closeProfiles(); } else { switchProfile(p.id); } }
         else { switchProfile(p.id); }
-      } } }, [profAvatar(p, true, S.profManage), h('div', { cls: 'pname', text: p.name })]));
+      } } }, [profAvatar(p, true, S.profManage), h('div', { cls: 'pname', text: p.name })].concat(p.kids ? [h('div', { cls: 'pkid', text: 'INFANTIL' })] : [])));
     });
     if (list.length < 5) {
       cards.push(h('div', { cls: 'f pcard padd', on: { click: function () {
@@ -726,7 +758,7 @@
   }
 
   function renderProfileEdit(box, list) {
-    var e = S.profEdit, p = { id: e.p.id, name: e.p.name, color: e.p.color, icon: e.p.icon || '' }, input = h('input', { cls: 'f input', type: 'text', placeholder: 'Nome do perfil' });
+    var e = S.profEdit, p = { id: e.p.id, name: e.p.name, color: e.p.color, icon: e.p.icon || '', kids: !!e.p.kids }, input = h('input', { cls: 'f input', type: 'text', placeholder: 'Nome do perfil' });
     input.value = p.name;
     input.maxLength = 16;
     var sw = h('div', { cls: 'pswatches' }), preview = profAvatar(p, true, false), ics = h('div', { cls: 'picons' });
@@ -756,10 +788,18 @@
         b.classList.toggle('on', b._k === (p.icon || ''));
         if (!b._k) { avSet(b, { name: p.name, icon: '' }); }
       });
+      kidsBtn.textContent = 'Perfil infantil: ' + (p.kids ? 'Sim' : 'Não');
+      kidsBtn.classList.toggle('primary', !!p.kids);
       avSet(preview, p);
       preview.style.backgroundColor = PCOLORS[p.color];
       sw.style.display = (p.icon && window.Avatars && Avatars.has(p.icon)) ? 'none' : '';
     }
+    var kidsBtn = h('button', { cls: 'f btn kidsbtn', type: 'button', on: { click: function () {
+      p.kids = !p.kids;
+      if (p.kids && /^Perfil \d+$/.test(input.value || '')) { input.value = 'Crianças'; p.name = 'Crianças'; }
+      paint();
+    } } });
+    var kidsNote = h('div', { cls: 'spnote small', text: 'Perfil infantil mostra só filmes, séries e canais infantis (desenhos, animação, família) e esconde Esportes.' });
     paint();
     input.addEventListener('input', function () { p.name = input.value || '?'; paint(); });
     var del = null;
@@ -775,7 +815,7 @@
       } } });
     }
     box.appendChild(h('div', { cls: 'ptitle', text: e.isNew ? 'Novo perfil' : 'Editar perfil' }));
-    box.appendChild(h('div', { cls: 'pform' }, [preview, input, sw, ics]));
+    box.appendChild(h('div', { cls: 'pform' }, [preview, input, kidsBtn, kidsNote, sw, ics]));
     box.appendChild(h('div', { cls: 'pbtns' }, [
       h('button', { cls: 'f btn primary', text: 'Salvar', on: { click: function () {
         p.name = (input.value || '').replace(/^\s+|\s+$/g, '') || p.name;
@@ -1105,10 +1145,44 @@
     }
   }
 
+  /* competições mais conhecidas e seleções para escolher os times favoritos */
+  var SP_PICK = [['bra.1', 'Brasileirão'], ['conmebol.libertadores', 'Libertadores'], ['uefa.champions', 'Champions'], ['eng.1', 'Premier League'],
+    ['esp.1', 'La Liga'], ['ita.1', 'Serie A'], ['ger.1', 'Bundesliga'], ['fra.1', 'Ligue 1'], ['conmebol.sudamericana', 'Sul-Americana'], ['fifa.world', 'Seleções']];
+
+  function spBodyPick(body) {
+    var sp = S.sp, lg = sp.pickLg || 'bra.1', fol = spFollow(), cache = sp.teamsCache = sp.teamsCache || {};
+    body.appendChild(h('div', { cls: 'sptitle', text: 'Escolha seus times e seleções' }));
+    body.appendChild(h('div', { cls: 'spchips' }, SP_PICK.map(function (x) {
+      return h('button', { cls: 'f spchip lg' + (x[0] === lg ? ' on' : ''), type: 'button', 'data-k': 'lg:' + x[0], text: x[1],
+        on: { click: function () { sp.pickLg = x[0]; paintSports(); } } });
+    }).concat([h('button', { cls: 'f btn primary', type: 'button', 'data-k': 'pickdone', text: 'Concluído', on: { click: function () { sp.pick = false; paintSports(); } } })])));
+    var list = cache[lg];
+    if (list === undefined) {
+      body.appendChild(spNote('Carregando times…'));
+      cache[lg] = null;
+      Sports.fetchTeams(http, lg).then(function (l) { cache[lg] = l; paintSports(); }, function () { cache[lg] = false; paintSports(); });
+      return;
+    }
+    if (list === null) { body.appendChild(spNote('Carregando times…')); return; }
+    if (list === false) {
+      body.appendChild(spNote('Não consegui carregar os times desta competição agora.', true));
+      delete cache[lg];
+      return;
+    }
+    body.appendChild(h('div', { cls: 'spteamgrid' }, list.map(function (t) {
+      var on = !!fol[t.id];
+      return h('button', { cls: 'f spteam' + (on ? ' on' : ''), type: 'button', 'data-k': 'tm:' + t.id, on: { click: function () { spToggleFollow(t); paintSports(); } } },
+        [spLogo(t, 'splogo'), h('span', { cls: 'tn', text: t.name }), h('span', { cls: 'tstar', text: on ? '★' : '☆' })]);
+    })));
+  }
+
   function spBodyTeams(body) {
     var sp = S.sp, fol = spFollow(), ids = Object.keys(fol);
+    if (sp.pick) { spBodyPick(body); return; }
+    body.appendChild(h('button', { cls: 'f btn primary spchoose', type: 'button', 'data-k': 'pick', text: ids.length ? 'Escolher mais times e seleções' : 'Escolher times e seleções',
+      on: { click: function () { sp.pick = true; paintSports(); } } }));
     if (!ids.length) {
-      body.appendChild(spNote('Você ainda não segue nenhum time. Abra um jogo e escolha "Seguir" no time que quiser: ele ganha uma estrela e aparece aqui.'));
+      body.appendChild(spNote('Você ainda não segue nenhum time. Escolha acima (campeonatos e seleções) ou abra um jogo e toque em "Seguir" no time.'));
       return;
     }
     body.appendChild(h('div', { cls: 'spchips' }, ids.map(function (id) {
@@ -1487,7 +1561,7 @@
     loginAuto(cfg).then(function (r) {
       if (!r.info.ok) { throw new Error('Usuário ou senha inválidos (ou conta inativa).'); }
       cfg = r.cfg;
-      S.provider = camWrap(r.prov); S.info = r.info;
+      S.provider = kidsWrap(camWrap(r.prov)); S.info = r.info;
       S.offline = false;
       S.cfg = cfg;
       store.set('cfg', cfg);
@@ -1749,7 +1823,7 @@
   function renderGenreHome(sec) {
     var page = S.pageEl, token = S.homeToken;
     page.className = 'page scroll home genrehome';
-    page.appendChild(h('div', { cls: 'hubtabs' }, ['home', 'live', 'movie', 'series', 'sports'].map(function (k) { return hubTab(k, sec); })));
+    page.appendChild(h('div', { cls: 'hubtabs' }, ['home', 'live', 'movie', 'series'].concat(isKids() ? [] : ['sports']).map(function (k) { return hubTab(k, sec); })));
     var rows = h('div', { cls: 'hrows' });
     page.appendChild(rows);
     var bar = h('div', { cls: 'genbar' }, [h('button', { cls: 'f btn', type: 'button', 'data-k': 'allcats', text: 'Todas as categorias',
@@ -2012,7 +2086,12 @@
       if (!target || !target._item || S.mode !== 'browse') { return; }
       var el = target;
       fired = true;
-      if (el._item.type === 'movie' || el._item.type === 'series') { try { if (navigator.vibrate) { navigator.vibrate(30); } } catch (e) {} openItemSheet(el._item); return; }
+      // card de filme/série numa fileira: o toque longo expande para 16:9 (capa + trailer); o toque simples abre o filme
+      if ((el._item.type === 'movie' || el._item.type === 'series') && el.parentNode && el.parentNode.classList.contains('hlist') && wideOn()) {
+        try { if (navigator.vibrate) { navigator.vibrate(30); } } catch (e) {}
+        Nav.focus(el);
+        return;
+      }
       var on = toggleFav(el._item);
       el.classList.toggle('isfav', on);
       try { if (navigator.vibrate) { navigator.vibrate(30); } } catch (e) {}
@@ -2214,8 +2293,6 @@
 
   function posterCard(it, list) {
     var el = h('div', { cls: 'f card', on: { click: function () {
-      // celular: 1º toque coloca o card em foco (vira 16:9, mostra a capa e inicia o trailer); 2º toque abre
-      if (!isTvDevice() && el.parentNode && el.parentNode.classList.contains('hlist') && (it.type === 'movie' || it.type === 'series') && wideOn() && !el.classList.contains('focus')) { Nav.focus(el); return; }
       if (isTvDevice() && it.type === 'movie') { startPlay({ kind: 'movie', item: it }); return; }   // TV: filme da Início começa direto
       if (isTvDevice() && it.type === 'series') { playSeriesHome(it); return; }                       // TV: série continua do episódio em que parou
       openItemObj(it, list);
@@ -2568,10 +2645,26 @@
   function onMetered() {
     try { return !!(window.NativeApp && NativeApp.isMetered && NativeApp.isMetered()); } catch (e) { return false; }
   }
+  /* trailers já achados ficam guardados no aparelho (positivo 60 dias; "sem trailer" 3 dias): reabrir não refaz as buscas */
+  function trCacheGet(k) {
+    var m = store.get('trcache', {}), e = m[k];
+    if (!e) { return undefined; }
+    if (Date.now() - e[1] > (e[0] ? 60 : 3) * 86400000) { return undefined; }
+    return e[0];
+  }
+  function trCachePut(k, id) {
+    var m = store.get('trcache', {}), ks;
+    m[k] = [id || '', Date.now()];
+    ks = Object.keys(m);
+    if (ks.length > 400) { ks.sort(function (a, b) { return m[a][1] - m[b][1]; }).slice(0, ks.length - 400).forEach(function (x) { delete m[x]; }); }
+    store.set('trcache', m);
+  }
   function trailerFor(it) {
     if (onMetered()) { PD.bloqueio = 'dados móveis: trailer só no Wi-Fi'; return Promise.resolve(''); }
     var dub = dubOn(), k = (dub ? 'd:' : 'a:') + it.type + ':' + it.id;
     if (TR[k]) { return TR[k]; }
+    var cachedId = trCacheGet(k);
+    if (cachedId !== undefined) { TR[k] = Promise.resolve(cachedId); return TR[k]; }
     var key = tmdbKey(), kind = it.type === 'movie' ? 'movie' : 'tv';
     var tid = null;
     var fromTmdb = function (onlyDub) {
@@ -2597,6 +2690,7 @@
     } else {
       p = provider().then(function (id) { return id || fromTmdb(false); });
     }
+    p = p.then(function (id) { trCachePut(k, id); return id; });
     TR[k] = p;
     return p;
   }
@@ -2935,9 +3029,9 @@
     rows.appendChild(hero);
     if (slides.length) { start(); }
     // abertura rápida: mostra já os destaques da última vez (a lista completa do catálogo é pesada na TV); depois só atualiza o cache
-    var ckey = 'herocache:' + secs.join(), cached = !slides.length ? store.get(ckey, null) : null, usedCache = false;
+    var ckey = 'herocache:' + secs.join() + (isKids() ? ':k' : ''), cached = !slides.length ? store.get(ckey, null) : null, usedCache = false;
     if (cached && cached.length) {
-      var pk0 = S.heroPick = S.heroPick || {}, ky0 = secs.join(), one0 = null;
+      var pk0 = S.heroPick = S.heroPick || {}, ky0 = secs.join() + (isKids() ? ':k' : ''), one0 = null;
       cached.forEach(function (a) { if (a.it && a.it.type + ':' + a.it.id === pk0[ky0]) { one0 = a; } });
       if (!one0) { one0 = cached[window.__pvTest ? 0 : Math.floor(Math.random() * cached.length)]; pk0[ky0] = one0.it.type + ':' + one0.it.id; }
       slides = [one0].concat(cached.filter(function (a) { return a !== one0; })).slice(0, 8);
@@ -2961,7 +3055,7 @@
         store.set(ckey, add.slice(0, 8));
         if (usedCache) { return; }
         // 1.51.0: um banner só, sorteado entre os filmes/séries em alta a cada abertura do app (volta à Início = mesmo banner)
-        var pk = S.heroPick = S.heroPick || {}, ky = secs.join(), one = null;
+        var pk = S.heroPick = S.heroPick || {}, ky = secs.join() + (isKids() ? ':k' : ''), one = null;
         if (pk[ky]) { add.forEach(function (a) { if (a.it.type + ':' + a.it.id === pk[ky]) { one = a; } }); }
         if (!one) { one = add[window.__pvTest ? 0 : Math.floor(Math.random() * Math.min(add.length, 8))]; pk[ky] = one.it.type + ':' + one.it.id; }
         // 1.51.4: volta o carrossel (filmes e séries em alta); o sorteado da abertura vem primeiro
@@ -2977,10 +3071,10 @@
     page.className = 'page scroll home';
     if (homeStyle() === 'blocks') {
       page.appendChild(h('div', { cls: 'hub-tiles' }, [
-        hubTile('live', 'Canais e programação'), hubTile('movie', 'Catálogo de filmes'), hubTile('series', 'Séries e episódios'), hubTile('sports', 'Placares e jogos')
-      ]));
+        hubTile('live', 'Canais e programação'), hubTile('movie', 'Catálogo de filmes'), hubTile('series', 'Séries e episódios')
+      ].concat(isKids() ? [] : [hubTile('sports', 'Placares e jogos')])));
     } else {
-      page.appendChild(h('div', { cls: 'hubtabs' }, [hubTab('home'), hubTab('live'), hubTab('movie'), hubTab('series'), hubTab('sports')]));
+      page.appendChild(h('div', { cls: 'hubtabs' }, ['home', 'live', 'movie', 'series'].concat(isKids() ? [] : ['sports']).map(function (k) { return hubTab(k); })));
     }
     var rows = h('div', { cls: 'hrows' });
     page.appendChild(rows);
@@ -2990,7 +3084,7 @@
     if (conts.length) { rows.appendChild(makeRow('Continuar assistindo', conts.map(contCard))); }
     var spHost = h('div', { cls: 'sphome hidden' });
     rows.appendChild(spHost);
-    spHomeFill(spHost);
+    if (!isKids()) { spHomeFill(spHost); }
     var favs = favList();
     if (favs.length) {
       rows.appendChild(makeRow('Favoritos', favs.slice(0, 20).map(function (it) { return posterCard(it, favs); }).concat([seeAllCard(favs.length)])));
@@ -3336,7 +3430,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.54.1']
+      ['Versão do app', '1.55.0']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
@@ -3406,6 +3500,7 @@
   /* ---------- detalhes (filme / série) ---------- */
 
   function showDetail(it, vars) {
+    stopAllTrailers();   // o trailer do banner/card não toca por baixo da tela de detalhe
     if (!S.detail) { S.lastFocus = Nav.current(); }
     S.mode = 'detail';
     var D = S.detail = { item: it, flat: [], seasons: [], season: null, vars: vars || null };
@@ -4244,7 +4339,21 @@
     setTimeout(function () { S.exitArmed = false; }, 2500);
   }
 
+  /* encerra qualquer trailer em andamento (banner, card ou detalhe): o áudio não pode continuar ao voltar */
+  function stopAllTrailers() {
+    try { if (S.heroEnd) { S.heroEnd(); } } catch (e) {}
+    try { pvStopCard(); } catch (e2) {}
+    var fr = document.querySelectorAll('iframe.ytv'), i;
+    for (i = 0; i < fr.length; i++) {
+      try { fr[i].src = 'about:blank'; } catch (e3) {}
+      if (fr[i].parentNode) { fr[i].parentNode.removeChild(fr[i]); }
+    }
+    var ph = document.querySelectorAll('.pv'), j;
+    for (j = 0; j < ph.length; j++) { ph[j].classList.remove('pv'); }
+  }
+
   function goBack() {
+    if (S.mode !== 'player') { stopAllTrailers(); }
     if (S.mode === 'profiles') {
       if (S.profEdit) { S.profEdit = null; renderProfiles(); return; }
       if (S.profManage) { S.profManage = false; renderProfiles(); return; }
