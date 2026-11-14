@@ -79,6 +79,7 @@ ok(/HBO Max/.test(Sports.whereToWatch(ucl).short) && Sports.whereToWatch(ucl).li
   var r = Sports.parseStreams(hex);
   ok(r.length === 1 && r[0].id === 'ddddddddddd' && r[0].live, 'página do YouTube em JSON escapado (\\x22) também é lida');
 })();
+ok(Sports.ptName('Netherlands') === 'Holanda' && Sports.ptName('Japan') === 'Japão' && Sports.ptName('Germany') === 'Alemanha' && Sports.ptName('Flamengo') === 'Flamengo', 'nomes de seleções em português (Holanda, Japão, Alemanha)');
 ok(Sports.youtubeLinks(Sports.whereToWatch(g)).some(function (l) { return l.label === 'CazéTV' && /@CazeTV\/live$/.test(l.url); }), 'Corinthians: link do YouTube da CazéTV');
 var ytHtml = '{"x":{"videoRenderer":{"videoId":"AAAAAAAAAAA","title":{"runs":[{"text":"AO VIVO: BRASIL NO ATLETISMO"}]},"ownerText":{"runs":[{"text":"CazéTV"}]},"badges":[{"style":"BADGE_STYLE_TYPE_LIVE_NOW"}]}},'
   + '"y":{"lockupViewModel":{"contentId":"BBBBBBBBBBB","contentType":"LOCKUP_CONTENT_TYPE_VIDEO","metadata":{"title":{"content":"AO VIVO: LIVERPOOL X MANCHESTER UNITED | PREMIER LEAGUE"},"row":{"text":"CazéTV"},"badge":{"text":"AO VIVO"}}}},'

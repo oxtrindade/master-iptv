@@ -332,3 +332,6 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 
 ## 1.55.8
 - **Live do YouTube: páginas "sem vídeos":** o diagnóstico mostrou páginas de 339/553 KB com 0 vídeos lidos. O YouTube às vezes entrega o JSON escapado em hexadecimal (`\x22`), que o leitor não entendia. Agora desfaz o escape (jogos e busca de trailer). Se ainda vier vazio, o aviso mostra o que a página trouxe (videoId/ytInitialData/consent/início).
+
+## 1.55.9
+- **Seleções em português:** Japão, Brasil, Alemanha, Holanda, Sérvia… (~170 nomes) em placares, detalhe do jogo, "Meus times" e escolha de times. A busca de lives no YouTube usa os mesmos nomes. Clubes seguem como vêm.

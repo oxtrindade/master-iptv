@@ -109,7 +109,7 @@
   function team(c) {
     var t = (c && c.team) || {};
     return {
-      id: String(t.id || ''), name: t.displayName || t.name || '', short: t.shortDisplayName || '', abbr: t.abbreviation || '',
+      id: String(t.id || ''), name: Sp.ptName(t.displayName || t.name || ''), short: Sp.ptName(t.shortDisplayName || ''), abbr: t.abbreviation || '',
       logo: t.logo || (t.logos && t.logos[0] && t.logos[0].href) || '',
       score: c && c.score != null && c.score !== '' ? String(typeof c.score === 'object' ? (c.score.displayValue || c.score.value) : c.score) : '',
       winner: !!(c && c.winner),
@@ -179,7 +179,7 @@
       var t = x && x.team;
       if (!t || !t.id || seen[t.id]) { return; }
       seen[t.id] = 1;
-      out.push({ id: String(t.id), name: t.displayName || t.name || t.shortDisplayName || '', logo: (t.logos && t.logos[0] && t.logos[0].href) || '' });
+      out.push({ id: String(t.id), name: Sp.ptName(t.displayName || t.name || t.shortDisplayName || ''), logo: (t.logos && t.logos[0] && t.logos[0].href) || '' });
     });
     out.sort(function (a, b) { return a.name < b.name ? -1 : a.name > b.name ? 1 : 0; });
     return out;
@@ -320,20 +320,12 @@
   };
 
   var GENERIC = { club: 1, city: 1, united: 1, real: 1, sporting: 1, team: 1, futebol: 1, football: 1, clube: 1 };
-  /* a ESPN devolve seleções em inglês; os canais brasileiros escrevem em português */
-  var PT = { serbia: 'servia', germany: 'alemanha', spain: 'espanha', france: 'franca', england: 'inglaterra', italy: 'italia', netherlands: 'holanda', 'holland': 'holanda',
-    belgium: 'belgica', croatia: 'croacia', switzerland: 'suica', denmark: 'dinamarca', sweden: 'suecia', norway: 'noruega', poland: 'polonia', 'czech republic': 'tchequia', czechia: 'tchequia',
-    austria: 'austria', hungary: 'hungria', scotland: 'escocia', wales: 'pais de gales', ireland: 'irlanda', 'republic of ireland': 'irlanda', 'northern ireland': 'irlanda do norte',
-    turkey: 'turquia', 'turkiye': 'turquia', greece: 'grecia', romania: 'romenia', bulgaria: 'bulgaria', slovakia: 'eslovaquia', slovenia: 'eslovenia', ukraine: 'ucrania', russia: 'russia',
-    finland: 'finlandia', iceland: 'islandia', albania: 'albania', georgia: 'georgia', israel: 'israel', 'bosnia and herzegovina': 'bosnia', kosovo: 'kosovo', luxembourg: 'luxemburgo',
-    'north macedonia': 'macedonia', montenegro: 'montenegro', japan: 'japao', 'south korea': 'coreia do sul', 'united states': 'estados unidos', usa: 'estados unidos', mexico: 'mexico',
-    brazil: 'brasil', argentina: 'argentina', uruguay: 'uruguai', paraguay: 'paraguai', colombia: 'colombia', chile: 'chile', ecuador: 'equador', peru: 'peru', bolivia: 'bolivia',
-    venezuela: 'venezuela', morocco: 'marrocos', egypt: 'egito', 'saudi arabia': 'arabia saudita', iran: 'ira', qatar: 'catar', australia: 'australia', 'ivory coast': 'costa do marfim',
-    'cote d ivoire': 'costa do marfim', 'south africa': 'africa do sul', algeria: 'argelia', tunisia: 'tunisia', 'costa rica': 'costa rica', panama: 'panama', canada: 'canada' };
-  Sp.ptName = function (name) { var n = Sp.norm(name); return PT[n] ? PT[n].replace(/\b\w/g, function (c) { return c.toUpperCase(); }) : name; };
+  /* nomes de seleções em português (a ESPN envia em inglês) — é o que aparece no app e o que casa com títulos de canais */
+  var DISP = {"brazil": "Brasil", "germany": "Alemanha", "france": "França", "spain": "Espanha", "england": "Inglaterra", "italy": "Itália", "netherlands": "Holanda", "holland": "Holanda", "belgium": "Bélgica", "uruguay": "Uruguai", "paraguay": "Paraguai", "ecuador": "Equador", "mexico": "México", "united states": "Estados Unidos", "usa": "Estados Unidos", "japan": "Japão", "croatia": "Croácia", "switzerland": "Suíça", "denmark": "Dinamarca", "sweden": "Suécia", "norway": "Noruega", "poland": "Polônia", "czechia": "Tchéquia", "czech republic": "Tchéquia", "scotland": "Escócia", "wales": "País de Gales", "turkey": "Turquia", "turkiye": "Turquia", "serbia": "Sérvia", "greece": "Grécia", "austria": "Áustria", "ukraine": "Ucrânia", "south korea": "Coreia do Sul", "korea republic": "Coreia do Sul", "north korea": "Coreia do Norte", "morocco": "Marrocos", "egypt": "Egito", "senegal": "Senegal", "cameroon": "Camarões", "saudi arabia": "Arábia Saudita", "australia": "Austrália", "canada": "Canadá", "costa rica": "Costa Rica", "hungary": "Hungria", "romania": "Romênia", "slovakia": "Eslováquia", "slovenia": "Eslovênia", "albania": "Albânia", "georgia": "Geórgia", "ireland": "Irlanda", "republic of ireland": "Irlanda", "northern ireland": "Irlanda do Norte", "iceland": "Islândia", "finland": "Finlândia", "new zealand": "Nova Zelândia", "south africa": "África do Sul", "ivory coast": "Costa do Marfim", "cote d ivoire": "Costa do Marfim", "algeria": "Argélia", "tunisia": "Tunísia", "nigeria": "Nigéria", "ghana": "Gana", "iran": "Irã", "ir iran": "Irã", "qatar": "Catar", "panama": "Panamá", "jamaica": "Jamaica", "argentina": "Argentina", "colombia": "Colômbia", "chile": "Chile", "peru": "Peru", "bolivia": "Bolívia", "venezuela": "Venezuela", "portugal": "Portugal", "russia": "Rússia", "bulgaria": "Bulgária", "israel": "Israel", "kosovo": "Kosovo", "luxembourg": "Luxemburgo", "north macedonia": "Macedônia do Norte", "montenegro": "Montenegro", "bosnia and herzegovina": "Bósnia e Herzegovina", "bosnia herzegovina": "Bósnia e Herzegovina", "china": "China", "china pr": "China", "india": "Índia", "indonesia": "Indonésia", "iraq": "Iraque", "jordan": "Jordânia", "uzbekistan": "Uzbequistão", "united arab emirates": "Emirados Árabes", "uae": "Emirados Árabes", "oman": "Omã", "bahrain": "Bahrein", "kuwait": "Kuwait", "thailand": "Tailândia", "vietnam": "Vietnã", "malaysia": "Malásia", "singapore": "Singapura", "philippines": "Filipinas", "honduras": "Honduras", "el salvador": "El Salvador", "guatemala": "Guatemala", "haiti": "Haiti", "cuba": "Cuba", "trinidad and tobago": "Trinidad e Tobago", "curacao": "Curaçao", "cape verde": "Cabo Verde", "cabo verde": "Cabo Verde", "dr congo": "RD Congo", "congo dr": "RD Congo", "mali": "Mali", "burkina faso": "Burkina Faso", "angola": "Angola", "mozambique": "Moçambique", "zambia": "Zâmbia", "gabon": "Gabão", "guinea": "Guiné", "benin": "Benim", "uganda": "Uganda", "kenya": "Quênia", "tanzania": "Tanzânia", "zimbabwe": "Zimbábue", "libya": "Líbia", "sudan": "Sudão", "ethiopia": "Etiópia", "estonia": "Estônia", "latvia": "Letônia", "lithuania": "Lituânia", "belarus": "Belarus", "moldova": "Moldávia", "armenia": "Armênia", "azerbaijan": "Azerbaijão", "kazakhstan": "Cazaquistão", "cyprus": "Chipre", "malta": "Malta", "faroe islands": "Ilhas Faroé", "andorra": "Andorra", "san marino": "San Marino", "liechtenstein": "Liechtenstein", "gibraltar": "Gibraltar", "suriname": "Suriname", "guyana": "Guiana", "new caledonia": "Nova Caledônia", "tahiti": "Taiti", "fiji": "Fiji", "palestine": "Palestina", "syria": "Síria", "lebanon": "Líbano"};
+  Sp.ptName = function (name) { var n = Sp.norm(name); return DISP[n] || name; };
   function teamWords(name) {
     var n = Sp.norm(name), l = n.split(' ').filter(function (w) { return w.length >= 4 && !GENERIC[w]; });
-    if (PT[n]) { l = l.concat(PT[n].split(' ').filter(function (w) { return w.length >= 4; })); }
+    if (DISP[n]) { l = l.concat(Sp.norm(DISP[n]).split(' ').filter(function (w) { return w.length >= 4; })); }
     return l;
   }
   /* entre as transmissões AO VIVO, a que cita os times do jogo (e, de preferência, é do canal pedido) */

@@ -832,7 +832,9 @@
 
   /* ---------- esportes: placares, meus times e jogos nos seus canais ---------- */
 
-  function spFollow() { return store.get('sportteams', {}); }
+  function spFollow() { return spFollowPt(store.get('sportteams', {})); }
+  function spFollowPt(f) { var k; for (k in f) { if (f[k] && f[k].name) { f[k].name = Sports.ptName(f[k].name); } } return f; }
+
   function spToggleFollow(t) {
     var f = spFollow();
     if (f[t.id]) { delete f[t.id]; toast('Deixou de seguir ' + t.name, 1600); }
@@ -3441,7 +3443,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.55.8']
+      ['Versão do app', '1.55.9']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {

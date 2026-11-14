@@ -627,7 +627,7 @@ Promise.all([listen(api), listen(px), startSync()]).then(function () {
       assert.ok(/Canal Esporte 2/.test($('.sports').textContent), 'aba de canais lista o jogo com o canal');
       $('[data-k="tab:scores"]').click();
       $('[data-k="d:2"]').click();
-      assert.ok(/Brazil/.test($('.sports').textContent) && !/France/.test($('.sports').textContent), 'amistoso do Brasil aparece em outro dia');
+      assert.ok(/Brasil/.test($('.sports').textContent) && !/Fran/.test($('.sports').textContent), 'amistoso do Brasil aparece em outro dia');
       step('esportes: placares, canal pela programação, seguir time, amistosos só do Brasil');
       go('home');
       assert.ok($('.hubtab, .hubtile'));
