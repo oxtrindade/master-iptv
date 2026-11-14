@@ -1332,9 +1332,11 @@
     scan('busca', searchUrl).then(function (pick) {
       return pick || (y.streams ? scan('canal', y.streams) : null);
     }).then(function (pick) {
-      return pick || viaFeed(cidKnown);
+      // fonte só sugerida (sem direitos confirmados): vale apenas live de verdade; o feed traz replays de outros jogos
+      return pick || (y.generic ? null : viaFeed(cidKnown));
     }).then(function (pick) {
       if (pick) { launch(pick.id); return; }
+      if (y.generic) { toast('Não há transmissão ao vivo de ' + g.home.name + ' x ' + g.away.name + ' na ' + label + ' agora.', 5000); return; }
       toast('Não achei ' + g.home.name + ' x ' + g.away.name + ' ao vivo na ' + label + ' agora. (' + diag.join('; ') + ')', 9000);
       launch(null);
     });
@@ -3432,7 +3434,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.55.4']
+      ['Versão do app', '1.55.5']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {

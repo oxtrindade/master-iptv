@@ -320,3 +320,6 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 
 ## 1.55.4
 - **Banner da Início voltou no celular/TV:** a partir da 2ª abertura o banner vinha do cache dos destaques, mas nunca era exibido (só aparecia na 1ª vez, sem cache). Corrigido, com teste. O banner continua só na Início; Filmes/Séries/Esportes/TV ao vivo não têm banner, e o trailer ao parar/segurar o card segue igual.
+
+## 1.55.5
+- **YouTube sem replay:** nos botões sugeridos (ge tv / CazéTV, quando a competição não tem fonte confirmada) só vale live de verdade; não cai mais no feed do canal, que trazia vídeo de outro jogo (ex.: Copa), nem abre a página do canal. Sem live, avisa.

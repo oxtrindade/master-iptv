@@ -266,7 +266,7 @@
     var txt = wr && wr.lines ? wr.lines.join('\n') : '', out = [];
     YT.forEach(function (y) { if (y.re.test(txt)) { out.push({ label: y.label, url: y.url, tries: y.tries, streams: y.streams, cid: y.cid }); } });
     /* direitos mudam por jogo: sem fonte listada, oferece os canais abertos que mais transmitem (ge tv, CazéTV) */
-    if (!out.length && any) { YT.forEach(function (y) { if (/ge tv|CazéTV/.test(y.label)) { out.push({ label: y.label, url: y.url, tries: y.tries, streams: y.streams, cid: y.cid }); } }); }
+    if (!out.length && any) { YT.forEach(function (y) { if (/ge tv|CazéTV/.test(y.label)) { out.push({ label: y.label, url: y.url, tries: y.tries, streams: y.streams, cid: y.cid, generic: true }); } }); }
     return out;
   };
 
