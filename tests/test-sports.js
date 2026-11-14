@@ -60,6 +60,13 @@ ok(/HBO Max/.test(Sports.whereToWatch(ucl).short) && Sports.whereToWatch(ucl).li
   var pg2 = Sports.pickLive('"videoId":"abcdefghijk","title":{"runs":[{"text":"SÉRVIA x ALEMANHA | NATIONS LEAGUE | AO VIVO"}]},"ownerText":{"runs":[{"text":"ge tv"}]}', sg, 'ge tv');
   ok(pg2 && pg2.id === 'abcdefghijk' && Sports.ptName('Germany') === 'Alemanha', 'seleções em inglês casam com título em português');
 })();
+(function () {
+  var bj = { home: { name: 'Brazil' }, away: { name: 'Japan' } };
+  var h1 = '"videoId":"aaaaaaaaaaa","title":{"runs":[{"text":"BRASIL x JAPÃO | AO VIVO | AMISTOSO"}]},"ownerText":{"runs":[{"text":"ge tv"}]},"badges":[{"label":"AO VIVO"}]'
+    + '"videoId":"bbbbbbbbbbb","title":{"runs":[{"text":"BRASIL x JAPÃO ao vivo - reação"}]},"ownerText":{"runs":[{"text":"Canal Qualquer"}]},"badges":[{"label":"AO VIVO"}]';
+  var r1 = Sports.pickLiveAny(h1, bj, 'CazéTV');
+  ok(r1 && r1.id === 'aaaaaaaaaaa', 'busca geral acha a live do canal conhecido e ignora reação');
+})();
 ok(Sports.youtubeLinks(Sports.whereToWatch(g)).some(function (l) { return l.label === 'CazéTV' && /@CazeTV\/live$/.test(l.url); }), 'Corinthians: link do YouTube da CazéTV');
 var ytHtml = '{"x":{"videoRenderer":{"videoId":"AAAAAAAAAAA","title":{"runs":[{"text":"AO VIVO: BRASIL NO ATLETISMO"}]},"ownerText":{"runs":[{"text":"CazéTV"}]},"badges":[{"style":"BADGE_STYLE_TYPE_LIVE_NOW"}]}},'
   + '"y":{"lockupViewModel":{"contentId":"BBBBBBBBBBB","contentType":"LOCKUP_CONTENT_TYPE_VIDEO","metadata":{"title":{"content":"AO VIVO: LIVERPOOL X MANCHESTER UNITED | PREMIER LEAGUE"},"row":{"text":"CazéTV"},"badge":{"text":"AO VIVO"}}}},'

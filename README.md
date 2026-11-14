@@ -323,3 +323,6 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 
 ## 1.55.5
 - **YouTube sem replay:** nos botões sugeridos (ge tv / CazéTV, quando a competição não tem fonte confirmada) só vale live de verdade; não cai mais no feed do canal, que trazia vídeo de outro jogo (ex.: Copa), nem abre a página do canal. Sem live, avisa.
+
+## 1.55.6
+- **Busca de live no YouTube de verdade:** se o canal pedido (ge tv, CazéTV…) não aparece na busca nem na lista /streams, faz uma busca geral "<time A> x <time B> ao vivo" (filtro AO VIVO) e abre a live que cita os dois times de qualquer canal conhecido (ge tv, CazéTV, TNT Sports, Globo, SporTV, ESPN, Record, SBT, CBF, FIFA…), ignorando reações, watchalongs e jogos de videogame. Replays continuam fora.
