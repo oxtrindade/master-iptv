@@ -1728,6 +1728,7 @@
     if (sec === 'search') { S.searchSec = /^(live|movie|series)$/.test(opts.backTo || '') ? opts.backTo : null; }
     S.loadToken++;
     S.homeToken++;
+    stopAllTrailers();   // trailer do banner/card não segue tocando em TV ao vivo, Esportes, Favoritos etc.
     if (imgIO) { imgIO.disconnect(); }
     S.mainEl.className = 'main sec-' + sec;
     renderHead(sec);
@@ -3036,6 +3037,7 @@
       if (!one0) { one0 = cached[window.__pvTest ? 0 : Math.floor(Math.random() * cached.length)]; pk0[ky0] = one0.it.type + ':' + one0.it.id; }
       slides = [one0].concat(cached.filter(function (a) { return a !== one0; })).slice(0, 8);
       usedCache = true;
+      start();
     }
     // completa com os destaques do catálogo (em alta); se não houver histórico, o banner nasce deles
     setTimeout(function () {
@@ -3430,7 +3432,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.55.2']
+      ['Versão do app', '1.55.4']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {

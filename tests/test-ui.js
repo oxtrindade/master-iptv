@@ -698,6 +698,12 @@ Promise.all([listen(api), listen(px), startSync()]).then(function () {
       }, 'jogos, canais e programação guardados no aparelho');
     }).then(function () {
       step('esportes: cache no aparelho (jogos, canais, programação)');
+      // 2ª abertura: com o cache dos destaques o banner tem de aparecer na Início (regressão: ficava escondido)
+      w.localStorage.setItem('iptv.herocache:movie,series', JSON.stringify([{ it: { type: 'movie', id: 'hc1', name: 'Filme Cache', logo: 'http://x/p.jpg', url: 'http://x/a.mp4' }, cont: null }]));
+      go('home');
+      assert.ok($('.hero:not(.hidden)'), 'banner aparece na hora com o cache');
+      w.localStorage.removeItem('iptv.herocache:movie,series');
+      step('Início: banner aparece a partir do cache');
       // Filmes por gênero (catálogo grande): banner de destaque com trailer, igual à Início
       w.__pvTest = true;
       w.Tmdb.findId = function () { return Promise.resolve(5); };

@@ -314,3 +314,9 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 
 ## 1.55.2
 - **YouTube direto no jogo:** a ESPN traz seleções em inglês (Serbia, Germany) e os canais escrevem em português (Sérvia x Alemanha), então a busca não achava a live e caía na página do canal. Agora há tradução de ~70 seleções, usada na busca e no casamento do título.
+
+## 1.55.3
+- **Trailer só na Home/Filmes/Séries:** ao trocar de aba (TV ao vivo, Esportes, Favoritos, Downloads, Configurações…), o trailer e o áudio do banner/card são encerrados na hora.
+
+## 1.55.4
+- **Banner da Início voltou no celular/TV:** a partir da 2ª abertura o banner vinha do cache dos destaques, mas nunca era exibido (só aparecia na 1ª vez, sem cache). Corrigido, com teste. O banner continua só na Início; Filmes/Séries/Esportes/TV ao vivo não têm banner, e o trailer ao parar/segurar o card segue igual.
