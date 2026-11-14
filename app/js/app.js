@@ -1320,18 +1320,18 @@
     };
     toast('Procurando o jogo na ' + label + '…', 3000);
     var cidKnown = y.cid || null;
-    var scan = function (name, url, any) {
+    var scan = function (name, url, any, own) {
       return ytGet(url).then(function (html) {
         var all = Sports.parseStreams(html), lives = all.filter(function (x) { return x.live; }).length;
         diag.push(name + ' ' + Math.round(String(html || '').length / 1000) + ' KB, ' + all.length + ' vídeos, ' + lives + ' ao vivo');
         if (!cidKnown) { cidKnown = Sports.channelId(html); }
-        return any ? Sports.pickLiveAny(html, g, label) : Sports.pickLive(html, g, label);
+        return any ? Sports.pickLiveAny(html, g, label) : Sports.pickLive(html, g, label, own);
       }, function (e) { diag.push(name + ': erro ' + ((e && e.message) || '?')); return null; });
     };
     // só vale transmissão do canal oficial. 1) busca (ao vivo) filtrando pelo canal; 2) lista /streams do canal; 3) feed RSS
     var openUrl = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(Sports.ptName(g.home.name) + ' x ' + Sports.ptName(g.away.name) + ' ao vivo') + '&sp=EgJAAQ%3D%3D';
     scan('busca', searchUrl).then(function (pick) {
-      return pick || (y.streams ? scan('canal', y.streams) : null);
+      return pick || (y.streams ? scan('canal', y.streams, false, true) : null);
     }).then(function (pick) {
       return pick || scan('busca geral', openUrl, true);   // nenhum canal pedido: qualquer canal conhecido que esteja ao vivo com os dois times
     }).then(function (pick) {
@@ -1339,7 +1339,7 @@
       return pick || (y.generic ? null : viaFeed(cidKnown));
     }).then(function (pick) {
       if (pick) { launch(pick.id); return; }
-      if (y.generic) { toast('Não há transmissão ao vivo de ' + g.home.name + ' x ' + g.away.name + ' na ' + label + ' agora.', 5000); return; }
+      if (y.generic) { toast('Não há transmissão ao vivo de ' + g.home.name + ' x ' + g.away.name + ' na ' + label + ' agora. (' + diag.join('; ') + ')', 9000); return; }
       toast('Não achei ' + g.home.name + ' x ' + g.away.name + ' ao vivo na ' + label + ' agora. (' + diag.join('; ') + ')', 9000);
       launch(null);
     });
@@ -3437,7 +3437,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.55.6']
+      ['Versão do app', '1.55.7']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {

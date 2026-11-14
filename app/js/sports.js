@@ -330,7 +330,7 @@
     return l;
   }
   /* entre as transmissões AO VIVO, a que cita os times do jogo (e, de preferência, é do canal pedido) */
-  Sp.pickLive = function (html, g, chan) {
+  Sp.pickLive = function (html, g, chan, own) {
     var hw = teamWords(g.home.name), aw = teamWords(g.away.name), cn = chan ? Sp.norm(chan).replace(/ /g, '') : '', best = null, bs = 0;
     Sp.parseStreams(html).forEach(function (st) {
       if (!st.live) { return; }
@@ -338,7 +338,7 @@
       var has = function (ws) { return ws.some(function (w) { return t.indexOf(' ' + w) >= 0; }); };
       var sc = (has(hw) ? 2 : 0) + (has(aw) ? 2 : 0);
       if (!sc) { return; }
-      if (cn && t.replace(/ /g, '').indexOf(cn) < 0) { return; }   // só canal oficial: sem reações/watchalongs
+      if (cn && !own && t.replace(/ /g, '').indexOf(cn) < 0) { return; }   // só canal oficial: sem reações/watchalongs (na página do próprio canal os itens não repetem o nome dele)
       if (cn) { sc += 1; }
       if (sc > bs) { bs = sc; best = st; }
     });
@@ -347,7 +347,7 @@
 
   /* transmissão ao vivo que cita os DOIS times, de qualquer canal conhecido (reações/watchalongs ficam de fora); o canal pedido ganha desempate */
   var OFFICIAL = /ge ?tv|caze ?tv|tnt sports|sportynet|globo|sportv|espn|record|sbt|xsports|cbf|fifa|conmebol|uefa|band|nsports|dazn|premiere/;
-  var NOISE = /react|reacao|watch ?along|assistindo|narracao|narrando|comentando|simulacao|pes |efootball|fifa 2|ea fc|fc 2|fc ?26|game play|gameplay/;
+  var NOISE = /react|reacao|watch ?along|assistindo (com|o jogo|junto)|narracao|narrando|comentando|simulacao|pes |efootball|fifa 2|ea fc|fc 2|fc ?26|game play|gameplay/;
   Sp.pickLiveAny = function (html, g, chan) {
     var hw = teamWords(g.home.name), aw = teamWords(g.away.name), cn = chan ? Sp.norm(chan).replace(/ /g, '') : '', best = null, bs = 0;
     Sp.parseStreams(html).forEach(function (st) {

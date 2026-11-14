@@ -67,6 +67,12 @@ ok(/HBO Max/.test(Sports.whereToWatch(ucl).short) && Sports.whereToWatch(ucl).li
   var r1 = Sports.pickLiveAny(h1, bj, 'CazéTV');
   ok(r1 && r1.id === 'aaaaaaaaaaa', 'busca geral acha a live do canal conhecido e ignora reação');
 })();
+(function () {
+  var bj2 = { home: { name: 'Japan' }, away: { name: 'Brazil' } };
+  var own = '"videoId":"ccccccccccc","title":{"runs":[{"text":"AO VIVO: BRASIL X JAPÃO | AMISTOSO INTERNACIONAL"}]},"viewCountText":{"runs":[{"text":"559 mil assistindo"}]}';
+  ok(Sports.pickLiveAny(own.replace('"viewCountText"', '"ownerText":{"runs":[{"text":"ge tv"}]},"viewCountText"'), bj2, 'ge tv'), 'busca geral: "559 mil assistindo" não é ruído');
+  ok(!Sports.pickLive(own, bj2, 'ge tv') && Sports.pickLive(own, bj2, 'ge tv', true).id === 'ccccccccccc', 'na página do próprio canal não exige o nome do canal no item');
+})();
 ok(Sports.youtubeLinks(Sports.whereToWatch(g)).some(function (l) { return l.label === 'CazéTV' && /@CazeTV\/live$/.test(l.url); }), 'Corinthians: link do YouTube da CazéTV');
 var ytHtml = '{"x":{"videoRenderer":{"videoId":"AAAAAAAAAAA","title":{"runs":[{"text":"AO VIVO: BRASIL NO ATLETISMO"}]},"ownerText":{"runs":[{"text":"CazéTV"}]},"badges":[{"style":"BADGE_STYLE_TYPE_LIVE_NOW"}]}},'
   + '"y":{"lockupViewModel":{"contentId":"BBBBBBBBBBB","contentType":"LOCKUP_CONTENT_TYPE_VIDEO","metadata":{"title":{"content":"AO VIVO: LIVERPOOL X MANCHESTER UNITED | PREMIER LEAGUE"},"row":{"text":"CazéTV"},"badge":{"text":"AO VIVO"}}}},'

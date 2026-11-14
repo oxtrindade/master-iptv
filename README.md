@@ -326,3 +326,6 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 
 ## 1.55.6
 - **Busca de live no YouTube de verdade:** se o canal pedido (ge tv, CazéTV…) não aparece na busca nem na lista /streams, faz uma busca geral "<time A> x <time B> ao vivo" (filtro AO VIVO) e abre a live que cita os dois times de qualquer canal conhecido (ge tv, CazéTV, TNT Sports, Globo, SporTV, ESPN, Record, SBT, CBF, FIFA…), ignorando reações, watchalongs e jogos de videogame. Replays continuam fora.
+
+## 1.55.7
+- **ge tv achava "sem transmissão":** (1) na página /streams do próprio canal os vídeos não repetem o nome do canal e eram descartados pelo filtro de canal; (2) a busca geral tratava "559 mil assistindo" como watchalong. Os dois corrigidos (testes com o título real "AO VIVO: BRASIL X JAPÃO | AMISTOSO…" do @getv). O aviso de "sem live" agora mostra o diagnóstico de cada busca.
