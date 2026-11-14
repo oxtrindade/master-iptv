@@ -39,6 +39,7 @@ var Tmdb = (function () {
     var url = 'https://www.youtube.com/results?hl=pt-BR&gl=BR&sp=EgIQAQ%253D%253D&search_query=' + encodeURIComponent(t + (year ? ' ' + year : '') + ' trailer' + (dub ? ' dublado' : ''));
     return Promise.resolve(http(url)).then(function (html) {
       html = String(html || '');
+      if (html.indexOf('\\x22') >= 0) { html = html.replace(/\\x([0-9a-fA-F]{2})/g, function (m, x) { return String.fromCharCode(parseInt(x, 16)); }); }
       var re = /"videoRenderer":\{"videoId":"([\w-]{11})"[\s\S]{0,2500}?"title":\{"runs":\[\{"text":"((?:[^"\\]|\\.)*)"/g, m;
       while ((m = re.exec(html))) {
         var tt = plain(m[2]);

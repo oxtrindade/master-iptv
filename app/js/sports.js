@@ -272,8 +272,14 @@
 
   /* vídeos de uma página do YouTube (busca ou /streams), sem depender do tipo de componente:
      junta, para cada id de vídeo, os textos próximos (título, canal, "AO VIVO"…). [{ id, text, live }] */
-  Sp.parseStreams = function (html) {
+  /* o YouTube às vezes entrega o JSON da página escapado em hexadecimal (\x22 = aspas): desfaz antes de ler */
+  Sp.unhex = function (html) {
     html = String(html || '');
+    if (html.indexOf('\\x22') < 0) { return html; }
+    return html.replace(/\\x([0-9a-fA-F]{2})/g, function (m, x) { return String.fromCharCode(parseInt(x, 16)); });
+  };
+  Sp.parseStreams = function (html) {
+    html = Sp.unhex(html);
     var re = /"(?:videoId|contentId)":"([\w-]{11})"/g, hits = [], m, byId = {}, out = [];
     while ((m = re.exec(html))) {
       if (!hits.length || hits[hits.length - 1].id !== m[1]) { hits.push({ id: m[1], at: m.index }); }
@@ -308,6 +314,7 @@
     return out;
   };
   Sp.channelId = function (html) {
+    html = Sp.unhex(html);
     var m = /channel_id=(UC[\w-]{22})/.exec(html) || /"(?:channelId|externalId)":"(UC[\w-]{22})"/.exec(html) || /\/channel\/(UC[\w-]{22})/.exec(html);
     return m ? m[1] : null;
   };

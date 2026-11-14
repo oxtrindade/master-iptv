@@ -1324,6 +1324,10 @@
       return ytGet(url).then(function (html) {
         var all = Sports.parseStreams(html), lives = all.filter(function (x) { return x.live; }).length;
         diag.push(name + ' ' + Math.round(String(html || '').length / 1000) + ' KB, ' + all.length + ' vídeos, ' + lives + ' ao vivo');
+        if (!all.length) {   // diagnóstico: o que a página trouxe no lugar dos vídeos
+          var hs = String(html || '');
+          diag.push('sem vídeos; videoId:' + (hs.indexOf('videoId') >= 0 ? 'sim' : 'não') + ', ytInitialData:' + (hs.indexOf('ytInitialData') >= 0 ? 'sim' : 'não') + ', \\x22:' + (hs.indexOf('\\x22') >= 0 ? 'sim' : 'não') + ', consent:' + (/consent/i.test(hs) ? 'sim' : 'não') + ', início:' + hs.replace(/\s+/g, ' ').slice(0, 60));
+        }
         if (!cidKnown) { cidKnown = Sports.channelId(html); }
         return any ? Sports.pickLiveAny(html, g, label) : Sports.pickLive(html, g, label, own);
       }, function (e) { diag.push(name + ': erro ' + ((e && e.message) || '?')); return null; });
@@ -3437,7 +3441,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.55.7']
+      ['Versão do app', '1.55.8']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {

@@ -329,3 +329,6 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 
 ## 1.55.7
 - **ge tv achava "sem transmissão":** (1) na página /streams do próprio canal os vídeos não repetem o nome do canal e eram descartados pelo filtro de canal; (2) a busca geral tratava "559 mil assistindo" como watchalong. Os dois corrigidos (testes com o título real "AO VIVO: BRASIL X JAPÃO | AMISTOSO…" do @getv). O aviso de "sem live" agora mostra o diagnóstico de cada busca.
+
+## 1.55.8
+- **Live do YouTube: páginas "sem vídeos":** o diagnóstico mostrou páginas de 339/553 KB com 0 vídeos lidos. O YouTube às vezes entrega o JSON escapado em hexadecimal (`\x22`), que o leitor não entendia. Agora desfaz o escape (jogos e busca de trailer). Se ainda vier vazio, o aviso mostra o que a página trouxe (videoId/ytInitialData/consent/início).
