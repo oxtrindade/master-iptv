@@ -665,10 +665,11 @@
   var AVICONS = ['av_smile', 'av_cat', 'av_paw', 'av_ghost', 'av_rocket', 'av_bolt', 'av_heart', 'av_crown', 'av_game', 'av_music', 'av_ball', 'av_moon'];
   function avSet(el, p) {
     var art = !!(p.icon && window.Avatars && Avatars.has(p.icon));
-    var ic = !art && p.icon && ICONS[p.icon] ? p.icon : '';
+    var ic = !art && !(typeof p.icon === 'string' && p.icon.indexOf('team:') === 0) && p.icon && ICONS[p.icon] ? p.icon : '';
     while (el.firstChild && !(el.firstChild.className === 'pedit')) { el.removeChild(el.firstChild); }
-    var node;
-    if (art) { node = h('span', { cls: 'art' }); node.innerHTML = Avatars.svg(p.icon); }
+    var node, crest = typeof p.icon === 'string' && p.icon.indexOf('team:') === 0 ? p.icon.slice(5) : '';
+    if (crest) { art = true; node = h('span', { cls: 'art crest' }); var im = document.createElement('img'); im.alt = ''; im.src = crest; im.onerror = function () { if (im.parentNode) { im.parentNode.removeChild(im); } }; node.appendChild(im); }
+    else if (art) { node = h('span', { cls: 'art' }); node.innerHTML = Avatars.svg(p.icon); }
     else { node = ic ? icon(ic, 60) : h('span', { text: profInitial(p) }); }
     el.classList.toggle('hasart', art);
     el.insertBefore(node, el.firstChild);
@@ -782,6 +783,27 @@
       g.items.forEach(function (it) { addTile(row, it.key, it.name); });
       ics.appendChild(row);
     });
+    // escudos: logos oficiais lidos da ESPN na hora (não ficam embutidos no app)
+    var crestBox = h('div', { cls: 'pgrow' });
+    ics.appendChild(h('div', { cls: 'pgtitle', text: 'Escudos de times (Série A e B)' }));
+    ics.appendChild(crestBox);
+    crestBox.appendChild(h('div', { cls: 'spnote small', text: 'Carregando escudos…' }));
+    if (!S.crests) { S.crests = {}; }
+    function fillCrests(l) {
+      crestBox.innerHTML = '';
+      if (!l || !l.length) { crestBox.appendChild(h('div', { cls: 'spnote small', text: 'Não consegui carregar os escudos agora (precisa de internet).' })); return; }
+      l.forEach(function (t) { if (t.logo) { addTile(crestBox, 'team:' + t.logo, t.name); } });
+      paint();
+    }
+    if (S.crests.list) { fillCrests(S.crests.list); }
+    else {
+      Promise.all(['bra.1', 'bra.2'].map(function (lg) { return Sports.fetchTeams(http, lg).then(function (x) { return x; }, function () { return []; }); })).then(function (r) {
+        var seen = {}, all = [];
+        r[0].concat(r[1]).forEach(function (t) { if (t.logo && !seen[t.id]) { seen[t.id] = 1; all.push(t); } });
+        S.crests.list = all.length ? all : null;
+        if (crestBox.isConnected !== false) { fillCrests(all); }
+      });
+    }
     function paint() {
       swBtns.forEach(function (b, i) { b.classList.toggle('on', i === p.color); });
       icBtns.forEach(function (b) {
@@ -3443,7 +3465,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.55.9']
+      ['Versão do app', '1.56.0']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {

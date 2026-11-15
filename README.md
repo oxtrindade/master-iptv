@@ -335,3 +335,6 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 
 ## 1.55.9
 - **Seleções em português:** Japão, Brasil, Alemanha, Holanda, Sérvia… (~170 nomes) em placares, detalhe do jogo, "Meus times" e escolha de times. A busca de lives no YouTube usa os mesmos nomes. Clubes seguem como vêm.
+
+## 1.56.0
+- **Avatar com escudo de time:** no editor de perfil, novo grupo "Escudos de times (Série A e B)". Os escudos são os logos que a ESPN entrega (lidos na hora, com internet; não ficam embutidos no app). Funciona na escolha de perfis, no editor e no topo.

@@ -1132,3 +1132,9 @@ body.compact .spteam .splogo { width: 64px; height: 64px; }
 body.compact .spteam .tn { font-size: 14px; max-height: 34px; }
 body.compact .spteam .tstar { font-size: 20px; }
 body.portrait .spteam { width: calc(33.3% - 8px); margin: 0 6px 10px 0; box-sizing: border-box; }
+
+/* 1.56.0: avatar com escudo de time */
+.art.crest { display: flex; align-items: center; justify-content: center; }
+.art.crest img { width: 78%; height: 78%; object-fit: contain; }
+.pav.hasart:has(.crest), .avatar.hasart:has(.crest) { background: rgba(255,255,255,.12) !important; }
+.aicon.art:has(.crest) { background: rgba(255,255,255,.1); }
