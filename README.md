@@ -338,3 +338,6 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 
 ## 1.56.0
 - **Avatar com escudo de time:** no editor de perfil, novo grupo "Escudos de times (Série A e B)". Os escudos são os logos que a ESPN entrega (lidos na hora, com internet; não ficam embutidos no app). Funciona na escolha de perfis, no editor e no topo.
+
+## 1.56.1
+- **Modo leve (TV simples):** nova opção em Configurações. Tira transições, animações de entrada, sombras e filtros; o foco passa a ser um contorno simples. Liga sozinho em TV com 4 núcleos ou menos / 2 GB ou menos (Android TV, LG, etc.); celular fica como está. O trailer ao parar no card continua.

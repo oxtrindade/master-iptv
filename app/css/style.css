@@ -1138,3 +1138,12 @@ body.portrait .spteam { width: calc(33.3% - 8px); margin: 0 6px 10px 0; box-sizi
 .art.crest img { width: 78%; height: 78%; object-fit: contain; }
 .pav.hasart:has(.crest), .avatar.hasart:has(.crest) { background: rgba(255,255,255,.12) !important; }
 .aicon.art:has(.crest) { background: rgba(255,255,255,.1); }
+
+/* 1.56.1: modo leve — TV de entrada: sem transições, animações de entrada, sombras difusas nem filtros */
+body.lite *, body.lite *::before, body.lite *::after { -webkit-transition: none !important; transition: none !important; text-shadow: none !important; }
+body.lite .card.f, body.lite .lcard.f, body.lite .ctile.f, body.lite .hero, body.lite .hlist > .card, body.lite .hlist > .card .poster { transition: none !important; }
+body.lite #profiles.pin .ptitle, body.lite #profiles.pin .pcard, body.lite .hero.slr .herobg, body.lite .hero.slr .heroposter,
+body.lite .hero.sll .herobg, body.lite .hero.sll .heroposter, body.lite .bootmark, body.lite .bootname, body.lite #splash-text { -webkit-animation: none !important; animation: none !important; opacity: 1; }
+body.lite .bootmark { filter: none !important; }
+body.lite .f.focus, body.lite .f:focus { box-shadow: none !important; outline: 4px solid #3ab4e0; outline-offset: -2px; }
+body.lite .card, body.lite .lcard, body.lite .ctile, body.lite .hero, body.lite .pcard, body.lite .aicon { box-shadow: none !important; }

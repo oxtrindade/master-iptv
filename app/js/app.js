@@ -162,7 +162,16 @@
   function metaLine(parts) { return parts.filter(function (x) { return x; }).join('  ·  '); }
   function opt(k) { return !!S.opts[k]; }
   function pvOn() { return true; }   // 1.47.0: prévia (trailer) sempre ligada, sem chave
-  function setOpt(k, v) { S.opts[k] = !!v; store.set('opts', S.opts); if (k === 'bgplay') { applyBg(); } }
+  /* modo leve: sem animações/sombras pesadas (TV de entrada). Automático em TV com pouco hardware; dá para forçar em Configurações. */
+  function liteOn() {
+    if (S.opts.lite !== undefined) { return !!S.opts.lite; }
+    var tv = false, cores = navigator.hardwareConcurrency || 4, mem = navigator.deviceMemory || 0;
+    try { tv = !!(window.NativeApp && window.NativeApp.isTv && window.NativeApp.isTv()); } catch (e) {}
+    tv = tv || /Web0S|webOS|SMART-?TV|Tizen|AFTM|BRAVIA|TCL/i.test(navigator.userAgent) || document.body.classList.contains('tv');
+    return tv && (cores <= 4 || (mem > 0 && mem <= 2));
+  }
+  function applyLite() { document.body.classList.toggle('lite', liteOn()); }
+  function setOpt(k, v) { S.opts[k] = !!v; store.set('opts', S.opts); if (k === 'bgplay') { applyBg(); } if (k === 'lite') { applyLite(); } }
   /* Android (celular): tocar com a tela bloqueada / app em segundo plano (padrão: ligado) */
   function hasBg() { try { return !!(window.NativeApp && window.NativeApp.setBackground && !(window.NativeApp.isTv && window.NativeApp.isTv())); } catch (e) { return false; } }
   function applyBg() {
@@ -678,7 +687,7 @@
 
   function reloadProfileData() {
     S.favs = store.get('fav', {}); S.resume = store.get('resume', {}); S.last = store.get('last', {});
-    S.cont = store.get('cont', {}); S.recent = store.get('recent', []); S.opts = store.get('opts', {}); S.pref = store.get('trackpref', {});
+    S.cont = store.get('cont', {}); S.recent = store.get('recent', []); S.opts = store.get('opts', {}); S.pref = store.get('trackpref', {}); applyLite();
     Tmdb.setPref(store.get('verpref', 'dub'));
   }
 
@@ -3465,7 +3474,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.56.0']
+      ['Versão do app', '1.56.1']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
@@ -3501,6 +3510,8 @@
       PD.falha ? 'Última falha: ' + PD.falha : '',
       PD.ultima ? 'Interrompida: ' + PD.ultima : ''
     ].forEach(function (t) { if (t) { page.appendChild(h('div', { cls: 'swd', style: 'margin:-6px 40px 10px 4px;white-space:normal;word-break:break-word;max-width:1500px', text: t })); } });
+    if (S.opts.lite === undefined) { S.opts.lite = liteOn(); }
+    page.appendChild(switchRow('Modo leve (TV simples)', 'Tira animações e sombras para a navegação ficar mais rápida em TV de entrada. Já vem ligado em TV com pouco processamento; o trailer ao parar no card continua.', 'lite'));
     page.appendChild(switchRow('Ocultar canais SD', 'Esconde da lista os canais com "SD" no nome.', 'hideSD'));
     page.appendChild(switchRow('Ocultar canais HD', 'Esconde da lista os canais com "HD" no nome (FHD e 4K continuam).', 'hideHD'));
     camOn();
