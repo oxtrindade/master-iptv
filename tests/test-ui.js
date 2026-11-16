@@ -489,12 +489,12 @@ Promise.all([listen(api), listen(px), startSync()]).then(function () {
       assert.ok(/127\.0\.0\.1/.test(txt) && /joao/.test(txt));
       var ver = require('../app/appinfo.json').version;
       assert.ok(txt.indexOf('Versão do app') >= 0 && txt.indexOf(ver) >= 0, 'versão do app em Configurações deve ser a do appinfo.json (' + ver + ')');
-      assert.strictEqual($$('.swrow').length, 5, 'cinco chaves');
+      assert.strictEqual($$('.swrow').length, 6, 'seis chaves (inclui modo leve)');
       step('configurações');
       // ocultar SD / HD: a categoria "Filmes e séries 24h" tem Cine HD, Cine SD e Cine FHD
-      $$('.swrow')[1].click(); // SD
-      assert.ok($$('.sw')[1].classList.contains('on'));
-      $$('.swrow')[2].click(); // HD
+      $$('.swrow')[2].click(); // SD
+      assert.ok($$('.sw')[2].classList.contains('on'));
+      $$('.swrow')[3].click(); // HD
       $('.backbtn').click();
       go('live');
       return waitFor(function () { return $$('.cat').length === 4; }, 'ao vivo de novo');
@@ -508,7 +508,7 @@ Promise.all([listen(api), listen(px), startSync()]).then(function () {
       go('settings');
       return waitFor(function () { return $('.settings .sgroup'); }, 'config 2');
     }).then(function () {
-      $$('.swrow')[1].click(); $$('.swrow')[2].click(); // desliga os dois
+      $$('.swrow')[2].click(); $$('.swrow')[3].click(); // desliga os dois
       // cidade do clima
       $('#city').value = 'Campinas';
       $('#city').focus();
