@@ -341,3 +341,10 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 
 ## 1.56.1
 - **Modo leve (TV simples):** nova opção em Configurações. Tira transições, animações de entrada, sombras e filtros; o foco passa a ser um contorno simples. Liga sozinho em TV com 4 núcleos ou menos / 2 GB ou menos (Android TV, LG, etc.); celular fica como está. O trailer ao parar no card continua.
+
+## 1.56.2
+- **Filmes e Séries por nota:** listas de categoria e fileiras por gênero passam a mostrar a maior nota primeiro (sem nota vai para o fim).
+- **Perfil infantil → "Em alta infantil":** as fileiras de destaque usam os mais populares de Animação/Família do TMDB (cruzados com o catálogo infantil), com título "Em alta infantil · Filmes/Séries". Recomendações e banner já saem só do catálogo infantil.
+
+## 1.56.3
+- **TV (webOS / Android TV): trailer do banner toca sozinho na Início**, sem precisar chegar no botão Assistir. Toca com o foco no menu de cima ou nos botões do banner; só para quando o foco desce para uma fileira. Filmes e Séries seguem sem banner.

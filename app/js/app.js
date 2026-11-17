@@ -225,7 +225,14 @@
       });
     };
     w.all = function (section) { return prov.all(section).then(function (l) { return clean(section, l); }); };
-    w.items = function (section, catId) { return prov.items(section, catId).then(function (l) { return clean(section, l); }); };
+    /* Filmes e Séries: maior nota primeiro (sem nota vai para o fim, em ordem alfabética) */
+    function byRating(section, l) {
+      if (section !== 'movie' && section !== 'series') { return l; }
+      return l.map(function (it, i) { return { it: it, i: i }; }).sort(function (a, b) {
+        return (b.it.rating || 0) - (a.it.rating || 0) || a.i - b.i;
+      }).map(function (x) { return x.it; });
+    }
+    w.items = function (section, catId) { return prov.items(section, catId).then(function (l) { return clean(section, l); }).then(function (l) { return byRating(section, l); }); };
     return w;
   }
 
@@ -1848,7 +1855,7 @@
       var arr = by[c.id];
       if (!arr || arr.length < 4 || isAdultCat(c.name)) { return; }
       var seen = {}, top = [];
-      arr = arr.slice().sort(function (a, b) { return (b.added || 0) - (a.added || 0) || (b.rating || 0) - (a.rating || 0); });
+      arr = arr.slice().sort(function (a, b) { return (b.rating || 0) - (a.rating || 0) || (b.added || 0) - (a.added || 0); });
       arr.forEach(function (it) { var k = Tmdb.norm(it.name); if (!seen[k] && top.length < 16) { seen[k] = 1; top.push(it); } });
       if (top.length >= 4) { out.push({ id: c.id, title: genreTitle(c.name, sec), rank: genreRank(c.name), idx: idx, n: arr.length, items: top }); }
     });
@@ -2963,14 +2970,12 @@
     function heroSeen() {
       var r = hero.getBoundingClientRect(), f = Nav.current();
       if (!window.__pvTest && (r.bottom < 160 || r.top > window.innerHeight * 0.6)) { return false; }
-      if (isTvDevice() && !(f && hero.contains(f))) { return false; }   // TV: o trailer só toca com o banner selecionado (foco em Assistir / Mais informações)
       if (f && !hero.contains(f) && f.closest && f.closest('.hrow')) { return false; }
-      // TV: o trailer do banner só toca com a seleção em "Assistir"/"Ver episódios"/"Mais informações" (no celular, basta estar à vista)
-      if (!window.__pvTest && isTvDevice() && !(f && hero.contains(f))) { return false; }
+      // 1.56.3: na TV o trailer do banner toca sozinho, com o foco nos botões ou no menu de cima; só para quando o foco desce para uma fileira
       return true;
     }
     S.heroEnd = function () { pvEnd(); };
-    S.heroSel = function (on) { if (!isTvDevice() || token !== S.homeToken) { return; } if (on) { pvSchedule(); } else { pvEnd(); } };
+    S.heroSel = function (on) { if (!isTvDevice() || token !== S.homeToken) { return; } if (on) { pvSchedule(); } else if (!heroSeen()) { pvEnd(); } };
     function pvEnd() {
       clearTimeout(pvStop);
       if (hero._yt) { hero._yt.off(); hero._yt = null; }
@@ -3191,8 +3196,8 @@
   function trendList(section, list) {
     var key = tmdbKey(), local = trending(list);
     if (!key) { return Promise.resolve(local); }
-    var kind = section === 'series' ? 'tv' : 'movie';
-    return tmdbCached('tmdbtr:' + kind, 12, function () { return Tmdb.trending(kind, key); }).then(function (res) {
+    var kind = section === 'series' ? 'tv' : 'movie', kids = isKids();
+    return tmdbCached((kids ? 'tmdbkids:' : 'tmdbtr:') + kind, 12, function () { return kids ? Tmdb.kids(kind, key) : Tmdb.trending(kind, key); }).then(function (res) {
       var out = Tmdb.match(list, res).filter(function (it) { return it.logo; }).slice(0, 20), seen = {};
       out.forEach(function (it) { seen[it.type + ':' + it.id] = 1; });
       local.forEach(function (it) { if (out.length < 20 && !seen[it.type + ':' + it.id]) { out.push(it); } });
@@ -3201,6 +3206,7 @@
   }
 
   function trendRow(rows, section, title) {
+    if (isKids()) { title = 'Em alta infantil · ' + (section === 'movie' ? 'Filmes' : 'Séries'); }
     var slot = h('div'), token = S.homeToken;
     rows.appendChild(slot);
     setTimeout(function () {
@@ -3474,7 +3480,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.56.1']
+      ['Versão do app', '1.56.3']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {

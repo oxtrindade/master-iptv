@@ -140,9 +140,9 @@ var Tmdb = (function () {
     return { id: r.id, t: kind === 'tv' ? r.name : r.title, o: kind === 'tv' ? r.original_name : r.original_title, y: d ? parseInt(String(d).slice(0, 4), 10) : 0 };
   }
 
-  function list(kind, path, key, pages) {
+  function list(kind, path, key, pages, extra) {
     var ps = [], p;
-    for (p = 1; p <= pages; p++) { ps.push(getJson(path, key, '&page=' + p)); }
+    for (p = 1; p <= pages; p++) { ps.push(getJson(path, key, (extra || '') + '&page=' + p)); }
     return Promise.all(ps).then(function (rs) {
       var out = [];
       rs.forEach(function (r) { (r.results || []).forEach(function (x) { out.push(slim(kind, x)); }); });
@@ -172,6 +172,8 @@ var Tmdb = (function () {
     ytSearch: ytSearch,
     match: match,
     trending: function (kind, key) { return list(kind, '/trending/' + kind + '/week', key, 2); },
+    /* mais populares de Animação ou Família (perfil infantil) */
+    kids: function (kind, key) { return list(kind, '/discover/' + kind, key, 3, '&with_genres=' + encodeURIComponent('16|10751') + '&sort_by=popularity.desc&include_adult=false'); },
     recommend: function (kind, id, key) { return list(kind, '/' + kind + '/' + id + '/recommendations', key, 1); },
     findId: function (kind, title, year, key) {
       var extra = '&query=' + encodeURIComponent(norm(title)) + (year ? (kind === 'tv' ? '&first_air_date_year=' : '&year=') + year : '');
