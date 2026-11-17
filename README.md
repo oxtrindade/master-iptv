@@ -351,3 +351,6 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 
 ## 1.56.4
 - **Ocultar conteúdo adulto (padrão ligado):** Configurações → "Ocultar conteúdo adulto". Esconde categorias adultas (+18, XXX, erótico, adultos, hentai, playboy…) e títulos XXX/porn em TV ao vivo, filmes e séries, inclusive na busca e nas fileiras da Início. "Adult Swim" não é afetado. Desligando a chave, tudo volta.
+
+## 1.56.5
+- **Jogo ao vivo no YouTube não abre mais live agendada:** "ao vivo" agora exige o selo AO VIVO / "N assistindo" (o título "AO VIVO: …" não vale, lives agendadas também o têm) e descarta estreia/programada/aguardando. O feed do canal só entra se as páginas não puderem ser lidas; com a página lida e sem live rolando, avisa "pode não ter começado" e não abre a live agendada de outro jogo.

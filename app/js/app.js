@@ -1396,10 +1396,11 @@
       }, function (e) { diag.push('feed: erro ' + ((e && e.message) || '?')); return null; });
     };
     toast('Procurando o jogo na ' + label + '…', 3000);
-    var cidKnown = y.cid || null;
+    var cidKnown = y.cid || null, readable = false;
     var scan = function (name, url, any, own) {
       return ytGet(url).then(function (html) {
         var all = Sports.parseStreams(html), lives = all.filter(function (x) { return x.live; }).length;
+        if (all.length) { readable = true; }
         diag.push(name + ' ' + Math.round(String(html || '').length / 1000) + ' KB, ' + all.length + ' vídeos, ' + lives + ' ao vivo');
         if (!all.length) {   // diagnóstico: o que a página trouxe no lugar dos vídeos
           var hs = String(html || '');
@@ -1417,12 +1418,12 @@
       return pick || scan('busca geral', openUrl, true);   // nenhum canal pedido: qualquer canal conhecido que esteja ao vivo com os dois times
     }).then(function (pick) {
       // fonte só sugerida (sem direitos confirmados): vale apenas live de verdade; o feed traz replays de outros jogos
-      return pick || (y.generic ? null : viaFeed(cidKnown));
+      return pick || (y.generic || readable ? null : viaFeed(cidKnown));   // feed não diferencia live de agendada/replay: só se as páginas não puderam ser lidas
     }).then(function (pick) {
       if (pick) { launch(pick.id); return; }
       if (y.generic) { toast('Não há transmissão ao vivo de ' + g.home.name + ' x ' + g.away.name + ' na ' + label + ' agora. (' + diag.join('; ') + ')', 9000); return; }
-      toast('Não achei ' + g.home.name + ' x ' + g.away.name + ' ao vivo na ' + label + ' agora. (' + diag.join('; ') + ')', 9000);
-      launch(null);
+      toast('Não achei ' + g.home.name + ' x ' + g.away.name + ' ao vivo na ' + label + ' agora (pode não ter começado). (' + diag.join('; ') + ')', 9000);
+      if (!readable) { launch(null); }   // página ilegível: abre o canal; com página lida, não leva para live agendada de outro jogo
     });
   }
 
@@ -3517,7 +3518,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.56.4']
+      ['Versão do app', '1.56.5']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {

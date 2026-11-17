@@ -294,7 +294,10 @@
       var texts = [], r = /"(?:text|content|label|simpleText)":"((?:[^"\\]|\\.)*)"/g, t;
       while ((t = r.exec(e.raw))) { var v = t[1]; try { v = JSON.parse('"' + v + '"'); } catch (er) { /* mantém */ } texts.push(v); }
       e.text = texts.join(' | ');
-      e.live = /AO VIVO|assistindo agora|assistindo|LIVE_NOW|BADGE_STYLE_LIVE|"style":"LIVE"|"iconType":"LIVE"|watching/i.test(e.raw);
+      /* ao vivo de verdade = selo AO VIVO ou "N assistindo" (o título "AO VIVO: …" não vale: lives agendadas também têm); live ainda não iniciada
+         (estreia/programada/aguardando) nunca conta */
+      e.upcoming = /upcomingEventData|UPCOMING|Estr[eé]ia|Programad|Agendad|Aguardando|Come[cç]a em|Come[cç]ar[aá]|Scheduled|waiting/i.test(e.raw);
+      e.live = !e.upcoming && /BADGE_STYLE_TYPE_LIVE_NOW|LIVE_NOW|BADGE_STYLE_LIVE|"style":"LIVE"|"iconType":"LIVE"|"(?:label|text|simpleText|content)":"AO VIVO"|\d[\d.,]*\s*(?:mil|mi)?\s+assistindo|\bwatching\b|assistindo agora/i.test(e.raw);
       delete e.raw;
     });
     return out;
