@@ -236,6 +236,43 @@
     return w;
   }
 
+  /* conteúdo adulto (TV ao vivo, filmes, séries): oculto por padrão; dá para liberar em Configurações */
+  var RE_ADCAT = /(^|[^a-z0-9])(xxx|porn[oô]?|er[oó]tic[oa]s?|hentai|sexy|playboy|sex ?hot|sensual|\+ ?18|18 ?\+|adult[oa]s?|for adults|adult content)([^a-z0-9]|$)/i;
+  var RE_ADITEM = /(^|[^a-z0-9])(xxx|porn[oô]?|hentai|\+ ?18|18 ?\+)([^a-z0-9]|$)/i;
+  function adultHide() {
+    if (S.opts.hideAdult === undefined) { S.opts.hideAdult = true; store.set('opts', S.opts); }
+    return !!S.opts.hideAdult;
+  }
+  function adultWrap(prov) {
+    var cache = {};
+    function bad(section) {
+      if (cache[section]) { return cache[section]; }
+      cache[section] = prov.categories(section).then(function (cats) {
+        var m = {};
+        cats.forEach(function (c) { if (RE_ADCAT.test(c.name || '') && !/adult swim/i.test(c.name || '')) { m[c.id] = 1; } });
+        return m;
+      }, function () { delete cache[section]; return {}; });
+      return cache[section];
+    }
+    function clean(section, l) {
+      if (!adultHide()) { return Promise.resolve(l); }
+      return bad(section).then(function (m) { return l.filter(function (it) { return !m[it.cat] && !RE_ADITEM.test(it.name || ''); }); });
+    }
+    var w = {}, k;
+    for (k in prov) { if (Object.prototype.hasOwnProperty.call(prov, k)) { w[k] = prov[k]; } }
+    w.categories = function (section) {
+      return prov.categories(section).then(function (cats) {
+        return adultHide() ? cats.filter(function (c) { return !(RE_ADCAT.test(c.name || '') && !/adult swim/i.test(c.name || '')); }) : cats;
+      });
+    };
+    w.all = function (section) { return prov.all(section).then(function (l) { return clean(section, l); }); };
+    w.items = function (section, catId) {
+      if (!adultHide()) { return prov.items(section, catId); }
+      return bad(section).then(function (m) { return m[catId] ? [] : prov.items(section, catId).then(function (l) { return clean(section, l); }); });
+    };
+    return w;
+  }
+
   /* perfil infantil: só categorias/canais infantis (desenho, animação, família, Disney, Gloob…), nunca adultas */
   var RE_KIDS = /infantil|kids?|crian[cç]|desenho|anima[cç]|cartoon|disney|pixar|dreamworks|nickelodeon|\bnick\b|gloob|boomerang|baby|junior|\bjr\b|ra.?tim.?bum|fam[ií]lia|turma|peppa|bluey|discovery k/i;
   var RE_ADULT = /adult|xxx|\+18|18\+|porn|er[oó]tic|hentai|sexy/i;
@@ -1610,7 +1647,7 @@
     loginAuto(cfg).then(function (r) {
       if (!r.info.ok) { throw new Error('Usuário ou senha inválidos (ou conta inativa).'); }
       cfg = r.cfg;
-      S.provider = kidsWrap(camWrap(r.prov)); S.info = r.info;
+      S.provider = kidsWrap(adultWrap(camWrap(r.prov))); S.info = r.info;
       S.offline = false;
       S.cfg = cfg;
       store.set('cfg', cfg);
@@ -3480,7 +3517,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.56.3']
+      ['Versão do app', '1.56.4']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
@@ -3521,6 +3558,8 @@
     page.appendChild(switchRow('Ocultar canais SD', 'Esconde da lista os canais com "SD" no nome.', 'hideSD'));
     page.appendChild(switchRow('Ocultar canais HD', 'Esconde da lista os canais com "HD" no nome (FHD e 4K continuam).', 'hideHD'));
     camOn();
+    adultHide();
+    page.appendChild(switchRow('Ocultar conteúdo adulto', 'Esconde categorias e títulos adultos (+18, XXX…) em TV ao vivo, filmes e séries. Já vem ligado.', 'hideAdult'));
     page.appendChild(switchRow('Ocultar filmes de cinema (gravação)', 'Esconde filmes de categoria/etiqueta Cinema ou CAM, que são gravações de sala com qualidade baixa.', 'hideCam'));
     dubOn();
     page.appendChild(switchRow('Preferir trailer dublado', 'Procura trailer dublado em português (TMDB e YouTube); se não achar, usa o do provedor ou o de qualquer idioma (original). Desligado, usa o do provedor primeiro.', 'pvdub'));

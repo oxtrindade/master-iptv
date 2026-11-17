@@ -348,3 +348,6 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 
 ## 1.56.3
 - **TV (webOS / Android TV): trailer do banner toca sozinho na Início**, sem precisar chegar no botão Assistir. Toca com o foco no menu de cima ou nos botões do banner; só para quando o foco desce para uma fileira. Filmes e Séries seguem sem banner.
+
+## 1.56.4
+- **Ocultar conteúdo adulto (padrão ligado):** Configurações → "Ocultar conteúdo adulto". Esconde categorias adultas (+18, XXX, erótico, adultos, hentai, playboy…) e títulos XXX/porn em TV ao vivo, filmes e séries, inclusive na busca e nas fileiras da Início. "Adult Swim" não é afetado. Desligando a chave, tudo volta.
