@@ -29,27 +29,55 @@ var Tmdb = (function () {
     return t;
   }
 
-  /* outra fonte de trailers: busca no YouTube ("<filme> <ano> trailer dublado") e escolhe o 1º resultado que é trailer,
-     diz "dublado" (se dub) e traz as palavras do nome do filme (evita outro filme). Devolve a chave do vídeo ou ''. */
+  /* outra fonte de trailers: busca no YouTube ("<filme> <ano> trailer dublado"), em até 3 consultas (nome do catálogo, nome do TMDB em
+     português/original, "trailer oficial dublado"). Aceita trailer/teaser/prévia que diga "dublado" (ou "dublagem"/"DUB") e traga as palavras
+     do nome; descarta legendado, reação, análise, fã-made, jogo, bastidores. Entre os que passam, prefere "oficial" e canais de estúdio/distribuidora.
+     title: nome (ou lista de nomes) do filme. Devolve a chave do vídeo ou ''. */
+  var STOPW = { the: 1, dos: 1, das: 1, and: 1, que: 1, com: 1, uma: 1, por: 1, para: 1, del: 1, les: 1, des: 1 };
+  var NEG = /legendad|react|reacao|analise|explic|review|critica|fan ?made|fanmade|gameplay|\bjogo\b|making of|bastidor|entrevista|recap|resumo|ending|final explicado/;
+  var STUDIO = /sony|warner|disney|universal|paramount|netflix|prime video|apple tv|hbo|globoplay|imagem filmes|diamond films|paris filmes|playarte|california filmes|vertical|downtown|pandora|mares filmes|bf1|elo studios|fox|20th|marvel|lucasfilm|pixar|dreamworks|lionsgate|mgm|a24|star\+|max |studiocanal|filmes|pictures|studios/;
+  function wordsOf(name) { return norm(name).split(' ').filter(function (w) { return w.length >= 3 && !STOPW[w]; }).slice(0, 5); }
+  function pickDub(html, nameWords, dub) {
+    var re = /"videoRenderer":\{"videoId":"([\w-]{11})"([\s\S]{0,2500}?)"title":\{"runs":\[\{"text":"((?:[^"\\]|\\.)*)"(?=([\s\S]{0,1500}))/g, m, best = '', bs = -1, pos = 0;
+    while ((m = re.exec(html))) {
+      pos++;
+      var tt = plain(m[3]);
+      if (!/trailer|teaser|previa|chamada|promo/.test(tt) || NEG.test(tt)) { continue; }
+      if (dub && !/dublad|dublagem|\bdub\b/.test(tt)) { continue; }
+      var okName = false, k, i, w;
+      for (k = 0; k < nameWords.length && !okName; k++) {
+        w = nameWords[k]; okName = w.length > 0;
+        for (i = 0; i < w.length; i++) { if (tt.indexOf(w[i]) < 0) { okName = false; break; } }
+      }
+      if (!okName) { continue; }
+      var ch = /"ownerText":\{"runs":\[\{"text":"((?:[^"\\]|\\.)*)"/.exec(m[4] + m[2]), cn = ch ? plain(ch[1]) : '';
+      var sc = (/oficial|official/.test(tt) ? 4 : 0) + (STUDIO.test(cn) ? 3 : 0) + (/trailer/.test(tt) ? 2 : 0) - pos * 0.1;
+      if (sc > bs) { bs = sc; best = m[1]; }
+    }
+    return best;
+  }
   function ytSearch(title, year, dub) {
     if (!http) { return Promise.resolve(''); }
-    var t = norm(title);
-    if (!t) { return Promise.resolve(''); }
-    var words = t.split(' ').filter(function (w) { return w.length >= 3; }).slice(0, 5);
-    var url = 'https://www.youtube.com/results?hl=pt-BR&gl=BR&sp=EgIQAQ%253D%253D&search_query=' + encodeURIComponent(t + (year ? ' ' + year : '') + ' trailer' + (dub ? ' dublado' : ''));
-    return Promise.resolve(http(url)).then(function (html) {
-      html = String(html || '');
-      if (html.indexOf('\\x22') >= 0) { html = html.replace(/\\x([0-9a-fA-F]{2})/g, function (m, x) { return String.fromCharCode(parseInt(x, 16)); }); }
-      var re = /"videoRenderer":\{"videoId":"([\w-]{11})"[\s\S]{0,2500}?"title":\{"runs":\[\{"text":"((?:[^"\\]|\\.)*)"/g, m;
-      while ((m = re.exec(html))) {
-        var tt = plain(m[2]);
-        if (!/trailer|teaser/.test(tt) || (dub && !/dublad/.test(tt))) { continue; }
-        var all = true, i;
-        for (i = 0; i < words.length; i++) { if (tt.indexOf(words[i]) < 0) { all = false; break; } }
-        if (all) { return m[1]; }
-      }
-      return '';
-    }).then(null, function () { return ''; });
+    var names = (Object.prototype.toString.call(title) === '[object Array]' ? title : [title]).filter(function (n) { return norm(n); });
+    if (!names.length) { return Promise.resolve(''); }
+    var nameWords = names.map(wordsOf).filter(function (w) { return w.length; }), seen = {}, qs = [];
+    names.forEach(function (n, i) {
+      var t = norm(n);
+      if (seen[t]) { return; }
+      seen[t] = 1;
+      qs.push(t + (year ? ' ' + year : '') + ' trailer' + (dub ? ' dublado' : ''));
+      if (i === 0 && dub) { qs.push(t + ' trailer oficial dublado'); }
+    });
+    qs = qs.slice(0, 3);
+    function one(q) {
+      var url = 'https://www.youtube.com/results?hl=pt-BR&gl=BR&sp=EgIQAQ%253D%253D&search_query=' + encodeURIComponent(q);
+      return Promise.resolve(http(url)).then(function (html) {
+        html = String(html || '');
+        if (html.indexOf('\\x22') >= 0) { html = html.replace(/\\x([0-9a-fA-F]{2})/g, function (m, x) { return String.fromCharCode(parseInt(x, 16)); }); }
+        return pickDub(html, nameWords, dub);
+      }).then(null, function () { return ''; });
+    }
+    return qs.reduce(function (p, q) { return p.then(function (id) { return id || one(q); }); }, Promise.resolve(''));
   }
 
   function yearOf(name) {
@@ -175,6 +203,15 @@ var Tmdb = (function () {
     /* mais populares de Animação ou Família (perfil infantil) */
     kids: function (kind, key) { return list(kind, '/discover/' + kind, key, 3, '&with_genres=' + encodeURIComponent('16|10751') + '&sort_by=popularity.desc&include_adult=false'); },
     recommend: function (kind, id, key) { return list(kind, '/' + kind + '/' + id + '/recommendations', key, 1); },
+    /* títulos do TMDB: [português do Brasil, original] (o catálogo às vezes vem em inglês e o trailer dublado é publicado com o nome em português) */
+    names: function (kind, id, key) {
+      return getJson('/' + kind + '/' + id, key, '').then(function (r) {
+        var out = [], a = r.title || r.name, b = r.original_title || r.original_name;
+        if (a) { out.push(a); }
+        if (b && b !== a) { out.push(b); }
+        return out;
+      });
+    },
     findId: function (kind, title, year, key) {
       var extra = '&query=' + encodeURIComponent(norm(title)) + (year ? (kind === 'tv' ? '&first_air_date_year=' : '&year=') + year : '');
       return getJson('/search/' + kind, key, extra).then(function (r) {

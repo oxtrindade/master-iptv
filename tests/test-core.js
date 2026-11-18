@@ -36,6 +36,16 @@ t('TMDB: versões do mesmo título (dublado, legendado, 4K) e preferência', fun
   Tmdb.ytSearch('Duna (2024) 4K', 2024, true).then(function (id) {
     assert.strictEqual(id, 'DUBDUBDUB11', 'trailer dublado do YouTube');
     assert.ok(/search_query=duna%202024%20trailer%20dublado/.test(seenUrl), 'consulta: ' + seenUrl);
+  }).then(function () {
+    // catálogo em inglês, trailer publicado com o nome brasileiro; entre vários, prefere "oficial" de canal de estúdio e ignora reação
+    var h2 = '"videoRenderer":{"videoId":"REACAOREAC1","title":{"runs":[{"text":"Vingadores Ultimato Trailer Dublado REAÇÃO"}]},"ownerText":{"runs":[{"text":"Canal Qualquer"}]}} ' +
+      '"videoRenderer":{"videoId":"FANFANFAN11","title":{"runs":[{"text":"Vingadores Ultimato trailer dublado"}]},"ownerText":{"runs":[{"text":"Zé Edits"}]}} ' +
+      '"videoRenderer":{"videoId":"OFICIALOFI1","title":{"runs":[{"text":"VINGADORES: ULTIMATO | Trailer Oficial Dublado"}]},"ownerText":{"runs":[{"text":"Marvel Studios Brasil"}]}}';
+    Tmdb.init(function () { return Promise.resolve(h2); });
+    return Tmdb.ytSearch(['Avengers Endgame', 'Vingadores: Ultimato'], 2019, true);
+  }).then(function (id) {
+    assert.strictEqual(id, 'OFICIALOFI1', 'nome em português do TMDB + oficial de estúdio, sem reação');
+    Tmdb.init(function () { return Promise.resolve(html); });
   }).then(function () { return Tmdb.ytSearch('Filme Inexistente', 0, true); }).then(function (id) { assert.strictEqual(id, '', 'sem dublado, sem trailer'); }).then(null, function (e) { console.error('FAIL ytSearch', e); process.exit(1); });
   var v = Tmdb.variants(list, l);
   assert.strictEqual(v.length, 3, 'três versões, sem duplicar a própria');

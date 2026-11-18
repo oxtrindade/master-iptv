@@ -357,3 +357,6 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 
 ## 1.57.0
 - **Entrar na TV pelo celular:** na tela de login da TV, botão "Entrar pelo celular" mostra um código de 16 caracteres. No app do celular (já logado): Configurações → "Enviar login para a TV" e digitar o código. A TV recebe servidor/usuário/senha, apaga do servidor na hora e conecta. Usa o mesmo servidor de sincronização (Cloudflare Worker) que você já tem, sem alterar o Worker; vale 15 min.
+
+## 1.57.1
+- **Trailer dublado, busca bem melhor:** a busca no YouTube agora usa também o título do TMDB em português e o original (o catálogo às vezes vem em inglês e o trailer dublado é publicado com o nome brasileiro), faz até 3 consultas (incluindo "trailer oficial dublado"), aceita "dublado/dublagem/DUB", descarta reação, análise, fã-made, jogo e bastidores, e entre os válidos prefere "oficial" e canais de estúdio/distribuidora. Sem dublado, continua caindo no do provedor e depois no original.
