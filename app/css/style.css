@@ -1147,3 +1147,9 @@ body.lite .hero.sll .herobg, body.lite .hero.sll .heroposter, body.lite .bootmar
 body.lite .bootmark { filter: none !important; }
 body.lite .f.focus, body.lite .f:focus { box-shadow: none !important; outline: 4px solid #3ab4e0; outline-offset: -2px; }
 body.lite .card, body.lite .lcard, body.lite .ctile, body.lite .hero, body.lite .pcard, body.lite .aicon { box-shadow: none !important; }
+
+/* 1.57.0: login da TV pelo celular */
+.login.pair .sub { max-width: 900px; margin: 14px auto; text-align: center; font-size: 28px; line-height: 1.3; }
+.paircode { margin: 22px auto; padding: 22px 34px; border-radius: 18px; background: rgba(255,255,255,.12); font-size: 64px; font-weight: 800; letter-spacing: 6px; text-align: center; font-family: monospace; }
+body.compact .login.pair .sub { font-size: 16px; }
+body.compact .paircode { font-size: 26px; letter-spacing: 2px; padding: 12px 14px; }

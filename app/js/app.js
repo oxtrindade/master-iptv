@@ -1601,6 +1601,7 @@
       h('div', { cls: 'lbl', text: 'Usuário' }), iUser,
       h('div', { cls: 'lbl', text: 'Senha' }), iPass,
       btn,
+      h('button', { cls: 'f btn', text: 'Entrar pelo celular', on: { click: function () { showPair(msg, canCancel); } } }),
       hasDl() && dlCount() ? h('button', { cls: 'f btn', text: 'Ver downloads (offline)', on: { click: showOffline } }) : null,
       canCancel ? h('button', { cls: 'f btn', text: 'Cancelar', on: { click: function () { showBrowse(); selectSection('settings'); } } }) : null,
       err
@@ -1608,6 +1609,39 @@
     Nav.setScope(app);
     var first = msg ? iServer : (!iServer.value ? iServer : (!iUser.value ? iUser : (!iPass.value ? iPass : btn)));
     Nav.focus(first);
+  }
+
+  /* login pelo celular: a TV mostra um código; no app do celular, Configurações → "Enviar login para a TV" */
+  function showPair(msg, canCancel) {
+    clearInterval(S.pairT);
+    var code = Sync.newCode(), url = Sync.normUrl(store.get('syncurl', '') || Sync.DEFAULT_URL), t0 = Date.now(), busy = false;
+    var st = h('div', { cls: 'sub', text: 'Aguardando o celular…' });
+    var app = $('app');
+    function leave() { clearInterval(S.pairT); S.pairT = null; showLogin(msg, canCancel); }
+    app.innerHTML = '';
+    app.appendChild(h('div', { cls: 'login pair' }, [
+      h('div', { cls: 'logo', text: 'ENTRAR PELO CELULAR' }),
+      h('div', { cls: 'sub', text: 'No app Master IPTV do celular (já logado): Configurações → "Enviar login para a TV" e digite o código:' }),
+      h('div', { cls: 'paircode', text: Sync.fmtCode(code) }),
+      st,
+      h('button', { cls: 'f btn', text: 'Voltar', on: { click: leave } })
+    ]));
+    Nav.setScope(app);
+    Nav.focus(app.querySelector('.f'));
+    S.pairT = setInterval(function () {
+      if (S.mode !== 'login' || !document.body.contains(st)) { clearInterval(S.pairT); S.pairT = null; return; }
+      if (Date.now() - t0 > 15 * 60000) { st.textContent = 'Tempo esgotado. Volte e tente de novo.'; clearInterval(S.pairT); S.pairT = null; return; }
+      if (busy) { return; }
+      busy = true;
+      Sync.pairPoll(url, code).then(function (l) {
+        busy = false;
+        if (!l) { return; }
+        clearInterval(S.pairT); S.pairT = null;
+        Sync.pairWipe(url, code);   // a senha não fica no servidor
+        st.textContent = 'Login recebido, conectando…';
+        connect({ mode: 'xtream', server: l.server, user: l.user, pass: l.pass });
+      }, function () { busy = false; st.textContent = 'Sem conexão com o servidor de sincronização…'; });
+    }, 3000);
   }
 
   /* http x https: se o endereço digitado não conecta, o app testa sozinho o outro e guarda o que funcionou */
@@ -3518,12 +3552,28 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.56.5']
+      ['Versão do app', '1.57.0']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
       page.appendChild(h('div', { cls: 'srow' }, [h('div', { cls: 'skey', text: r[0] }), h('div', { text: String(r[1]) })]));
     });
+    if (S.cfg && S.cfg.server) {
+      var pcIn = h('input', { cls: 'f input', type: 'text', placeholder: 'Código que aparece na TV (XXXX-XXXX-XXXX-XXXX)' });
+      var pcSt = h('div', { cls: 'swd' });
+      var sendTv = function () {
+        var c = Sync.normCode(pcIn.value);
+        if (!Sync.validCode(c)) { pcSt.textContent = 'Código inválido: 16 letras e números, como mostra a TV.'; return; }
+        pcSt.textContent = 'Enviando…';
+        Sync.pairSend(Sync.normUrl(store.get('syncurl', '') || Sync.DEFAULT_URL), c, S.cfg).then(function () {
+          pcSt.textContent = 'Enviado! A TV entra em alguns segundos.'; pcIn.value = '';
+        }, function (e) { pcSt.textContent = 'Falha: ' + ((e && e.message) || 'sem conexão'); });
+      };
+      pcIn._enter = sendTv;
+      page.appendChild(h('div', { cls: 'swd tmdbhelp', text: 'Entrar na TV sem digitar: na tela de login da TV, escolha "Entrar pelo celular" e digite aqui o código mostrado.' }));
+      page.appendChild(h('div', { cls: 'citybox' }, [pcIn, h('button', { cls: 'f btn', text: 'Enviar login para a TV', on: { click: sendTv } })]));
+      page.appendChild(pcSt);
+    }
     page.appendChild(h('div', { cls: 'sbtns' }, [
       h('button', { cls: 'f btn primary', text: 'Editar servidor', on: { click: function () { showLogin('', true); } } }),
       h('button', { cls: 'f btn', text: 'Trocar conta / Sair', on: { click: logout } })

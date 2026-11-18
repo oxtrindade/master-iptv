@@ -211,5 +211,24 @@
     return p;
   };
 
+  /* ---------- login da TV pelo celular ----------
+     A TV mostra um código aleatório (o segredo). O celular grava o login nele; a TV lê, apaga e entra. */
+  function pairUrl(url, code) { return Sy.normUrl(url) + '/sync/' + Sy.normCode(code); }
+  Sy.pairSend = function (url, code, login) {
+    return request('POST', pairUrl(url, code), JSON.stringify({ v: 1, login: { server: login.server, user: login.user, pass: login.pass }, at: Date.now() })).then(function (w) {
+      if (w.status < 200 || w.status >= 300) { throw new Error('Servidor recusou (' + w.status + ')'); }
+      return true;
+    });
+  };
+  Sy.pairPoll = function (url, code) {   // -> Promise(login | null)
+    return request('GET', pairUrl(url, code)).then(function (r) {
+      if (r.status !== 200) { return null; }
+      var j; try { j = JSON.parse(r.text); } catch (e) { return null; }
+      var l = j && j.login;
+      return l && l.server && l.user && l.pass ? { server: String(l.server), user: String(l.user), pass: String(l.pass) } : null;
+    });
+  };
+  Sy.pairWipe = function (url, code) { return request('POST', pairUrl(url, code), '{}').then(function () { return true; }, function () { return false; }); };
+
   return Sy;
 });

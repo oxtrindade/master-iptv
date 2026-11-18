@@ -665,20 +665,20 @@ Promise.all([listen(api), listen(px), startSync()]).then(function () {
       return waitFor(function () { return $('.settings .sgroup'); }, 'config 4');
     }).then(function () {
       // editar servidor: abre o login já preenchido, com Cancelar
-      $$('.settings .btn')[0].click();
+      $$('.settings .btn').filter(function (b) { return b.textContent === 'Editar servidor'; })[0].click();
       return waitFor(function () { return $('.login'); }, 'editar servidor');
     }).then(function () {
       assert.strictEqual($$('.login input')[1].value, 'joao');
-      assert.strictEqual($$('.login .btn').length, 2, 'Entrar + Cancelar');
-      $$('.login .btn')[1].click(); // Cancelar
+      assert.strictEqual($$('.login .btn').length, 3, 'Entrar + Entrar pelo celular + Cancelar');
+      $$('.login .btn')[2].click(); // Cancelar
       return waitFor(function () { return $('.settings .sgroup'); }, 'volta às configurações');
     }).then(function () {
       step('editar servidor (preenchido, com cancelar)');
-      $$('.settings .btn')[1].click(); // Trocar conta / Sair
+      $$('.settings .btn').filter(function (b) { return /Trocar conta/.test(b.textContent); })[0].click(); // Trocar conta / Sair
       return waitFor(function () { return $('.login'); }, 'logout');
     }).then(function () {
       assert.strictEqual($$('.login input')[1].value, 'joao', 'logout mantém usuário');
-      assert.strictEqual($$('.login .btn').length, 1, 'login sem modo demonstração');
+      assert.strictEqual($$('.login .btn').length, 2, 'login: Entrar + Entrar pelo celular (sem modo demonstração)');
       assert.ok(/MASTER IPTV/.test($('.login .logo').textContent));
 
       step('logout volta ao login (sem demonstração, nome Master IPTV)');

@@ -354,3 +354,6 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 
 ## 1.56.5
 - **Jogo ao vivo no YouTube não abre mais live agendada:** "ao vivo" agora exige o selo AO VIVO / "N assistindo" (o título "AO VIVO: …" não vale, lives agendadas também o têm) e descarta estreia/programada/aguardando. O feed do canal só entra se as páginas não puderem ser lidas; com a página lida e sem live rolando, avisa "pode não ter começado" e não abre a live agendada de outro jogo.
+
+## 1.57.0
+- **Entrar na TV pelo celular:** na tela de login da TV, botão "Entrar pelo celular" mostra um código de 16 caracteres. No app do celular (já logado): Configurações → "Enviar login para a TV" e digitar o código. A TV recebe servidor/usuário/senha, apaga do servidor na hora e conecta. Usa o mesmo servidor de sincronização (Cloudflare Worker) que você já tem, sem alterar o Worker; vale 15 min.

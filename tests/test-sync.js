@@ -30,6 +30,15 @@ function step(s) { console.log('  ok  ', s); }
   assert.strictEqual(Sync.pairString('https://abc.workers.dev', 'K7QM2XPD9TVR4HNC'), 'abc.workers.dev#K7QM-2XPD-9TVR-4HNC');
   step('código, endereço e texto de pareamento');
 
+  /* ---- login da TV pelo celular ---- */
+  var pc = Sync.newCode(), pu = 'https://abc.workers.dev';
+  assert.strictEqual(await Sync.pairPoll(pu, pc), null, 'antes do celular enviar: nada');
+  await Sync.pairSend(pu, pc, { server: 'http://s.com:80', user: 'joao', pass: 'x y' });
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(await Sync.pairPoll(pu, pc))), { server: 'http://s.com:80', user: 'joao', pass: 'x y' }, 'TV recebe o login');
+  await Sync.pairWipe(pu, pc);
+  assert.strictEqual(await Sync.pairPoll(pu, pc), null, 'depois de lido, o login é apagado do servidor');
+  step('login da TV pelo celular: enviar, receber e apagar');
+
   /* ---- fusão ---- */
   var NOW = 1000000000000;
   var tvShow = { type: 'series', id: 9 };
