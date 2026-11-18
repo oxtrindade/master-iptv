@@ -3558,7 +3558,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.57.3']
+      ['Versão do app', '1.57.4']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
@@ -4570,6 +4570,7 @@
   function boot() {
     Weather.init(http);
     Tmdb.init(http);
+    Tmdb.initYt(ytGet);
     Tmdb.setTv4k(/Web0S|webOS|SMART-?TV/i.test(navigator.userAgent) || document.body.classList.contains('tv'));
     Tmdb.setPref(store.get('verpref', 'dub'));
     Player.init($('video'), {

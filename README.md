@@ -367,3 +367,6 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 ## 1.57.3
 - **Trailer dublado: a busca do YouTube passa a ser a 1ª fonte** (antes vinha depois do TMDB, que podia trazer um trailer dublado mais antigo). Ordem: busca no YouTube → TMDB pt-BR "dublado" → provedor → qualquer idioma.
 - **Leitura dos resultados do YouTube nos dois formatos** (videoRenderer e o novo lockupViewModel); o título do vídeo vem do campo de título (não de descrição). Teste com o caso real "A Odisseia | Novo Trailer Oficial Dublado (Universal Pictures) - HD".
+
+## 1.57.4
+- **Trailer dublado: a busca no YouTube usava o leitor errado.** Ela passava pelo `http` genérico (sem User-Agent de navegador), que recebe do YouTube uma página sem resultados, e por isso caía no trailer legendado do provedor/estúdio. Agora usa o mesmo leitor da busca de jogos (`ytGet`, com User-Agent de navegador / proxy no webOS). O título do vídeo continua precisando dizer "dublado/dublagem/DUB".

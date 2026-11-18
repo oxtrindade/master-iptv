@@ -63,6 +63,15 @@ t('TMDB: versões do mesmo título (dublado, legendado, 4K) e preferência', fun
       assert.strictEqual(id, 'v_eHpukGdTM', 'acha "A Odisseia | Novo Trailer Oficial Dublado" no formato novo');
       Tmdb.init(function () { return Promise.resolve(html); });
     });
+  }).then(function () {
+    // a busca no YouTube usa o leitor próprio (User-Agent de navegador), não o http padrão
+    var usado = '';
+    Tmdb.init(function () { usado = 'http'; return Promise.resolve(''); });
+    Tmdb.initYt(function () { usado = 'yt'; return Promise.resolve('"videoRenderer":{"videoId":"YTYTYTYTYT1","title":{"runs":[{"text":"A Odisseia | Trailer Oficial Dublado"}]},"ownerText":{"runs":[{"text":"Universal Pictures Brasil"}]}}'); });
+    return Tmdb.ytSearch('A Odisseia', 2026, true).then(function (id) {
+      assert.strictEqual(id, 'YTYTYTYTYT1', 'usa o leitor do YouTube'); assert.strictEqual(usado, 'yt', 'não usa o http padrão');
+      Tmdb.initYt(null); Tmdb.init(function () { return Promise.resolve(html); });
+    });
   }).then(function () { return Tmdb.ytSearch('Filme Inexistente', 0, true); }).then(function (id) { assert.strictEqual(id, '', 'sem dublado, sem trailer'); }).then(null, function (e) { console.error('FAIL ytSearch', e); process.exit(1); });
   var v = Tmdb.variants(list, l);
   assert.strictEqual(v.length, 3, 'três versões, sem duplicar a própria');

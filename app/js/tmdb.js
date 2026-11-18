@@ -33,6 +33,7 @@ var Tmdb = (function () {
      português/original, "trailer oficial dublado"). Aceita trailer/teaser/prévia que diga "dublado" (ou "dublagem"/"DUB") e traga as palavras
      do nome; descarta legendado, reação, análise, fã-made, jogo, bastidores. Entre os que passam, prefere "oficial" e canais de estúdio/distribuidora.
      title: nome (ou lista de nomes) do filme. Devolve a chave do vídeo ou ''. */
+  var yget = null;
   var STOPW = { the: 1, dos: 1, das: 1, and: 1, que: 1, com: 1, uma: 1, por: 1, para: 1, del: 1, les: 1, des: 1 };
   var NEG = /legendad|react|reacao|analise|explic|review|critica|fan ?made|fanmade|gameplay|\bjogo\b|making of|bastidor|entrevista|recap|resumo|ending|final explicado/;
   var STUDIO = /sony|warner|disney|universal|paramount|netflix|prime video|apple tv|hbo|globoplay|imagem filmes|diamond films|paris filmes|playarte|california filmes|vertical|downtown|pandora|mares filmes|bf1|elo studios|fox|20th|marvel|lucasfilm|pixar|dreamworks|lionsgate|mgm|a24|star\+|max |studiocanal|filmes|pictures|studios/;
@@ -94,7 +95,7 @@ var Tmdb = (function () {
     qs = qs.slice(0, 3);
     function one(q) {
       var url = 'https://www.youtube.com/results?hl=pt-BR&gl=BR&sp=EgIQAQ%253D%253D&search_query=' + encodeURIComponent(q);
-      return Promise.resolve(http(url)).then(function (html) {
+      return Promise.resolve((yget || http)(url)).then(function (html) {
         html = String(html || '');
         if (html.indexOf('\\x22') >= 0) { html = html.replace(/\\x([0-9a-fA-F]{2})/g, function (m, x) { return String.fromCharCode(parseInt(x, 16)); }); }
         return pickDub(html, nameWords, dub);
@@ -203,6 +204,8 @@ var Tmdb = (function () {
 
   return {
     init: function (h) { http = h; },
+    /* leitor de páginas do YouTube (precisa de User-Agent de navegador; o http padrão devolve uma página sem resultados) */
+    initYt: function (f) { yget = f; },
     norm: norm,
     variantInfo: variantInfo,
     variants: variants,
