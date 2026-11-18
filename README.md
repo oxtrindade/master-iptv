@@ -360,3 +360,6 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 
 ## 1.57.1
 - **Trailer dublado, busca bem melhor:** a busca no YouTube agora usa também o título do TMDB em português e o original (o catálogo às vezes vem em inglês e o trailer dublado é publicado com o nome brasileiro), faz até 3 consultas (incluindo "trailer oficial dublado"), aceita "dublado/dublagem/DUB", descarta reação, análise, fã-made, jogo e bastidores, e entre os válidos prefere "oficial" e canais de estúdio/distribuidora. Sem dublado, continua caindo no do provedor e depois no original.
+
+## 1.57.2
+- **Trailer dublado quando o ano do catálogo difere:** a busca no YouTube agora faz uma consulta com ano e outra sem (ex.: "O Diário Mágico (2018)" tem trailer dublado de 2023 da Elite Filmes: "O Diário Mágico (King's Gambit) | Trailer Dublado"). Teste com esse caso real.

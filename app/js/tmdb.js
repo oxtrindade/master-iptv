@@ -65,8 +65,9 @@ var Tmdb = (function () {
       var t = norm(n);
       if (seen[t]) { return; }
       seen[t] = 1;
-      qs.push(t + (year ? ' ' + year : '') + ' trailer' + (dub ? ' dublado' : ''));
-      if (i === 0 && dub) { qs.push(t + ' trailer oficial dublado'); }
+      // o ano do catálogo nem sempre é o do lançamento no Brasil (ex.: filme de 2018 com trailer dublado de 2023): 1º nome com e sem ano
+      if (i === 0 && year) { qs.push(t + ' ' + year + ' trailer' + (dub ? ' dublado' : '')); }
+      qs.push(t + ' trailer' + (dub ? ' dublado' : ''));
     });
     qs = qs.slice(0, 3);
     function one(q) {
