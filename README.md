@@ -363,3 +363,7 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 
 ## 1.57.2
 - **Trailer dublado quando o ano do catálogo difere:** a busca no YouTube agora faz uma consulta com ano e outra sem (ex.: "O Diário Mágico (2018)" tem trailer dublado de 2023 da Elite Filmes: "O Diário Mágico (King's Gambit) | Trailer Dublado"). Teste com esse caso real.
+
+## 1.57.3
+- **Trailer dublado: a busca do YouTube passa a ser a 1ª fonte** (antes vinha depois do TMDB, que podia trazer um trailer dublado mais antigo). Ordem: busca no YouTube → TMDB pt-BR "dublado" → provedor → qualquer idioma.
+- **Leitura dos resultados do YouTube nos dois formatos** (videoRenderer e o novo lockupViewModel); o título do vídeo vem do campo de título (não de descrição). Teste com o caso real "A Odisseia | Novo Trailer Oficial Dublado (Universal Pictures) - HD".

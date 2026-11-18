@@ -2806,15 +2806,15 @@
     if (dub) {
       // prefere dublado: 1) TMDB (vídeo pt-BR cujo nome diz "dublado"), 2) busca no YouTube por "<filme> trailer dublado";
       // sem dublado, usa o do provedor e depois qualquer idioma (original)
-      p = fromTmdb(true).then(function (id) {
-        if (id) { return id; }
-        var yr = Tmdb.yearOf(it.name) || parseInt(it.year, 10) || 0;
-        // nomes para procurar: o do catálogo + título do TMDB em português e original (trailer dublado é publicado com o nome brasileiro)
-        var nm = key && tid ? tid.then(function (tidv) {
-          return tidv ? tmdbCached('tmdbnames:' + kind + ':' + tidv, 24 * 90, function () { return Tmdb.names(kind, tidv, key); }) : [];
-        }).then(null, function () { return []; }) : Promise.resolve([]);
-        return nm.then(function (alt) { return Tmdb.ytSearch([it.name].concat(alt), yr, true); });
-      }).then(function (id) { return id || provider(); }).then(function (id) { return id || fromTmdb(false); });
+      // 1) busca no YouTube (o 1º resultado "trailer dublado", como faria uma pessoa), 2) TMDB pt-BR "dublado", 3) provedor, 4) qualquer idioma
+      var yr = Tmdb.yearOf(it.name) || parseInt(it.year, 10) || 0;
+      // nomes para procurar: o do catálogo + título do TMDB em português e original (trailer dublado é publicado com o nome brasileiro)
+      var nm = key ? (tid = tid || Tmdb.findId(kind, it.name, yr, key)).then(function (tidv) {
+        return tidv ? tmdbCached('tmdbnames:' + kind + ':' + tidv, 24 * 90, function () { return Tmdb.names(kind, tidv, key); }) : [];
+      }).then(null, function () { return []; }) : Promise.resolve([]);
+      p = nm.then(function (alt) { return Tmdb.ytSearch([it.name].concat(alt), yr, true); })
+        .then(function (id) { return id || fromTmdb(true); })
+        .then(function (id) { return id || provider(); }).then(function (id) { return id || fromTmdb(false); });
     } else {
       p = provider().then(function (id) { return id || fromTmdb(false); });
     }
@@ -3558,7 +3558,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.57.2']
+      ['Versão do app', '1.57.3']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {

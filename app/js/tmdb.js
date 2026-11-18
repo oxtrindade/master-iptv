@@ -37,23 +37,45 @@ var Tmdb = (function () {
   var NEG = /legendad|react|reacao|analise|explic|review|critica|fan ?made|fanmade|gameplay|\bjogo\b|making of|bastidor|entrevista|recap|resumo|ending|final explicado/;
   var STUDIO = /sony|warner|disney|universal|paramount|netflix|prime video|apple tv|hbo|globoplay|imagem filmes|diamond films|paris filmes|playarte|california filmes|vertical|downtown|pandora|mares filmes|bf1|elo studios|fox|20th|marvel|lucasfilm|pixar|dreamworks|lionsgate|mgm|a24|star\+|max |studiocanal|filmes|pictures|studios/;
   function wordsOf(name) { return norm(name).split(' ').filter(function (w) { return w.length >= 3 && !STOPW[w]; }).slice(0, 5); }
+  /* resultados da busca do YouTube, nos dois formatos (videoRenderer e o novo lockupViewModel): [{ id, title, chan, pos }] */
+  function parseResults(html) {
+    var re = /"(?:videoId|contentId)":"([\w-]{11})"/g, hits = [], m, byId = {}, out = [];
+    while ((m = re.exec(html))) { if (!hits.length || hits[hits.length - 1].id !== m[1]) { hits.push({ id: m[1], at: m.index }); } }
+    hits.forEach(function (x, i) {
+      var chunk = html.slice(x.at, Math.min(i + 1 < hits.length ? hits[i + 1].at : x.at + 4000, x.at + 4000)), e = byId[x.id];
+      if (!e) { e = byId[x.id] = { id: x.id, raw: '', pos: out.length }; out.push(e); }
+      e.raw += chunk;
+    });
+    out.forEach(function (e) {
+      var t = /"title":\{(?:"runs":\[\{"text":|"content":)"((?:[^"\\]|\\.)*)"/.exec(e.raw), c = /"(?:ownerText|longBylineText|shortBylineText)":\{"runs":\[\{"text":"((?:[^"\\]|\\.)*)"/.exec(e.raw), v;
+      v = t ? t[1] : ''; try { v = JSON.parse('"' + v + '"'); } catch (er) { /* mantém */ }
+      e.title = v;
+      if (c) { v = c[1]; try { v = JSON.parse('"' + v + '"'); } catch (er2) { /* mantém */ } e.chan = v; }
+      else {   // formato novo: o canal é um dos textos depois do título
+        var tx = [], r2 = /"(?:text|content)":"((?:[^"\\]|\\.)*)"/g, q;
+        while ((q = r2.exec(e.raw)) && tx.length < 12) { tx.push(q[1]); }
+        e.chan = tx.slice(1).join(' ');
+      }
+      delete e.raw;
+    });
+    return out.filter(function (e) { return e.title; });
+  }
   function pickDub(html, nameWords, dub) {
-    var re = /"videoRenderer":\{"videoId":"([\w-]{11})"([\s\S]{0,2500}?)"title":\{"runs":\[\{"text":"((?:[^"\\]|\\.)*)"(?=([\s\S]{0,1500}))/g, m, best = '', bs = -1, pos = 0;
-    while ((m = re.exec(html))) {
-      pos++;
-      var tt = plain(m[3]);
-      if (!/trailer|teaser|previa|chamada|promo/.test(tt) || NEG.test(tt)) { continue; }
-      if (dub && !/dublad|dublagem|\bdub\b/.test(tt)) { continue; }
+    var best = '', bs = -1;
+    parseResults(html).forEach(function (r) {
+      var tt = plain(r.title);
+      if (!/trailer|teaser|previa|chamada|promo/.test(tt) || NEG.test(tt)) { return; }
+      if (dub && !/dublad|dublagem|\bdub\b/.test(tt)) { return; }
       var okName = false, k, i, w;
       for (k = 0; k < nameWords.length && !okName; k++) {
         w = nameWords[k]; okName = w.length > 0;
         for (i = 0; i < w.length; i++) { if (tt.indexOf(w[i]) < 0) { okName = false; break; } }
       }
-      if (!okName) { continue; }
-      var ch = /"ownerText":\{"runs":\[\{"text":"((?:[^"\\]|\\.)*)"/.exec(m[4] + m[2]), cn = ch ? plain(ch[1]) : '';
-      var sc = (/oficial|official/.test(tt) ? 4 : 0) + (STUDIO.test(cn) ? 3 : 0) + (/trailer/.test(tt) ? 2 : 0) - pos * 0.1;
-      if (sc > bs) { bs = sc; best = m[1]; }
-    }
+      if (!okName) { return; }
+      var cn = plain(r.chan);
+      var sc = (/oficial|official/.test(tt) ? 4 : 0) + (STUDIO.test(cn) || STUDIO.test(tt) ? 3 : 0) + (/trailer/.test(tt) ? 2 : 0) - r.pos * 0.1;
+      if (sc > bs) { bs = sc; best = r.id; }
+    });
     return best;
   }
   function ytSearch(title, year, dub) {

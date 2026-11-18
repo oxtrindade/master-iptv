@@ -54,6 +54,15 @@ t('TMDB: versões do mesmo título (dublado, legendado, 4K) e preferência', fun
       assert.strictEqual(id, 'F72L-f-VRPQ', 'acha o dublado mesmo com ano diferente: ' + urls.join(' | '));
       Tmdb.init(function () { return Promise.resolve(html); });
     });
+  }).then(function () {
+    // caso real "A Odisseia": formato novo da busca (lockupViewModel) e catálogo só "Odisseia (2026)"
+    var nova = '"lockupViewModel":{"contentId":"v_eHpukGdTM","contentType":"LOCKUP_CONTENT_TYPE_VIDEO","metadata":{"lockupMetadataViewModel":{"title":{"content":"A Odisseia | Novo Trailer Oficial Dublado (Universal Pictures) - HD"},"metadata":{"contentMetadataViewModel":{"metadataRows":[{"metadataParts":[{"text":{"content":"Universal Pictures Brasil"}}]}]}}}}}} ' +
+      '"lockupViewModel":{"contentId":"LEGENDADO11","metadata":{"lockupMetadataViewModel":{"title":{"content":"The Odyssey | Official Trailer"},"x":{"text":{"content":"Universal Pictures"}}}}}';
+    Tmdb.init(function () { return Promise.resolve(nova); });
+    return Tmdb.ytSearch('Odisseia (2026)', 2026, true).then(function (id) {
+      assert.strictEqual(id, 'v_eHpukGdTM', 'acha "A Odisseia | Novo Trailer Oficial Dublado" no formato novo');
+      Tmdb.init(function () { return Promise.resolve(html); });
+    });
   }).then(function () { return Tmdb.ytSearch('Filme Inexistente', 0, true); }).then(function (id) { assert.strictEqual(id, '', 'sem dublado, sem trailer'); }).then(null, function (e) { console.error('FAIL ytSearch', e); process.exit(1); });
   var v = Tmdb.variants(list, l);
   assert.strictEqual(v.length, 3, 'três versões, sem duplicar a própria');
