@@ -370,3 +370,6 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 
 ## 1.57.4
 - **Trailer dublado: a busca no YouTube usava o leitor errado.** Ela passava pelo `http` genérico (sem User-Agent de navegador), que recebe do YouTube uma página sem resultados, e por isso caía no trailer legendado do provedor/estúdio. Agora usa o mesmo leitor da busca de jogos (`ytGet`, com User-Agent de navegador / proxy no webOS). O título do vídeo continua precisando dizer "dublado/dublagem/DUB".
+
+## 1.57.5
+- **Limpar cache de trailers:** botão em Configurações (junto de "Preferir trailer dublado"). Apaga os trailers guardados (inclusive o "sem trailer" de 3 dias) e o banner guardado, sem sair da conta nem perder favoritos.

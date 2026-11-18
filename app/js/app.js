@@ -3558,7 +3558,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.57.4']
+      ['Versão do app', '1.57.5']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
@@ -3620,6 +3620,11 @@
     page.appendChild(switchRow('Ocultar filmes de cinema (gravação)', 'Esconde filmes de categoria/etiqueta Cinema ou CAM, que são gravações de sala com qualidade baixa.', 'hideCam'));
     dubOn();
     page.appendChild(switchRow('Preferir trailer dublado', 'Procura trailer dublado em português (TMDB e YouTube); se não achar, usa o do provedor ou o de qualquer idioma (original). Desligado, usa o do provedor primeiro.', 'pvdub'));
+    page.appendChild(h('div', { cls: 'sbtns' }, [h('button', { cls: 'f btn', text: 'Limpar cache de trailers', on: { click: function () {
+      store.set('trcache', {}); TR = {};
+      store.set('herocache:movie,series', null); store.set('herocache:movie', null); store.set('herocache:series', null);
+      toast('Cache de trailers limpo. Os trailers serão procurados de novo.', 4000);
+    } } })]));
 
     page.appendChild(sgroup('Recomendações'));
     page.appendChild(tmdbBlock());
