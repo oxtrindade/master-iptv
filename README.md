@@ -377,3 +377,7 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 ## 1.57.6
 - **Tela do filme/série com trailer:** enquanto o trailer toca, o título fica pequeno e sinopse/nota/gêneros/elenco somem (ficam só os botões); volta ao normal quando o trailer termina.
 - **Diagnóstico do trailer:** texto pequeno no rodapé da tela do filme mostra a origem (busca no YouTube dublado / TMDB / provedor / cache / nenhum) e, se a busca dublada falhou, a consulta usada, quantos vídeos foram lidos e se a página veio vazia/bloqueada.
+
+## 1.57.7
+- **Banner da Home com trailer:** enquanto o trailer toca, o título fica pequeno e tag/nota/sinopse somem (ficam só os botões), como na tela do filme.
+- **Diagnóstico mais detalhado:** cada consulta mostra tamanho da página, quantidade de `videoId`, se tem `ytInitialData` e se veio tela de consentimento.
