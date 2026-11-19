@@ -79,7 +79,8 @@ var Tmdb = (function () {
     });
     return best;
   }
-  function ytSearch(title, year, dub) {
+  function ytSearch(title, year, dub, diag) {
+    diag = diag || [];
     if (!http) { return Promise.resolve(''); }
     var names = (Object.prototype.toString.call(title) === '[object Array]' ? title : [title]).filter(function (n) { return norm(n); });
     if (!names.length) { return Promise.resolve(''); }
@@ -98,8 +99,10 @@ var Tmdb = (function () {
       return Promise.resolve((yget || http)(url)).then(function (html) {
         html = String(html || '');
         if (html.indexOf('\\x22') >= 0) { html = html.replace(/\\x([0-9a-fA-F]{2})/g, function (m, x) { return String.fromCharCode(parseInt(x, 16)); }); }
-        return pickDub(html, nameWords, dub);
-      }).then(null, function () { return ''; });
+        var n = parseResults(html).length, id = pickDub(html, nameWords, dub);
+        diag.push('"' + q + '": ' + (html.length < 2000 ? 'página vazia/bloqueada (' + html.length + ' bytes' + (/consent/i.test(html) ? ', consentimento' : '') + ')' : n + ' vídeos' + (id ? ', achou ' + id : ', nenhum dublado')));
+        return id;
+      }).then(null, function (e) { diag.push('"' + q + '": falha de rede'); return ''; });
     }
     return qs.reduce(function (p, q) { return p.then(function (id) { return id || one(q); }); }, Promise.resolve(''));
   }
