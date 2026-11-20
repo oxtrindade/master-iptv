@@ -370,7 +370,9 @@ Promise.all([listen(api), listen(px), startSync()]).then(function () {
       assert.ok(/E2/.test($('#osd-nextep').textContent), 'botão diz qual é o próximo: ' + $('#osd-nextep').textContent);
       $('#osd').classList.add('hidden');
       key(40);
-      assert.ok($('#osd-tracks').classList.contains('focus'), 'baixo: menu com Áudio e legenda destacado');
+      assert.ok($('#osd-bar').classList.contains('focus') && !$('#osd-tracks').classList.contains('focus'), 'baixo: menu abre na linha do tempo');
+      key(38);
+      assert.ok($('#osd-tracks').classList.contains('focus'), 'cima: vai para Áudio e legenda');
       key(39);
       assert.ok($('#osd-nextep').classList.contains('focus') && !$('#osd-tracks').classList.contains('focus'), '→ move para "Próximo episódio"');
       key(13);
@@ -391,10 +393,16 @@ Promise.all([listen(api), listen(px), startSync()]).then(function () {
       // cima e baixo abrem o menu inferior com "Áudio e legenda" destacado; OK abre o painel
       $('#osd').classList.add('hidden');
       key(40);
-      assert.ok(!$('#osd').classList.contains('hidden') && $('#osd-tracks').classList.contains('focus'), 'baixo abre o menu com Áudio e legenda');
+      assert.ok(!$('#osd').classList.contains('hidden') && $('#osd-bar').classList.contains('focus'), 'baixo abre o menu na linha do tempo');
+      var t0 = vt; key(39);
+      assert.ok(vt > t0 && $('#osd-bar').classList.contains('focus'), '→ na linha do tempo avança e mantém o menu: ' + t0 + ' → ' + vt);
+      key(37);
+      assert.ok(vt <= t0 + 0.01 && $('#osd-bar').classList.contains('focus'), '← na linha do tempo retrocede');
       $('#osd').classList.add('hidden');
       key(38);
-      assert.ok(!$('#osd').classList.contains('hidden') && $('#osd-tracks').classList.contains('focus') && $('#tracks').classList.contains('hidden'), 'cima também abre o menu (sem abrir o painel direto)');
+      assert.ok(!$('#osd').classList.contains('hidden') && $('#osd-bar').classList.contains('focus'), 'cima também abre o menu (na linha do tempo)');
+      key(38);
+      assert.ok($('#osd-tracks').classList.contains('focus') && $('#tracks').classList.contains('hidden'), 'cima de novo vai para Áudio e legenda (sem abrir o painel direto)');
       key(13);
       assert.ok(!$('#tracks').classList.contains('hidden'), 'OK no menu abre áudio e legenda');
       key(27);
@@ -680,8 +688,13 @@ Promise.all([listen(api), listen(px), startSync()]).then(function () {
       assert.strictEqual($$('.login input')[1].value, 'joao', 'logout mantém usuário');
       assert.strictEqual($$('.login .btn').length, 2, 'login: Entrar + Entrar pelo celular (sem modo demonstração)');
       assert.ok(/MASTER IPTV/.test($('.login .logo').textContent));
+      $$('.login .btn')[1].click();
+      assert.ok($('.login.pair .qrbox img') && /^data:image\/gif/.test($('.login.pair .qrbox img').src), 'entrar pelo celular mostra o QR Code');
+      assert.ok(/^[A-Z2-9]{4}(-[A-Z2-9]{4}){3}$/.test($('.paircode').textContent), 'e o código');
+      $$('.login.pair .btn')[0].click();
+      assert.ok($('.login:not(.pair)'), 'Voltar do QR volta ao login');
 
-      step('logout volta ao login (sem demonstração, nome Master IPTV)');
+      step('logout volta ao login (sem demonstração, nome Master IPTV) + QR Code');
       mock.many = true;   // a partir daqui o catálogo de filmes é grande (testa Filmes por gênero)
       // http x https: o servidor de teste só fala http; digitar https:// deve cair sozinho em http:// e guardar o que funcionou
       $$('.login input')[0].value = base.replace('http://', 'https://');

@@ -38,6 +38,11 @@ function step(s) { console.log('  ok  ', s); }
   await Sync.pairWipe(pu, pc);
   assert.strictEqual(await Sync.pairPoll(pu, pc), null, 'depois de lido, o login é apagado do servidor');
   step('login da TV pelo celular: enviar, receber e apagar');
+  var pg = await call('GET', 'https://abc.workers.dev/p/' + pc);
+  assert.strictEqual(pg.status, 200, 'página do QR Code abre');
+  assert.ok(/text\/html/.test(pg.headers.get('content-type')) && pg.text.indexOf('"' + pc + '"') > 0 && /Servidor/.test(pg.text), 'página de login com o código da TV');
+  assert.strictEqual((await call('GET', 'https://abc.workers.dev/p/CURTO')).status, 404, 'código inválido na página: 404');
+  step('worker: página /p/<código> do QR Code');
 
   /* ---- fusão ---- */
   var NOW = 1000000000000;

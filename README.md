@@ -387,3 +387,8 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 
 ## 1.57.9
 - **Trailer dublado (Android):** com o cookie de consentimento a página do YouTube passou a vir com 60 vídeos, mas o leitor não achava os títulos (formato diferente). O leitor agora aceita `title.simpleText` e rótulos de acessibilidade, e o diagnóstico mostra uma amostra do trecho da página quando nenhum vídeo é lido.
+
+## 1.58.0
+- **Login da TV por QR Code:** "Entrar pelo celular" agora mostra um QR Code. Ao apontar a câmera do celular, abre uma página (servida pelo Worker em `/p/<código>`) onde se digita servidor, usuário e senha; a TV recebe e conecta sozinha. O código de 16 caracteres e o caminho pelo app do celular continuam funcionando. **Precisa publicar de novo o Worker** (`worker/sync-worker.mjs`, ganhou a rota `/p/`); sem isso o QR abre uma página "not found".
+- **Player (filmes e séries):** o menu de baixo agora abre na **linha do tempo** (↓ ou ↑): ←/→ avançam/retrocedem com o menu aberto, ↑ passa para os botões (Anterior · Áudio e legenda · Próximo) e ↓ volta para a linha do tempo. Com o menu fechado, ←/→ continuam avançando direto.
+- QR gerado com a biblioteca `qrcode-generator` (MIT, em `app/lib/qrcode.js`).

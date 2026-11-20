@@ -1611,7 +1611,20 @@
     Nav.focus(first);
   }
 
-  /* login pelo celular: a TV mostra um código; no app do celular, Configurações → "Enviar login para a TV" */
+  function qrBox(text) {   // QR Code (imagem GIF embutida); vazio se a biblioteca não carregou
+    var box = h('div', { cls: 'qrbox' });
+    try {
+      var q = window.qrcode(0, 'M');
+      q.addData(text); q.make();
+      var img = document.createElement('img');
+      img.src = q.createDataURL(8, 4);
+      img.alt = 'QR Code';
+      box.appendChild(img);
+    } catch (e) { box.style.display = 'none'; }
+    return box;
+  }
+
+  /* login pelo celular: a TV mostra um QR Code e um código; no app do celular, Configurações → "Enviar login para a TV" */
   function showPair(msg, canCancel) {
     clearInterval(S.pairT);
     var code = Sync.newCode(), url = Sync.normUrl(store.get('syncurl', '') || Sync.DEFAULT_URL), t0 = Date.now(), busy = false;
@@ -1621,7 +1634,9 @@
     app.innerHTML = '';
     app.appendChild(h('div', { cls: 'login pair' }, [
       h('div', { cls: 'logo', text: 'ENTRAR PELO CELULAR' }),
-      h('div', { cls: 'sub', text: 'No app Master IPTV do celular (já logado): Configurações → "Enviar login para a TV" e digite o código:' }),
+      h('div', { cls: 'sub', text: 'Aponte a câmera do celular para o QR Code e digite o login na página que abrir:' }),
+      qrBox(url + '/p/' + code),
+      h('div', { cls: 'sub', text: 'Ou, no app Master IPTV do celular (já logado): Configurações → "Enviar login para a TV" e digite o código:' }),
       h('div', { cls: 'paircode', text: Sync.fmtCode(code) }),
       st,
       h('button', { cls: 'f btn', text: 'Voltar', on: { click: leave } })
@@ -3560,7 +3575,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.57.9']
+      ['Versão do app', '1.58.0']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
@@ -4120,7 +4135,7 @@
     S.tracksScope = Nav.getScope();
     $('tracks').classList.remove('hidden');
     clearTimeout(S.osdTimer);
-    $('osd').classList.add('hidden');
+    $('osd').classList.add('hidden'); setOsdMenu(false);
     Nav.setScope($('tracks'));
     renderTracks(null);
   }
@@ -4255,7 +4270,7 @@
   }
 
   /* menu de baixo do player: [Episódio anterior] [Áudio e legenda] [Próximo episódio]; setas ←/→ escolhem, OK ativa */
-  function osdDefault() { return S.ctx && S.ctx.kind === 'live' ? $('osd-guide') : $('osd-tracks'); }
+  function osdDefault() { return S.ctx && S.ctx.kind === 'live' ? $('osd-guide') : $('osd-bar'); }   // filme/série: abre na linha do tempo (←/→ já avançam)
 
   function osdBtns() {
     return [$('osd-prevep'), $('osd-tracks'), $('osd-guide'), $('osd-nextep')].filter(function (b) { return !b.classList.contains('hidden'); });
@@ -4264,7 +4279,7 @@
   function setOsdMenu(on) {
     S.osdMenu = !!on;
     if (!S.osdSel || S.osdSel.classList.contains('hidden')) { S.osdSel = osdDefault(); }
-    [$('osd-prevep'), $('osd-tracks'), $('osd-guide'), $('osd-nextep')].forEach(function (b) { b.classList.toggle('focus', !!on && b === S.osdSel); });
+    [$('osd-prevep'), $('osd-tracks'), $('osd-guide'), $('osd-nextep'), $('osd-bar')].forEach(function (b) { b.classList.toggle('focus', !!on && b === S.osdSel); });
   }
 
   function moveOsdSel(d) {
@@ -4444,8 +4459,17 @@
     S.seekAt = now;
     var steps = [10, 10, 20, 30, 60, 60, 120];
     Player.seek(dir * steps[Math.min(S.seekCount, steps.length - 1)]);
-    showOsd();
+    showOsd(S.osdMenu);
     updateBar(Player.time(), Player.duration());
+  }
+
+  /* filme/série: ↑ vai da linha do tempo aos botões; ↓ vai dos botões à linha do tempo (a barra fica abaixo dos botões) */
+  function vodVert(d) {
+    var open = S.osdMenu && !$('osd').classList.contains('hidden'), bar = $('osd-bar');
+    if (!open || bar.classList.contains('hidden')) { S.osdSel = osdDefault(); showOsd(true); return; }
+    if (d < 0 && S.osdSel === bar) { var bs = osdBtns(); S.osdSel = bs.indexOf($('osd-tracks')) >= 0 ? $('osd-tracks') : bs[0]; }
+    else if (d > 0 && S.osdSel !== bar) { S.osdSel = bar; }
+    showOsd(true);
   }
 
   function playerKey(k) {
@@ -4459,27 +4483,27 @@
       case KEY.UP: case KEY.CHUP:
         if (live) { if (k === KEY.UP) { openPGuide(); } else { zap(1); } }   // ▲ abre o guia sem parar o som; CH+/CH− trocam de canal
         else if (k === KEY.CHUP && c.kind === 'ep') { stepEpisode(1); }
-        else { if (!S.osdMenu) { S.osdSel = osdDefault(); } showOsd(true); }   // cima e baixo abrem o menu de baixo
+        else { vodVert(-1); }   // cima/baixo abrem o menu de baixo e alternam entre os botões e a linha do tempo
         break;
       case KEY.DOWN: case KEY.CHDN:
         if (live) { if (k === KEY.DOWN) { if (!S.osdMenu) { S.osdSel = osdDefault(); } showOsd(true); } else { zap(-1); } }
         else if (k === KEY.CHDN && c.kind === 'ep') { stepEpisode(-1); }
-        else { if (!S.osdMenu) { S.osdSel = osdDefault(); } showOsd(true); }
+        else { vodVert(1); }
         break;
       case KEY.LEFT:
-        if (S.osdMenu && !$('osd').classList.contains('hidden')) { moveOsdSel(-1); } else if (live) { showOsd(); } else { seek(-1); }
+        if (S.osdMenu && !$('osd').classList.contains('hidden') && S.osdSel !== $('osd-bar')) { moveOsdSel(-1); } else if (live) { showOsd(); } else { seek(-1); }
         break;
       case KEY.RIGHT:
-        if (S.osdMenu && !$('osd').classList.contains('hidden')) { moveOsdSel(1); } else if (live) { showOsd(); } else { seek(1); }
+        if (S.osdMenu && !$('osd').classList.contains('hidden') && S.osdSel !== $('osd-bar')) { moveOsdSel(1); } else if (live) { showOsd(); } else { seek(1); }
         break;
       case KEY.REW: if (!live) { Player.seek(-30); showOsd(); } break;
       case KEY.FF: if (!live) { Player.seek(30); showOsd(); } break;
       case KEY.PLAY: if (Player.isPaused()) { Player.toggle(); } showOsd(); break;
       case KEY.PAUSE: if (!Player.isPaused()) { Player.toggle(); } showOsd(); break;
       case KEY.ENTER:
-        if (S.osdMenu && !$('osd').classList.contains('hidden')) { activateOsdSel(); }   // menu aberto: OK ativa a opção escolhida
+        if (S.osdMenu && !$('osd').classList.contains('hidden') && S.osdSel !== $('osd-bar')) { activateOsdSel(); }   // menu aberto: OK ativa a opção escolhida
         else if (live) { showOsd(true); }
-        else { Player.toggle(); showOsd(); }
+        else { Player.toggle(); showOsd(S.osdMenu); }
         break;
       case KEY.RED:
         if (live) { toggleFav(c.list[c.idx]); }

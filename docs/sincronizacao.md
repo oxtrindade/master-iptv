@@ -33,3 +33,6 @@ Se um aparelho acabou de gravar, o outro pode demorar até cerca de 1 minuto par
 
 ## Evitar digitar o endereço em cada aparelho
 Em `app/js/sync.js`, preencha `Sy.DEFAULT_URL` com `https://master-sync.seunome.workers.dev` antes de gerar o zip.
+
+## Login da TV por QR Code
+A rota `GET /p/<código>` do Worker entrega a página onde o celular digita o login da TV. Depois de atualizar o app para a 1.58.0, publique o `worker/sync-worker.mjs` de novo no Cloudflare (Edit code → colar → Deploy).
