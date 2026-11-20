@@ -1150,18 +1150,80 @@
     return el;
   }
 
+  /* degradê com a cor do time (hex sem #); vazio se não houver cor */
+  function spTint(hex, dir, a1, a2) {
+    if (!/^[0-9a-fA-F]{6}$/.test(hex || '')) { return ''; }
+    var r = parseInt(hex.slice(0, 2), 16), g = parseInt(hex.slice(2, 4), 16), b = parseInt(hex.slice(4, 6), 16);
+    return 'linear-gradient(' + dir + ', rgba(' + r + ',' + g + ',' + b + ',' + a1 + '), rgba(' + r + ',' + g + ',' + b + ',' + a2 + '))';
+  }
+
+  function spRgba(hex, a, dflt) {
+    return /^[0-9a-fA-F]{6}$/.test(hex || '') ? 'rgba(' + parseInt(hex.slice(0, 2), 16) + ',' + parseInt(hex.slice(2, 4), 16) + ',' + parseInt(hex.slice(4, 6), 16) + ',' + a + ')' : dflt;
+  }
+
+  function spOpenGame(g) { S.sp.game = g; S.sp.autoFocus = true; S.sp.autoKey = null; if (S.section === 'sports') { renderSports(); } else { selectSection('sports'); } }
+
+  /* banner de destaque: jogos ao vivo e os próximos (os dos times que você segue primeiro); ←/→ passam de um para outro */
+  function spHero(body, list) {
+    list = list.slice(0, 7);
+    if (!list.length) { return; }
+    var fol = spFollow(), cur = S.sp.heroIdx || 0, box = h('button', { cls: 'f sphero', type: 'button', 'data-k': 'hero' }), dots = h('div', { cls: 'sphdots' });
+    if (cur >= list.length) { cur = 0; }
+    function paint() {
+      var g = list[cur], live = g.state === 'in', hits = spHits(g), wr = Sports.whereToWatch(g), st = Sports.statusText(g), dk = Sports.dayKey(g.start), tag;
+      if (live) { tag = 'AO VIVO'; }
+      else if (dk === Sports.ymd(new Date())) { tag = 'HOJE'; }
+      else if (dk === Sports.ymd(spDay(1))) { tag = 'AMANHÃ'; }
+      else { tag = SP_WD[new Date(g.start).getDay()].toUpperCase(); }
+      box.innerHTML = '';
+      box.className = 'f sphero' + (live ? ' live' : '');
+      box.style.background = 'linear-gradient(90deg, ' + spRgba(g.home.color, .85, '#1b2a47') + ' 0%, #0c1424 50%, ' + spRgba(g.away.color, .85, '#1b2a47') + ' 100%)';
+      var mid = g.state === 'pre' ? h('div', { cls: 'sphvs', text: 'VS' }) : h('div', { cls: 'sphsc', text: g.home.score + ' x ' + g.away.score });
+      box.appendChild(h('div', { cls: 'sphtag' + (live ? ' live' : ''), text: tag + (live ? ' · ' + st : '') }));
+      box.appendChild(h('div', { cls: 'sphmain' }, [
+        h('div', { cls: 'sphteam' }, [spLogo(g.home, 'splogo xxl'), h('div', { cls: 'sphname', text: g.home.name })]),
+        mid,
+        h('div', { cls: 'sphteam' }, [spLogo(g.away, 'splogo xxl'), h('div', { cls: 'sphname', text: g.away.name })])
+      ]));
+      box.appendChild(h('div', { cls: 'sphfoot', text: [g.leagueName, live ? '' : st, g.venue, hits.length ? hits[0].ch.name : (wr ? 'Onde: ' + wr.short : '')].filter(function (x) { return x; }).join('  ·  ') }));
+      [].forEach.call(dots.children, function (d, i) { d.className = 'sphdot' + (i === cur ? ' on' : ''); });
+    }
+    list.forEach(function () { dots.appendChild(h('span', { cls: 'sphdot' })); });
+    box.addEventListener('click', function () { var g = list[cur], hits = spHits(g); if (g.state === 'in' && hits.length) { spPlay(g, 0); } else { spOpenGame(g); } });
+    function go(d) { cur = (cur + d + list.length) % list.length; S.sp.heroIdx = cur; paint(); }
+    S.spHeroKey = function (k) {
+      var c = Nav.current();
+      if (list.length < 2 || !c || c !== box || !document.body.contains(box)) { return false; }
+      go(k === KEY.LEFT ? -1 : 1); return true;
+    };
+    clearInterval(S.spHeroT);
+    S.spHeroT = setInterval(function () {
+      if (S.section !== 'sports' || S.mode !== 'browse' || !document.body.contains(box)) { clearInterval(S.spHeroT); return; }
+      if (Nav.current() !== box) { go(1); }
+    }, 7000);
+    paint();
+    var wrap = h('div', { cls: 'sphwrap' }, [box, dots]);
+    body.appendChild(wrap);
+  }
+
   function spCard(g, o) {
     o = o || {};
     var fol = spFollow(), hits = spHits(g), live = g.state === 'in';
     function trow(t) {
-      return h('div', { cls: 'sprow' + (t.winner ? ' win' : '') }, [
+      var rw = h('div', { cls: 'sprow' + (t.winner ? ' win' : '') }, [
         spLogo(t), h('div', { cls: 'spname', text: t.name }),
         fol[t.id] ? h('span', { cls: 'spstar' }, [icon('starfill', 20)]) : null,
         h('div', { cls: 'spscore', text: g.state === 'pre' ? '' : t.score })
       ]);
+      rw.style.background = spTint(t.color, '90deg', .5, .05);
+      return rw;
     }
     var st = Sports.statusText(g);
-    if (o.date && g.state === 'pre' && Sports.dayKey(g.start) !== Sports.ymd(new Date())) { st = SP_WD[new Date(g.start).getDay()] + ' ' + st; }
+    if (g.state === 'pre') {
+      var dk = Sports.dayKey(g.start);
+      if (dk === Sports.ymd(spDay(1))) { st = 'AMANHÃ · ' + st; }
+      else if (dk !== Sports.ymd(new Date())) { st = SP_WD[new Date(g.start).getDay()] + ' ' + st; }
+    }
     var wr = g.state === 'post' ? null : Sports.whereToWatch(g), wh = wr ? h('div', { cls: 'spwh' }, [h('span', { text: 'Onde: ' + wr.short })]) : null;
     var ch = null;
     if (hits.length) {
@@ -1171,7 +1233,7 @@
       ch = h('div', { cls: 'spch guess' }, [icon('live', 18), h('span', { text: 'Palpite: ' + gg[0].name + (gg.length > 1 ? '  +' + (gg.length - 1) : '') })]);
     }
     return h('button', { cls: 'f spcard' + (live ? ' live' : ''), type: 'button', 'data-k': 'g:' + spGame(g), on: { click: function () {
-      if (o.play && hits.length) { spPlay(g, 0); } else { S.sp.game = g; S.sp.autoFocus = true; S.sp.autoKey = null; if (S.section === 'sports') { renderSports(); } else { selectSection('sports'); } }
+      if (o.play && hits.length) { spPlay(g, 0); } else { spOpenGame(g); }
     } } }, [
       h('div', { cls: 'sptop' }, [h('div', { cls: 'splg', text: g.leagueName }), h('div', { cls: 'spst' + (live ? ' live' : (g.state === 'post' ? ' done' : '')), text: st })]),
       trow(g.home), trow(g.away), ch, wh
@@ -1208,6 +1270,11 @@
     body.appendChild(h('div', { cls: 'spchips' }, chips));
     var key = Sports.dayKey(spDay(sp.day).getTime());
     var games = sp.games.filter(function (g) { return Sports.dayKey(g.start) === key && g.state !== 'in' && Sports.visible(g, fol); }).sort(spOrder);
+    if (sp.day === 0) {
+      var cand = sp.games.filter(function (g) { return g.state !== 'post' && Sports.visible(g, fol); });
+      cand.sort(function (a, b) { return (b.state === 'in') - (a.state === 'in') || ((fol[b.home.id] || fol[b.away.id]) ? 1 : 0) - ((fol[a.home.id] || fol[a.away.id]) ? 1 : 0) || a.start - b.start; });
+      spHero(body, cand);
+    }
     if (sp.day === 0) {
       // jogos ao vivo aparecem sempre em "Hoje", mesmo os que começaram antes da meia-noite
       var live = sp.games.filter(function (g) { return g.state === 'in' && Sports.visible(g, fol); }).sort(spOrder);
@@ -1251,6 +1318,39 @@
       return h('button', { cls: 'f spteam' + (on ? ' on' : ''), type: 'button', 'data-k': 'tm:' + t.id, on: { click: function () { spToggleFollow(t); paintSports(); } } },
         [spLogo(t, 'splogo'), h('span', { cls: 'tn', text: t.name }), h('span', { cls: 'tstar', text: on ? '★' : '☆' })]);
     })));
+  }
+
+  /* tabelas de classificação (uma por liga; busca só ao abrir) */
+  function spBodyTables(body) {
+    var sp = S.sp, lg = sp.tbLg || 'bra.1', cache = sp.stCache = sp.stCache || {}, list = SP_PICK.filter(function (x) { return x[0] !== 'fifa.world'; });
+    body.appendChild(h('div', { cls: 'spchips' }, list.map(function (x) {
+      return h('button', { cls: 'f spchip lg' + (x[0] === lg ? ' on' : ''), type: 'button', 'data-k': 'tb:' + x[0], text: x[1],
+        on: { click: function () { sp.tbLg = x[0]; paintSports(); } } });
+    })));
+    var t = cache[lg];
+    if (t === undefined) {
+      cache[lg] = null;
+      Sports.fetchStandings(http, lg).then(function (r) { cache[lg] = r; paintSports(); }, function () { cache[lg] = false; paintSports(); });
+      body.appendChild(spNote('Carregando tabela…'));
+      return;
+    }
+    if (t === null) { body.appendChild(spNote('Carregando tabela…')); return; }
+    if (t === false || !t.length) { delete cache[lg]; body.appendChild(spNote('Não consegui carregar a tabela desta competição agora.', true)); return; }
+    var fol = spFollow();
+    t.forEach(function (tb, ti) {
+      if (tb.name) { body.appendChild(h('div', { cls: 'sptitle', text: tb.name })); }
+      var box = h('div', { cls: 'sptable' });
+      box.appendChild(h('div', { cls: 'sptr head' }, [h('span', { cls: 'c pos', text: '#' }), h('span', { cls: 'c tm', text: 'Time' }),
+        h('span', { cls: 'c n', text: 'J' }), h('span', { cls: 'c n', text: 'V' }), h('span', { cls: 'c n', text: 'E' }), h('span', { cls: 'c n', text: 'D' }), h('span', { cls: 'c n', text: 'SG' }), h('span', { cls: 'c n pts', text: 'Pts' })]));
+      function num(v) { return v == null || !isFinite(v) ? '-' : String(v); }
+      tb.rows.forEach(function (r) {
+        box.appendChild(h('button', { cls: 'f sptr' + (fol[r.id] ? ' mine' : '') + (r.pos <= 4 ? ' top' : ''), type: 'button', 'data-k': 'tr:' + ti + ':' + r.pos }, [
+          h('span', { cls: 'c pos', text: String(r.pos) }), h('span', { cls: 'c tm' }, [spLogo(r, 'splogo sm'), h('span', { cls: 'tn', text: r.name })]),
+          h('span', { cls: 'c n', text: num(r.gp) }), h('span', { cls: 'c n', text: num(r.w) }), h('span', { cls: 'c n', text: num(r.d) }), h('span', { cls: 'c n', text: num(r.l) }),
+          h('span', { cls: 'c n', text: r.gd == null || !isFinite(r.gd) ? '-' : (r.gd > 0 ? '+' : '') + r.gd }), h('span', { cls: 'c n pts', text: num(r.pts) })]));
+      });
+      body.appendChild(box);
+    });
   }
 
   function spBodyTeams(body) {
@@ -1521,7 +1621,7 @@
     var page = S.pageEl;
     page.className = 'page scroll sports';
     page.innerHTML = '';
-    var tabs = h('div', { cls: 'sptabs' }, [['scores', 'Placares'], ['teams', 'Meus times'], ['channels', 'Nos meus canais']].map(function (t) {
+    var tabs = h('div', { cls: 'sptabs' }, [['scores', 'Placares'], ['tables', 'Tabelas'], ['teams', 'Meus times'], ['channels', 'Nos meus canais']].map(function (t) {
       return h('button', { cls: 'f hubtab sptab', type: 'button', 'data-k': 'tab:' + t[0], text: t[1], on: { click: function () { S.sp.tab = t[0]; S.sp.game = null; paintSports(); spEnsure(spNeeded()); } } });
     }));
     S.sp.bodyEl = h('div', { cls: 'spbody' });
@@ -1551,6 +1651,7 @@
       if (Object.keys(sp.pend).length || !sp.tried) { body.appendChild(spNote('Carregando placares…')); }
       else { body.appendChild(spNote('Não consegui carregar os placares agora. A fonte gratuita pode estar fora do ar ou sem acesso daqui.', true)); }
     } else if (sp.game) { spBodyGame(body); }
+    else if (sp.tab === 'tables') { spBodyTables(body); }
     else if (sp.tab === 'teams') { spBodyTeams(body); }
     else if (sp.tab === 'channels') { spBodyChannels(body); }
     else { spBodyScores(body); }
@@ -3575,7 +3676,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.58.0']
+      ['Versão do app', '1.59.0']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
@@ -4589,6 +4690,7 @@
       if (k === KEY.BACK || k === KEY.ESC) { a.blur(); e.preventDefault(); return; }
       if (k === KEY.UP || k === KEY.DOWN) { a.blur(); } else { return; }
     }
+    if ((k === KEY.LEFT || k === KEY.RIGHT) && S.mode === 'browse' && S.section === 'sports' && S.spHeroKey && S.spHeroKey(k)) { e.preventDefault(); return; }
     if ((k === KEY.LEFT || k === KEY.RIGHT) && S.mode === 'browse' && S.heroKey && S.heroKey(k)) { e.preventDefault(); return; }
     switch (k) {
       case KEY.LEFT: e.preventDefault(); Nav.move('left'); break;

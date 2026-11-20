@@ -1176,3 +1176,48 @@ body.compact .hero.pv .herotitle { font-size: 18px; max-height: 26px; margin-bot
 .qrbox { margin: 10px auto; text-align: center; }
 .qrbox img { width: 260px; height: 260px; border-radius: 12px; background: #fff; image-rendering: pixelated; }
 body.compact .qrbox img { width: 170px; height: 170px; }
+
+/* 1.59.0: aba Esportes com banner de destaque, cards com cor do time e tabelas */
+.sphwrap { margin: 0 0 18px; }
+.sphero { position: relative; display: block; width: 100%; height: 330px; padding: 22px 40px; border: 0; border-radius: 22px; color: #fff; text-align: left; overflow: hidden; }
+.sphero.f.focus { box-shadow: 0 0 0 4px #fff, 0 0 30px rgba(58,180,224,.45); }
+.sphtag { display: inline-block; padding: 5px 16px; border-radius: 8px; background: rgba(0,0,0,.45); font-size: 22px; font-weight: 800; letter-spacing: 2px; }
+.sphtag.live { background: #c9372c; }
+.sphmain { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; }
+.sphteam { display: flex; flex-direction: column; align-items: center; width: 34%; }
+.sphname { margin-top: 10px; font-size: 38px; font-weight: 800; text-align: center; max-height: 90px; overflow: hidden; line-height: 1.1; }
+.sphvs, .sphsc { font-size: 44px; font-weight: 800; padding: 8px 22px; border-radius: 14px; background: rgba(0,0,0,.4); }
+.sphsc { font-size: 64px; }
+.sphfoot { position: absolute; left: 40px; right: 40px; bottom: 16px; font-size: 22px; font-weight: 600; color: #e6ecf7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.splogo.xxl { width: 130px; height: 130px; }
+.sphdots { display: flex; justify-content: center; margin-top: 10px; }
+.sphdot { width: 10px; height: 10px; margin: 0 5px; border-radius: 5px; background: rgba(255,255,255,.3); }
+.sphdot.on { width: 26px; background: #3ab4e0; }
+.sprow { padding: 0 10px; border-radius: 10px; margin-bottom: 4px; }
+.sptable { margin-bottom: 20px; }
+.sptr { display: flex; align-items: center; width: 100%; height: 56px; padding: 0 16px; border: 0; border-radius: 10px; background: #111a2c; color: #e9eef7; font-size: 24px; margin-bottom: 4px; text-align: left; }
+.sptr.head { height: 40px; background: transparent; color: #8a97ad; font-size: 20px; font-weight: 700; }
+.sptr.top { box-shadow: inset 5px 0 0 #3ab4e0; }
+.sptr.mine { background: #1c2c4a; }
+.sptr.f.focus { background: #fff; color: #0b101a; box-shadow: 0 0 0 3px #3ab4e0; }
+.sptr .c { display: flex; align-items: center; }
+.sptr .pos { width: 50px; font-weight: 800; }
+.sptr .tm { flex: 1; min-width: 0; }
+.sptr .tm .tn { margin-left: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sptr .n { width: 70px; justify-content: center; }
+.sptr .pts { font-weight: 800; }
+body.compact .sphero { height: 200px; padding: 14px 22px; }
+body.compact .sphtag { font-size: 14px; }
+body.compact .sphname { font-size: 22px; max-height: 52px; }
+body.compact .sphvs { font-size: 26px; } body.compact .sphsc { font-size: 36px; }
+body.compact .sphfoot { font-size: 14px; left: 22px; right: 22px; bottom: 10px; }
+body.compact .splogo.xxl { width: 78px; height: 78px; }
+body.compact .sptr { height: 40px; font-size: 17px; } body.compact .sptr.head { height: 28px; font-size: 14px; }
+body.compact .sptr .n { width: 46px; } body.compact .sptr .pos { width: 34px; }
+body.portrait .sphero { height: 170px; padding: 12px 14px; }
+body.portrait .sphname { font-size: 15px; max-height: 40px; }
+body.portrait .sphvs { font-size: 20px; padding: 4px 12px; } body.portrait .sphsc { font-size: 28px; }
+body.portrait .sphtag { font-size: 12px; } body.portrait .sphfoot { font-size: 12px; left: 14px; right: 14px; bottom: 8px; }
+body.portrait .splogo.xxl { width: 60px; height: 60px; }
+body.portrait .sptr { height: 36px; font-size: 14px; padding: 0 8px; } body.portrait .sptr .n { width: 30px; } body.portrait .sptr .pos { width: 26px; }
+body.portrait .sptr.head { height: 24px; font-size: 12px; }

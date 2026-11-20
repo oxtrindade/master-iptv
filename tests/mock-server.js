@@ -56,6 +56,12 @@ function create() {
       }
     }
     // placares (formato da API pública da ESPN) para testar a tela de Esportes
+    var sm = /^\/espn\/([^/]+)\/standings$/.exec(u.pathname);
+    if (sm) {
+      function ent(rank, id, name, pts) { return { team: { id: id, displayName: name, logos: [{ href: '' }] }, stats: [{ name: 'rank', value: rank }, { name: 'gamesPlayed', value: 10 }, { name: 'wins', value: 6 }, { name: 'ties', value: 2 }, { name: 'losses', value: 2 }, { name: 'pointDifferential', value: 7 }, { name: 'points', value: pts }] }; }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ children: [{ name: 'Liga', standings: { entries: [ent(2, '819', 'Flamengo', 20), ent(1, '2029', 'Palmeiras', 22)] } }] }));
+    }
     var em = /^\/espn\/([^/]+)\/scoreboard$/.exec(u.pathname);
     if (em) {
       var lg = em[1], nowMs = Date.now();

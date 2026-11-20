@@ -110,7 +110,7 @@
     var t = (c && c.team) || {};
     return {
       id: String(t.id || ''), name: Sp.ptName(t.displayName || t.name || ''), short: Sp.ptName(t.shortDisplayName || ''), abbr: t.abbreviation || '',
-      logo: t.logo || (t.logos && t.logos[0] && t.logos[0].href) || '',
+      logo: t.logo || (t.logos && t.logos[0] && t.logos[0].href) || '', color: /^[0-9a-fA-F]{6}$/.test(t.color || '') ? t.color : '',
       score: c && c.score != null && c.score !== '' ? String(typeof c.score === 'object' ? (c.score.displayValue || c.score.value) : c.score) : '',
       winner: !!(c && c.winner),
       stats: { poss: stat(c, 'possessionPct'), shots: stat(c, 'totalShots'), sot: stat(c, 'shotsOnTarget'), fouls: stat(c, 'foulsCommitted'), corners: stat(c, 'wonCorners'), yellow: stat(c, 'yellowCards'), red: stat(c, 'redCards') }
@@ -186,6 +186,39 @@
   };
   Sp.fetchTeams = function (http, leagueId) {
     return getJson(http, Sp.BASE + '/' + leagueId + '/teams?limit=200').then(Sp.parseTeams);
+  };
+
+
+  /* classificação (tabela) de uma liga: [{name, rows:[{pos,id,name,logo,gp,w,d,l,gd,pts}]}] — uma tabela por grupo/fase */
+  function sv(stats, names) {
+    var i, j;
+    for (j = 0; j < names.length; j++) {
+      for (i = 0; i < (stats || []).length; i++) { if (stats[i].name === names[j] || stats[i].abbreviation === names[j]) { return stats[i].value != null ? stats[i].value : parseFloat(stats[i].displayValue); } }
+    }
+    return null;
+  }
+  Sp.parseStandings = function (d) {
+    var out = [];
+    function table(node, label) {
+      var es = node && node.standings && node.standings.entries;
+      if (!es || !es.length) { return; }
+      var rows = es.map(function (e, i) {
+        var t = e.team || {}, st = e.stats || [], r = sv(st, ['rank']);
+        return { pos: r != null && isFinite(r) ? Math.round(r) : i + 1, id: String(t.id || ''), name: Sp.ptName(t.displayName || t.name || ''),
+          logo: (t.logos && t.logos[0] && t.logos[0].href) || t.logo || '',
+          gp: sv(st, ['gamesPlayed', 'GP']), w: sv(st, ['wins', 'W']), d: sv(st, ['ties', 'draws', 'D']), l: sv(st, ['losses', 'L']),
+          gd: sv(st, ['pointDifferential', 'goalDifference', 'GD']), pts: sv(st, ['points', 'PTS']) };
+      });
+      rows.sort(function (a, b) { return a.pos - b.pos; });
+      out.push({ name: label || '', rows: rows });
+    }
+    if (d && d.children && d.children.length) {
+      d.children.forEach(function (c) { table(c, d.children.length > 1 ? (c.name || c.abbreviation || '') : ''); });
+    } else { table(d, ''); }
+    return out;
+  };
+  Sp.fetchStandings = function (http, leagueId) {
+    return getJson(http, Sp.BASE.replace('/site/v2/', '/v2/') + '/' + leagueId + '/standings').then(Sp.parseStandings);
   };
 
   /* amistosos: só os do Brasil (ou de times que você segue) para não encher a tela */

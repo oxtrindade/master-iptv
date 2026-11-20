@@ -629,6 +629,14 @@ Promise.all([listen(api), listen(px), startSync()]).then(function () {
       key(413);
       assert.ok($('#player').classList.contains('hidden'));
       key(27);
+      assert.ok($('.sphero') && /Palmeiras|Flamengo/.test($('.sphero').textContent) && $$('.sphdot').length >= 2, 'banner de destaque com os jogos de hoje');
+      assert.ok($('.spcard .sprow').style.background !== undefined, 'cards com linhas de time');
+      $('[data-k="tab:tables"]').click();
+      return waitFor(function () { return $('.sptr:not(.head)'); }, 'tabela de classificação');
+    }).then(function () {
+      var tr = $$('.sptr:not(.head)');
+      assert.ok(tr.length === 2 && /^1Palmeiras/.test(tr[0].textContent.replace(/\s+/g, '')) && /22$/.test(tr[0].textContent), 'tabela ordenada por posição: ' + tr[0].textContent);
+      step('esportes: banner de destaque e aba Tabelas');
       $('[data-k="tab:teams"]').click();
       assert.ok($('.spchip.team') && /Palmeiras/.test($('.sports').textContent), 'Meus times mostra o time e o jogo');
       $('[data-k="tab:channels"]').click();

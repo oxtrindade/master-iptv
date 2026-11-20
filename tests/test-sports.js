@@ -122,3 +122,11 @@ Sports.fetchDay(fakeHttp, new Date(2026, 8, 19)).then(function (r) {
   ok(calls.length === Sports.LEAGUES.length && calls.every(function (u) { return /dates=20260919(&|$)/.test(u); }), 'uma consulta por liga, com um único dia (sem intervalo)');
   console.log('todos os testes passaram (' + n + ')');
 }).catch(function (e) { console.error('  FAIL ' + (e && e.stack || e)); process.exit(1); });
+
+(function () {
+  var st = Sports.parseStandings({ children: [{ standings: { entries: [
+    { team: { id: '1', displayName: 'Flamengo' }, stats: [{ name: 'rank', value: 2 }, { name: 'points', value: 20 }, { name: 'gamesPlayed', value: 10 }] },
+    { team: { id: '2', displayName: 'Palmeiras' }, stats: [{ name: 'rank', value: 1 }, { name: 'points', value: 22 }] }] } }] });
+  ok(st.length === 1 && st[0].rows[0].name === 'Palmeiras' && st[0].rows[1].gp === 10 && st[0].rows[0].pts === 22, 'standings: ordena por posição e lê pontos/jogos');
+  ok(Sports.parseStandings({}).length === 0, 'standings vazio');
+})();

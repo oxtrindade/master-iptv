@@ -392,3 +392,9 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 - **Login da TV por QR Code:** "Entrar pelo celular" agora mostra um QR Code. Ao apontar a câmera do celular, abre uma página (servida pelo Worker em `/p/<código>`) onde se digita servidor, usuário e senha; a TV recebe e conecta sozinha. O código de 16 caracteres e o caminho pelo app do celular continuam funcionando. **Precisa publicar de novo o Worker** (`worker/sync-worker.mjs`, ganhou a rota `/p/`); sem isso o QR abre uma página "not found".
 - **Player (filmes e séries):** o menu de baixo agora abre na **linha do tempo** (↓ ou ↑): ←/→ avançam/retrocedem com o menu aberto, ↑ passa para os botões (Anterior · Áudio e legenda · Próximo) e ↓ volta para a linha do tempo. Com o menu fechado, ←/→ continuam avançando direto.
 - QR gerado com a biblioteca `qrcode-generator` (MIT, em `app/lib/qrcode.js`).
+
+## 1.59.0
+- **Aba Esportes redesenhada** (inspirada no ReSeq/Nuvio): 
+  - **Banner de destaque** no topo de "Hoje": jogos ao vivo e os próximos (os dos seus times primeiro), com escudos grandes, etiqueta AO VIVO/HOJE/AMANHÃ, campeonato, horário, estádio e canal. Passa sozinho a cada 7 s; com o banner selecionado, ←/→ trocam de jogo e OK abre (ou assiste, se o jogo está ao vivo e tem canal).
+  - **Cards** com cada time sobre a cor do clube e etiqueta AMANHÃ/dia da semana nos jogos futuros.
+  - **Nova aba Tabelas:** classificação (posição, J, V, E, D, SG, Pontos) das principais ligas, com os 4 primeiros destacados e seus times marcados. Fonte: ESPN (`/apis/v2/.../standings`).
