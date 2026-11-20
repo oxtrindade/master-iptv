@@ -381,3 +381,6 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 ## 1.57.7
 - **Banner da Home com trailer:** enquanto o trailer toca, o título fica pequeno e tag/nota/sinopse somem (ficam só os botões), como na tela do filme.
 - **Diagnóstico mais detalhado:** cada consulta mostra tamanho da página, quantidade de `videoId`, se tem `ytInitialData` e se veio tela de consentimento.
+
+## 1.57.8
+- **Android: busca de trailer dublado corrigida.** O diagnóstico mostrou que o YouTube devolvia a tela de consentimento (sem vídeos) para a busca. As páginas `youtube.com/results`, feeds e canais agora são buscadas pelo app com cookie de consentimento e idioma pt-BR (`MainActivity.ytFetch`). O mesmo vale para a busca de jogos ao vivo no YouTube. (No webOS o proxy local já enviava o cookie.)

@@ -18,6 +18,12 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
 import android.webkit.JavascriptInterface;
@@ -131,6 +137,15 @@ public class MainActivity extends Activity {
                                 new ByteArrayInputStream(ytPage(id).getBytes(StandardCharsets.UTF_8)));
                     }
                 }
+                // buscas/páginas do YouTube feitas pelo JS (trailers, jogos): o YouTube devolve a tela de consentimento
+                // se não houver cookie; o XHR de file:// não envia cookies, então a requisição é feita aqui com o cookie
+                if (u != null && "www.youtube.com".equals(u.getHost()) && "GET".equals(request.getMethod())
+                        && u.getPath() != null && (u.getPath().startsWith("/results") || u.getPath().startsWith("/feeds/")
+                        || u.getPath().startsWith("/@") || u.getPath().startsWith("/channel/") || u.getPath().startsWith("/c/"))
+                        && request.isForMainFrame() == false) {
+                    WebResourceResponse r = ytFetch(u.toString(), request.getRequestHeaders());
+                    if (r != null) { return r; }
+                }
                 return super.shouldInterceptRequest(view, request);
             }
 
@@ -155,6 +170,30 @@ public class MainActivity extends Activity {
 
         web.loadUrl(START_URL);
         web.requestFocus();
+    }
+
+    /** GET no YouTube com cookie de consentimento e idioma pt-BR; devolve com CORS liberado. null = deixa o WebView seguir normal. */
+    private WebResourceResponse ytFetch(String url, Map<String, String> inHeaders) {
+        try {
+            HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
+            c.setConnectTimeout(10000); c.setReadTimeout(15000);
+            String ua = inHeaders != null ? inHeaders.get("User-Agent") : null;
+            if (ua != null) { c.setRequestProperty("User-Agent", ua); }
+            c.setRequestProperty("Accept-Language", "pt-BR,pt;q=0.9");
+            c.setRequestProperty("Cookie", "CONSENT=YES+1; SOCS=CAI");
+            int code = c.getResponseCode();
+            InputStream in = code >= 400 ? c.getErrorStream() : c.getInputStream();
+            if (in == null) { return null; }
+            ByteArrayOutputStream bo = new ByteArrayOutputStream();
+            byte[] buf = new byte[16384]; int n;
+            while ((n = in.read(buf)) > 0) { bo.write(buf, 0, n); }
+            in.close();
+            String ct = c.getContentType(); String mime = "text/html", enc = "utf-8";
+            if (ct != null) { String[] pp = ct.split(";"); mime = pp[0].trim(); }
+            Map<String, String> h = new HashMap<String, String>();
+            h.put("Access-Control-Allow-Origin", "*");
+            return new WebResourceResponse(mime, enc, code, code >= 400 ? "Error" : "OK", h, new ByteArrayInputStream(bo.toByteArray()));
+        } catch (Exception e) { return null; }
     }
 
     /** Ponte exposta ao JavaScript como window.NativeApp. */

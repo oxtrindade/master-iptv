@@ -3560,7 +3560,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.57.7']
+      ['Versão do app', '1.57.8']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
