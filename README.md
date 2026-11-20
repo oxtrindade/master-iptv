@@ -384,3 +384,6 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 
 ## 1.57.8
 - **Android: busca de trailer dublado corrigida.** O diagnóstico mostrou que o YouTube devolvia a tela de consentimento (sem vídeos) para a busca. As páginas `youtube.com/results`, feeds e canais agora são buscadas pelo app com cookie de consentimento e idioma pt-BR (`MainActivity.ytFetch`). O mesmo vale para a busca de jogos ao vivo no YouTube. (No webOS o proxy local já enviava o cookie.)
+
+## 1.57.9
+- **Trailer dublado (Android):** com o cookie de consentimento a página do YouTube passou a vir com 60 vídeos, mas o leitor não achava os títulos (formato diferente). O leitor agora aceita `title.simpleText` e rótulos de acessibilidade, e o diagnóstico mostra uma amostra do trecho da página quando nenhum vídeo é lido.

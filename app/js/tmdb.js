@@ -46,9 +46,13 @@ var Tmdb = (function () {
       var chunk = html.slice(x.at, Math.min(i + 1 < hits.length ? hits[i + 1].at : x.at + 4000, x.at + 4000)), e = byId[x.id];
       if (!e) { e = byId[x.id] = { id: x.id, raw: '', pos: out.length }; out.push(e); }
       e.raw += chunk;
+      if (!e.pre) { e.pre = html.slice(Math.max(0, x.at - 700), x.at); }
     });
     out.forEach(function (e) {
       var t = /"title":\{(?:"runs":\[\{"text":|"content":)"((?:[^"\\]|\\.)*)"/.exec(e.raw), c = /"(?:ownerText|longBylineText|shortBylineText)":\{"runs":\[\{"text":"((?:[^"\\]|\\.)*)"/.exec(e.raw), v;
+      if (!t) { t = /"title":\{"simpleText":"((?:[^"\\]|\\.)*)"/.exec(e.raw) || /"title":\{"simpleText":"((?:[^"\\]|\\.)*)"/.exec(e.pre || ''); }
+      if (!t) { t = /"(?:title|text)":"((?:[^"\\]|\\.){6,200})"/.exec(e.raw); }
+      if (!t) { t = /"(?:label|accessibilityText)":"((?:[^"\\]|\\.){6,300})"/.exec(e.raw) || /"(?:label|accessibilityText)":"((?:[^"\\]|\\.){6,300})"/.exec(e.pre || ''); }
       v = t ? t[1] : ''; try { v = JSON.parse('"' + v + '"'); } catch (er) { /* mantém */ }
       e.title = v;
       if (c) { v = c[1]; try { v = JSON.parse('"' + v + '"'); } catch (er2) { /* mantém */ } e.chan = v; }
@@ -57,7 +61,7 @@ var Tmdb = (function () {
         while ((q = r2.exec(e.raw)) && tx.length < 12) { tx.push(q[1]); }
         e.chan = tx.slice(1).join(' ');
       }
-      delete e.raw;
+      delete e.raw; delete e.pre;
     });
     return out.filter(function (e) { return e.title; });
   }
@@ -100,7 +104,7 @@ var Tmdb = (function () {
         html = String(html || '');
         if (html.indexOf('\\x22') >= 0) { html = html.replace(/\\x([0-9a-fA-F]{2})/g, function (m, x) { return String.fromCharCode(parseInt(x, 16)); }); }
         var n = parseResults(html).length, id = pickDub(html, nameWords, dub);
-        diag.push('"' + q + '": ' + n + ' vídeos' + (id ? ', achou ' + id : ', nenhum dublado') + ' [' + html.length + ' bytes, videoId×' + (html.match(/"videoId":"/g) || []).length + ', ' + (html.indexOf('ytInitialData') >= 0 ? 'initialData' : 'sem initialData') + (/consent\.youtube|CONSENT/.test(html) ? ', CONSENTIMENTO' : '') + ']');
+        diag.push('"' + q + '": ' + n + ' vídeos' + (id ? ', achou ' + id : ', nenhum dublado') + ' [' + html.length + ' bytes, videoId×' + (html.match(/"videoId":"/g) || []).length + ', ' + (html.indexOf('ytInitialData') >= 0 ? 'initialData' : 'sem initialData') + (n ? '' : ', amostra: ' + (function () { var i = html.indexOf('"videoId":"'); return i < 0 ? '-' : html.slice(i, i + 220).replace(/[\r\n]+/g, ' '); })()) + (/consent\.youtube|CONSENT/.test(html) ? ', CONSENTIMENTO' : '') + ']');
         return id;
       }).then(null, function (e) { diag.push('"' + q + '": falha de rede'); return ''; });
     }
