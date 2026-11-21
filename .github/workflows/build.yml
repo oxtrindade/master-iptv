@@ -17,7 +17,7 @@ jobs:
       # Atualização pelo celular: suba um .zip na raiz do repositório e este passo o aplica sozinho
       - name: Aplicar .zip enviado (se houver)
         run: |
-          Z=$(ls -1 ./*.zip 2>/dev/null | head -1 || true)
+          Z=$(ls -1 ./*.zip 2>/dev/null | sort -V | tail -1 || true)   # vários zips na raiz: usa o de maior versão
           if [ -n "$Z" ]; then
             echo "Aplicando $Z"
             rm -rf "$RUNNER_TEMP/upd" && mkdir -p "$RUNNER_TEMP/upd"
