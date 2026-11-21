@@ -615,6 +615,9 @@ Promise.all([listen(api), listen(px), startSync()]).then(function () {
       assert.ok(gu && /Palpite: Premiere 3/.test(gu.textContent), 'jogo sem canal no guia: palpite com o Premiere sem guia');
       $('.spcard.live').click();
       assert.ok(/Raphael Veiga/.test($('.sports').textContent) && /Posse de bola/.test($('.sports').textContent) && /55%/.test($('.sports').textContent), 'gols e estatísticas');
+      return waitFor(function () { return $$('.sppitch .spplayer').length === 22; }, 'escalação no campo');
+    }).then(function () {
+      assert.ok(/Escalação/.test($('.sports').textContent) && /4-3-3/.test($('.splnames').textContent), 'escalação com formação');
       var pl = $$('.spplay')[0];
       assert.ok(pl && /Canal Esporte 2/.test(pl.textContent), 'botão para assistir no canal');
       var fb = $$('.sports .btn').filter(function (b) { return /Seguir Palmeiras/.test(b.textContent); })[0];
@@ -667,6 +670,15 @@ Promise.all([listen(api), listen(px), startSync()]).then(function () {
       $$('#profiles .btn').filter(function (b) { return b.textContent === 'Salvar'; })[0].click();
       assert.strictEqual($$('#profiles .pcard').length, 3, 'dois perfis + adicionar');
       assert.ok($$('#profiles .pcard')[1].querySelector('svg'), 'o perfil salvo mostra o ícone em vez da inicial');
+      // perfil existente: escolher o avatar já grava, sem apertar "Salvar"
+      $$('#profiles .pcard')[1].click();   // em "Gerenciar": abre a edição
+      var ic5 = $$('#profiles .aicon')[5];
+      assert.ok(ic5, 'edição do perfil Ana abriu');
+      ic5.click();
+      var saved = w.JSON.parse(w.localStorage.getItem('iptv.profiles')).filter(function (x) { return x.name === 'Ana'; })[0];
+      assert.ok(saved && saved.icon === ic5._k, 'avatar gravado ao escolher, sem Salvar: ' + (saved && saved.icon) + ' / ' + ic5._k);
+      $$('#profiles .btn').filter(function (b) { return b.textContent === 'Cancelar'; })[0].click();
+      assert.ok(w.JSON.parse(w.localStorage.getItem('iptv.profiles')).filter(function (x) { return x.name === 'Ana'; })[0].icon === ic5._k, 'Cancelar não desfaz o avatar já escolhido');
       $$('#profiles .btn').filter(function (b) { return b.textContent === 'Concluído'; })[0].click();
       $$('#profiles .pcard')[1].click(); // entra no perfil Ana
       assert.ok($('#profiles').classList.contains('hidden') && $('.hubtab'), 'entrou no menu do novo perfil');

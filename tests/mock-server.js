@@ -62,6 +62,11 @@ function create() {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ children: [{ name: 'Liga', standings: { entries: [ent(2, '819', 'Flamengo', 20), ent(1, '2029', 'Palmeiras', 22)] } }] }));
     }
+    if (/^\/espn\/[^/]+\/summary$/.test(u.pathname)) {
+      var rost = function (ha, fm) { var r = []; for (var i = 1; i <= 11; i++) { r.push({ starter: true, jersey: String(i), formationPlace: String(i), athlete: { displayName: 'Jogador ' + ha + i }, position: { abbreviation: 'M' } }); } return { homeAway: ha, formation: fm, roster: r }; };
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ rosters: [rost('home', '4-3-3'), rost('away', '4-4-2')] }));
+    }
     var em = /^\/espn\/([^/]+)\/scoreboard$/.exec(u.pathname);
     if (em) {
       var lg = em[1], nowMs = Date.now();

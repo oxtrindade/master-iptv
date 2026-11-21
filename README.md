@@ -398,3 +398,13 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
   - **Banner de destaque** no topo de "Hoje": jogos ao vivo e os próximos (os dos seus times primeiro), com escudos grandes, etiqueta AO VIVO/HOJE/AMANHÃ, campeonato, horário, estádio e canal. Passa sozinho a cada 7 s; com o banner selecionado, ←/→ trocam de jogo e OK abre (ou assiste, se o jogo está ao vivo e tem canal).
   - **Cards** com cada time sobre a cor do clube e etiqueta AMANHÃ/dia da semana nos jogos futuros.
   - **Nova aba Tabelas:** classificação (posição, J, V, E, D, SG, Pontos) das principais ligas, com os 4 primeiros destacados e seus times marcados. Fonte: ESPN (`/apis/v2/.../standings`).
+
+## 1.59.1
+- **Escudos na aba Esportes:** se o logo que vem da fonte não carregar, usa o escudo padrão da ESPN pelo id do time e, em último caso, as iniciais do time num círculo (nunca fica um espaço vazio).
+- **Banner de destaque:** mais alto (o rodapé não cobre mais os nomes) e cores muito claras (ex.: time de branco) não clareiam mais o fundo.
+
+## 1.60.0
+- **Avatar do perfil:** em perfil já existente, escolher avatar/escudo/cor já grava na hora (sem apertar "Salvar"; um perfil novo continua sendo criado no Salvar).
+- **Escalação no campo virtual:** ao abrir um jogo, aparece um campo com os 11 titulares de cada time na formação (ex.: 4-3-3), com número e sobrenome. Vem da ESPN quando a escalação já foi divulgada; antes disso, aviso "ainda não divulgada". Na TV o campo é horizontal; no celular em pé, vertical.
+- **YouTube em segundo plano:** o app procura, sozinho, nos canais do YouTube (CazéTV, SportyNet, ge tv, TNT Sports) a transmissão dos jogos ao vivo ou prestes a começar (uma página por canal a cada ~3 min, só Android/LG). Achou: o card mostra "CazéTV (YouTube) · ao vivo" e, no jogo, o botão "Assistir ao vivo na CazéTV (YouTube)" abre direto o vídeo, como os canais do provedor.
+- Inclui os ajustes de escudo da 1.59.1 (fallback pelo id da ESPN e iniciais).

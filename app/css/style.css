@@ -1179,7 +1179,7 @@ body.compact .qrbox img { width: 170px; height: 170px; }
 
 /* 1.59.0: aba Esportes com banner de destaque, cards com cor do time e tabelas */
 .sphwrap { margin: 0 0 18px; }
-.sphero { position: relative; display: block; width: 100%; height: 330px; padding: 22px 40px; border: 0; border-radius: 22px; color: #fff; text-align: left; overflow: hidden; }
+.sphero { position: relative; display: block; width: 100%; height: 350px; padding: 22px 40px; border: 0; border-radius: 22px; color: #fff; text-align: left; overflow: hidden; }
 .sphero.f.focus { box-shadow: 0 0 0 4px #fff, 0 0 30px rgba(58,180,224,.45); }
 .sphtag { display: inline-block; padding: 5px 16px; border-radius: 8px; background: rgba(0,0,0,.45); font-size: 22px; font-weight: 800; letter-spacing: 2px; }
 .sphtag.live { background: #c9372c; }
@@ -1206,7 +1206,7 @@ body.compact .qrbox img { width: 170px; height: 170px; }
 .sptr .tm .tn { margin-left: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sptr .n { width: 70px; justify-content: center; }
 .sptr .pts { font-weight: 800; }
-body.compact .sphero { height: 200px; padding: 14px 22px; }
+body.compact .sphero { height: 240px; padding: 14px 22px; }
 body.compact .sphtag { font-size: 14px; }
 body.compact .sphname { font-size: 22px; max-height: 52px; }
 body.compact .sphvs { font-size: 26px; } body.compact .sphsc { font-size: 36px; }
@@ -1214,10 +1214,41 @@ body.compact .sphfoot { font-size: 14px; left: 22px; right: 22px; bottom: 10px; 
 body.compact .splogo.xxl { width: 78px; height: 78px; }
 body.compact .sptr { height: 40px; font-size: 17px; } body.compact .sptr.head { height: 28px; font-size: 14px; }
 body.compact .sptr .n { width: 46px; } body.compact .sptr .pos { width: 34px; }
-body.portrait .sphero { height: 170px; padding: 12px 14px; }
+body.portrait .sphero { height: 215px; padding: 12px 14px; }
 body.portrait .sphname { font-size: 15px; max-height: 40px; }
 body.portrait .sphvs { font-size: 20px; padding: 4px 12px; } body.portrait .sphsc { font-size: 28px; }
 body.portrait .sphtag { font-size: 12px; } body.portrait .sphfoot { font-size: 12px; left: 14px; right: 14px; bottom: 8px; }
 body.portrait .splogo.xxl { width: 60px; height: 60px; }
 body.portrait .sptr { height: 36px; font-size: 14px; padding: 0 8px; } body.portrait .sptr .n { width: 30px; } body.portrait .sptr .pos { width: 26px; }
 body.portrait .sptr.head { height: 24px; font-size: 12px; }
+
+.spini { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; border-radius: 50%; background: rgba(255,255,255,.14); color: #fff; font-weight: 800; font-size: .42em; letter-spacing: 0; }
+.splogo { font-size: 40px; } .splogo.sm { font-size: 30px; } .splogo.xl { font-size: 120px; } .splogo.xxl { font-size: 130px; }
+body.compact .splogo.xxl { font-size: 78px; } body.portrait .splogo.xxl { font-size: 60px; } body.portrait .splogo { font-size: 28px; } body.compact .splogo { font-size: 30px; }
+.sphmain { padding-bottom: 28px; }
+
+/* 1.60.0: escalação no campo virtual */
+.splnames { display: flex; justify-content: space-between; font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+.splname.away { text-align: right; }
+.sppitch { position: relative; width: 100%; height: 560px; border-radius: 16px; background: repeating-linear-gradient(90deg, #1f7a3a 0, #1f7a3a 10%, #228a41 10%, #228a41 20%); border: 3px solid rgba(255,255,255,.55); margin-bottom: 20px; overflow: hidden; }
+.sppitch .spmid { position: absolute; left: 50%; top: 0; bottom: 0; width: 3px; margin-left: -1px; background: rgba(255,255,255,.55); }
+.sppitch .spcircle { position: absolute; left: 50%; top: 50%; width: 130px; height: 130px; margin: -65px 0 0 -65px; border: 3px solid rgba(255,255,255,.55); border-radius: 50%; }
+.sppitch .spbox { position: absolute; top: 25%; bottom: 25%; width: 14%; border: 3px solid rgba(255,255,255,.55); }
+.sppitch .spbox.l { left: 0; border-left: 0; } .sppitch .spbox.r { right: 0; border-right: 0; }
+.spplayer { position: absolute; width: 90px; margin-left: -45px; margin-top: -30px; text-align: center; }
+.spplayer .spnum { display: inline-block; min-width: 38px; height: 38px; line-height: 38px; border-radius: 19px; background: #e8f1ff; color: #0b2a66; font-size: 21px; font-weight: 800; }
+.spplayer.away .spnum { background: #ffd84a; color: #4a3500; }
+.spplayer .spnm { display: block; margin-top: 2px; font-size: 16px; font-weight: 700; color: #fff; text-shadow: 0 1px 3px #000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sppitch.vert { height: 900px; background: repeating-linear-gradient(0deg, #1f7a3a 0, #1f7a3a 10%, #228a41 10%, #228a41 20%); }
+.sppitch.vert .spmid { left: 0; right: 0; top: 50%; bottom: auto; width: auto; height: 3px; margin: -1px 0 0; }
+.sppitch.vert .spbox { left: 25%; right: 25%; top: auto; bottom: auto; width: auto; height: 14%; border: 3px solid rgba(255,255,255,.55); }
+.sppitch.vert .spbox.l { top: 0; border-top: 0; } .sppitch.vert .spbox.r { bottom: 0; top: auto; border-bottom: 0; left: 25%; right: 25%; }
+body.compact .sppitch { height: 340px; } body.compact .spplayer { width: 64px; margin-left: -32px; margin-top: -22px; }
+body.compact .spplayer .spnum { min-width: 26px; height: 26px; line-height: 26px; font-size: 14px; } body.compact .spplayer .spnm { font-size: 11px; }
+body.compact .splnames { font-size: 17px; }
+body.portrait .sppitch { height: 620px; } body.portrait .sppitch.vert { height: 620px; }
+body.portrait .spplayer { width: 56px; margin-left: -28px; margin-top: -20px; }
+body.portrait .spplayer .spnum { min-width: 24px; height: 24px; line-height: 24px; font-size: 13px; } body.portrait .spplayer .spnm { font-size: 10px; }
+body.portrait .splnames { font-size: 14px; }
+
+.spch.yt { color: #ff9a9a; }

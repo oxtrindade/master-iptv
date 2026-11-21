@@ -819,11 +819,11 @@
     var swBtns = [], icBtns = [];
     // os botões são criados uma vez; escolher só troca a marca (o foco do controle não se perde)
     PCOLORS.forEach(function (c, i) {
-      var b = h('button', { cls: 'f swatch', type: 'button', style: 'background:' + c, on: { click: function () { p.color = i; paint(); } } });
+      var b = h('button', { cls: 'f swatch', type: 'button', style: 'background:' + c, on: { click: function () { p.color = i; paint(); autoSave(); } } });
       swBtns.push(b); sw.appendChild(b);
     });
     function addTile(box, k, name) {
-      var b = avSet(h('button', { cls: 'f aicon' + (k ? ' art' : ''), type: 'button', title: name, on: { click: function () { p.icon = k; paint(); } } }), { name: p.name, icon: k });
+      var b = avSet(h('button', { cls: 'f aicon' + (k ? ' art' : ''), type: 'button', title: name, on: { click: function () { p.icon = k; paint(); autoSave(); } } }), { name: p.name, icon: k });
       b._k = k; icBtns.push(b); box.appendChild(b);
     }
     var first = h('div', { cls: 'pgrow' });
@@ -856,6 +856,16 @@
         S.crests.list = all.length ? all : null;
         if (crestBox.isConnected !== false) { fillCrests(all); }
       });
+    }
+    /* perfil já existente: escolher cor/avatar já grava (sem precisar de "Salvar"); perfil novo só é criado no Salvar */
+    function autoSave() {
+      if (e.isNew) { return; }
+      p.name = (input.value || '').replace(/^\s+|\s+$/g, '') || p.name;
+      store.set('profiles', list.map(function (x) { return x.id === p.id ? p : x; }));
+      list = list.map(function (x) { return x.id === p.id ? p : x; });
+      e.p = p;
+      if (p.id === curProf) { try { var hb = document.querySelector('#head .avatar'); if (hb) { avSet(hb, p); hb.style.backgroundColor = PCOLORS[p.color % PCOLORS.length]; } } catch (x) {} }
+      toast('Avatar salvo', 1200);
     }
     function paint() {
       swBtns.forEach(function (b, i) { b.classList.toggle('on', i === p.color); });
@@ -1008,8 +1018,50 @@
       });
     });
     if (any) { paintSports(); }
-    chain.then(function () { if (token === S.loadToken && S.section === 'sports') { spScan(false); } });
+    chain.then(function () { if (token === S.loadToken && S.section === 'sports') { spScan(false); } if (token === S.loadToken) { spYtScan(false); } });
     return chain;
+  }
+
+  /* segundo plano: procura nos canais do YouTube (CazéTV, SportyNet, ge tv…) a transmissão de cada jogo ao vivo ou prestes a começar
+     e deixa o botão pronto (como os canais do provedor). Uma página /streams por canal, reaproveitada para todos os jogos dele. */
+  function spYtHit(g) {
+    var h0 = S.sp && S.sp.yt && S.sp.yt[spGame(g)];
+    return h0 && Date.now() - h0.at < 15 * 60000 ? h0 : null;
+  }
+  function spYtScan(force) {
+    var sp = S.sp, now = Date.now(), token = S.loadToken;
+    if (!sp || sp.ytBusy || !(window.NativeApp && window.NativeApp.openUrl || window.PalmServiceBridge)) { return; }
+    if (!force && sp.ytAt && now - sp.ytAt < 180000) { return; }
+    var fol = spFollow(), groups = {}, order = [];
+    sp.games.forEach(function (g) {
+      if (g.state === 'post' || !Sports.visible(g, fol)) { return; }
+      if (!(g.state === 'in' || (g.state === 'pre' && g.start - now < 40 * 60000 && g.start - now > -3 * 3600000))) { return; }
+      Sports.youtubeLinks(Sports.whereToWatch(g), true).forEach(function (y) {
+        if (!groups[y.label]) { groups[y.label] = { y: y, games: [] }; order.push(y.label); }
+        groups[y.label].games.push(g);
+      });
+    });
+    if (!order.length) { return; }
+    sp.ytBusy = true; sp.ytAt = now; sp.yt = sp.yt || {};
+    var chain = Promise.resolve();
+    order.slice(0, 5).forEach(function (lab) {
+      chain = chain.then(function () {
+        var gr = groups[lab];
+        if (!gr.y.streams) { return null; }
+        return ytGet(gr.y.streams).then(function (html) {
+          gr.games.forEach(function (g) {
+            var pick = Sports.pickLive(html, g, lab, true);
+            if (pick) { sp.yt[spGame(g)] = { id: pick.id, y: gr.y, at: Date.now() }; }
+          });
+        }, function () {});
+      });
+    });
+    chain.then(function () {
+      sp.ytBusy = false;
+      if (token !== S.loadToken) { return; }
+      if (S.section === 'sports') { paintSports(); }
+      if (S.spHomePaint) { try { S.spHomePaint(); } catch (e) {} }
+    }, function () { sp.ytBusy = false; });
   }
 
   function spFresh(g) {
@@ -1144,9 +1196,23 @@
     startPlay({ kind: 'live', list: hits.map(function (x) { return x.ch; }), idx: idx || 0 });
   }
 
+  /* escudo: logo da fonte → escudo padrão da ESPN pelo id do time → iniciais (nunca fica um buraco vazio) */
   function spLogo(t, cls) {
-    var el = h('div', { cls: cls || 'splogo' });
-    if (t.logo) { imgEl(t.logo, el); }
+    var el = h('div', { cls: cls || 'splogo' }), tried = 0, srcs = [];
+    if (t.logo) { srcs.push(t.logo); }
+    if (t.id && /^\d+$/.test(t.id)) { srcs.push('https://a.espncdn.com/i/teamlogos/soccer/500/' + t.id + '.png'); }
+    function initials() {
+      var ab = (t.abbr || t.short || t.name || '?').replace(/[^A-Za-zÀ-ú0-9]/g, '').slice(0, 3).toUpperCase();
+      el.appendChild(h('span', { cls: 'spini', text: ab }));
+    }
+    function next() {
+      if (tried >= srcs.length) { initials(); return; }
+      var img = document.createElement('img');
+      img.onerror = function () { if (img.parentNode) { img.parentNode.removeChild(img); } next(); };
+      img.src = srcs[tried++];
+      el.appendChild(img);
+    }
+    next();
     return el;
   }
 
@@ -1158,7 +1224,7 @@
   }
 
   function spRgba(hex, a, dflt) {
-    return /^[0-9a-fA-F]{6}$/.test(hex || '') ? 'rgba(' + parseInt(hex.slice(0, 2), 16) + ',' + parseInt(hex.slice(2, 4), 16) + ',' + parseInt(hex.slice(4, 6), 16) + ',' + a + ')' : dflt;
+    return /^[0-9a-fA-F]{6}$/.test(hex || '') && (parseInt(hex.slice(0, 2), 16) * .3 + parseInt(hex.slice(2, 4), 16) * .59 + parseInt(hex.slice(4, 6), 16) * .11) < 170 ? 'rgba(' + parseInt(hex.slice(0, 2), 16) + ',' + parseInt(hex.slice(2, 4), 16) + ',' + parseInt(hex.slice(4, 6), 16) + ',' + a + ')' : dflt;
   }
 
   function spOpenGame(g) { S.sp.game = g; S.sp.autoFocus = true; S.sp.autoKey = null; if (S.section === 'sports') { renderSports(); } else { selectSection('sports'); } }
@@ -1225,8 +1291,10 @@
       else if (dk !== Sports.ymd(new Date())) { st = SP_WD[new Date(g.start).getDay()] + ' ' + st; }
     }
     var wr = g.state === 'post' ? null : Sports.whereToWatch(g), wh = wr ? h('div', { cls: 'spwh' }, [h('span', { text: 'Onde: ' + wr.short })]) : null;
-    var ch = null;
-    if (hits.length) {
+    var ch = null, yh = spYtHit(g);
+    if (!hits.length && yh) {
+      ch = h('div', { cls: 'spch yt' }, [icon('live', 18), h('span', { text: yh.y.label + ' (YouTube) · ao vivo' })]);
+    } else if (hits.length) {
       ch = h('div', { cls: 'spch' }, [icon('live', 18), h('span', { text: hits[0].ch.name + (hits.length > 1 ? '  +' + (hits.length - 1) : '') })]);
     } else if (spGuess(g).length) {
       var gg = spGuess(g);
@@ -1391,6 +1459,35 @@
     return h('div', { cls: 'spstat' }, [h('span', { cls: 'a', text: a || '–' }), h('span', { cls: 'l', text: label }), h('span', { cls: 'b', text: b || '–' })]);
   }
 
+  /* campo virtual com as escalações (só aparecem quando a fonte já divulgou os titulares) */
+  function spLineup(body, g) {
+    var sp = S.sp, k = spGame(g), c = (sp.lineups = sp.lineups || {});
+    if (c[k] === undefined) {
+      c[k] = null;
+      Sports.fetchLineup(http, g.league, g.id).then(function (r) { c[k] = r; if (sp.game && spGame(sp.game) === k) { paintSports(); } }, function () { c[k] = false; if (sp.game && spGame(sp.game) === k) { paintSports(); } });
+    }
+    var l = c[k];
+    if (l === null) { return; }
+    if (!l || !l.length) {
+      if (g.state === 'pre') { body.appendChild(h('div', { cls: 'spnote small', text: 'Escalação ainda não divulgada (costuma sair cerca de 1 hora antes do jogo).' })); }
+      return;
+    }
+    var vert = document.body.classList.contains('portrait');
+    body.appendChild(h('div', { cls: 'sptitle', text: 'Escalação' }));
+    var names = h('div', { cls: 'splnames' }, l.map(function (t) { return h('div', { cls: 'splname' + (t.home ? '' : ' away'), text: (t.home ? g.home.name : g.away.name) + (t.formation ? '  ' + t.formation : '') }); }));
+    var pitch = h('div', { cls: 'sppitch' + (vert ? ' vert' : '') }, [h('div', { cls: 'spmid' }), h('div', { cls: 'spcircle' }), h('div', { cls: 'spbox l' }), h('div', { cls: 'spbox r' })]);
+    l.forEach(function (t) {
+      t.players.forEach(function (p) {
+        var along = t.home ? p.x : 100 - p.x, across = t.home ? p.y : 100 - p.y, pos = vert ? { left: across, top: 100 - along } : { left: along, top: across };
+        var el = h('div', { cls: 'spplayer' + (t.home ? '' : ' away') }, [h('span', { cls: 'spnum', text: p.num }), h('span', { cls: 'spnm', text: (p.name || '').split(' ').slice(-1)[0] })]);
+        el.style.left = pos.left + '%'; el.style.top = pos.top + '%';
+        pitch.appendChild(el);
+      });
+    });
+    body.appendChild(names);
+    body.appendChild(pitch);
+  }
+
   function spBodyGame(body) {
     var sp = S.sp, g = sp.game, hits = spHits(g), fol = spFollow(), a = g.home.stats, b = g.away.stats;
     body.appendChild(h('button', { cls: 'f btn spback', type: 'button', 'data-k': 'back', on: { click: function () { sp.game = null; renderSports(); } } }, [icon('back', 24), 'Jogos']));
@@ -1401,6 +1498,7 @@
       h('div', { cls: 'splg', text: g.leagueName }), h('div', { cls: 'spst' + (g.state === 'in' ? ' live' : ''), text: Sports.statusText(g) }),
       h('div', { cls: 'spdate', text: SP_WD[new Date(g.start).getDay()] + ' ' + new Date(g.start).getDate() + '/' + (new Date(g.start).getMonth() + 1) + (g.venue ? ' · ' + g.venue : '') })
     ]), big(g.away)]));
+    spLineup(body, g);
     if (g.goals.length) {
       body.appendChild(h('div', { cls: 'sptitle', text: 'Gols' }));
       body.appendChild(h('div', { cls: 'spgoals' }, g.goals.map(function (x) {
@@ -1436,9 +1534,11 @@
     }
     var yts = Sports.youtubeLinks(wr, g.state !== 'post');
     if (yts.length) {
+      var yh = spYtHit(g);
       body.appendChild(h('div', { cls: 'spwatch' }, yts.map(function (y) {
-        return h('button', { cls: 'f btn primary', type: 'button', 'data-k': 'yt:' + y.label, on: { click: function () { openYouTube(y, g); } } },
-          [icon('play', 22), 'Procurar ao vivo na ' + y.label + ' (YouTube)']);
+        var found = yh && yh.y.label === y.label ? yh : null;
+        return h('button', { cls: 'f btn primary' + (found ? ' spplay' : ''), type: 'button', 'data-k': 'yt:' + y.label, on: { click: function () { openYouTube(y, g, found && found.id); } } },
+          [icon('play', 22), found ? 'Assistir ao vivo na ' + y.label + ' (YouTube)' : 'Procurar ao vivo na ' + y.label + ' (YouTube)']);
       })));
     }
     body.appendChild(h('div', { cls: 'spwatch' }, [g.home, g.away].map(function (t) {
@@ -1456,7 +1556,7 @@
     if (window.NativeApp && window.NativeApp.openUrl) { return xhr(url, 20000).then(null, function () { return http(url); }); }
     return viaProxy(url, false, true);
   }
-  function openYouTube(y, g) {
+  function openYouTube(y, g, vid) {
     var label = y.label, android = !!(window.NativeApp && window.NativeApp.openUrl), webos = !android && !!window.PalmServiceBridge;
     var searchUrl = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(Sports.ptName(g.home.name) + ' x ' + Sports.ptName(g.away.name) + ' ' + label + ' ao vivo') + '&sp=EgJAAQ%3D%3D';
     var failMsg = 'Abra o YouTube e procure por ' + label + '.';
@@ -1487,6 +1587,7 @@
       setTimeout(go, 900);
     };
 
+    if (vid) { launch(vid); return; }   // já achado em segundo plano (spYtScan): abre direto
     var diag = [];
     var viaFeed = function (cid) {
       if (!cid) { diag.push('sem id do canal'); return Promise.resolve(null); }
@@ -1613,6 +1714,7 @@
       host.appendChild(h('div', { cls: 'hlist scroll' }, l.map(function (g) { return spCard(g, { date: true }); }).concat([all])));
     }
     paint();
+    S.spHomePaint = paint;
     spEnsure([0], false).then(paint);
   }
 
@@ -3676,7 +3778,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.59.0']
+      ['Versão do app', '1.60.0']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {

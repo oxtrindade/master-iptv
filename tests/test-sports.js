@@ -130,3 +130,10 @@ Sports.fetchDay(fakeHttp, new Date(2026, 8, 19)).then(function (r) {
   ok(st.length === 1 && st[0].rows[0].name === 'Palmeiras' && st[0].rows[1].gp === 10 && st[0].rows[0].pts === 22, 'standings: ordena por posição e lê pontos/jogos');
   ok(Sports.parseStandings({}).length === 0, 'standings vazio');
 })();
+(function () {
+  function pl(n) { return { starter: true, jersey: String(n), formationPlace: String(n), athlete: { displayName: 'Jogador ' + n }, position: { abbreviation: 'M' } }; }
+  var r = []; for (var i = 1; i <= 11; i++) { r.push(pl(i)); }
+  var lu = Sports.parseLineups({ rosters: [{ homeAway: 'home', formation: '4-3-3', roster: r }, { homeAway: 'away', formation: '4-4-2', roster: r }] });
+  ok(lu.length === 2 && lu[0].players.length === 11 && lu[0].players[0].x < lu[0].players[10].x && lu[0].players[10].x <= 46, 'escalação: goleiro atrás, ataque na frente');
+  ok(Sports.parseLineups({ rosters: [{ homeAway: 'home', roster: [] }] }).length === 0 && Sports.parseLineups({}).length === 0, 'escalação vazia/ausente');
+})();

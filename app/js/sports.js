@@ -221,6 +221,35 @@
     return getJson(http, Sp.BASE.replace('/site/v2/', '/v2/') + '/' + leagueId + '/standings').then(Sp.parseStandings);
   };
 
+
+  /* escalações (ESPN summary): [{ home: bool, formation: '4-3-3', players: [{ name, num, pos, place, x, y }] }]. x = 0..100 no sentido do ataque, y = 0..100 de lado a lado */
+  Sp.parseLineups = function (d) {
+    var out = [];
+    ((d && d.rosters) || []).forEach(function (r) {
+      var starters = ((r.roster) || []).filter(function (p) { return p.starter; });
+      if (starters.length < 7) { return; }
+      starters.forEach(function (p, i) { p._i = i; });
+      starters.sort(function (a, b) { return (parseInt(a.formationPlace, 10) || 99) - (parseInt(b.formationPlace, 10) || 99) || a._i - b._i; });
+      var fm = String(r.formation || r.formationName || ''), lines = fm.split('-').map(function (n) { return parseInt(n, 10); }).filter(function (n) { return n > 0; });
+      var total = lines.reduce(function (a, b) { return a + b; }, 0);
+      if (total !== starters.length - 1) { lines = [starters.length - 1 > 4 ? 4 : starters.length - 1]; lines.push(starters.length - 1 - lines[0]); fm = ''; }
+      var layout = [1].concat(lines), idx = 0, players = [];
+      layout.forEach(function (n, li) {
+        var x = 6 + li * (40 / Math.max(1, layout.length - 1));
+        for (var j = 0; j < n; j++) {
+          var p = starters[idx++]; if (!p) { return; }
+          var a = p.athlete || {};
+          players.push({ name: a.shortName || a.displayName || a.fullName || '', num: String(p.jersey || a.jersey || ''), pos: (p.position && p.position.abbreviation) || '', x: x, y: (j + 1) / (n + 1) * 100 });
+        }
+      });
+      out.push({ home: r.homeAway !== 'away', formation: fm, team: (r.team && (r.team.displayName || r.team.name)) || '', players: players });
+    });
+    return out;
+  };
+  Sp.fetchLineup = function (http, leagueId, eventId) {
+    return getJson(http, Sp.BASE + '/' + leagueId + '/summary?event=' + encodeURIComponent(eventId)).then(Sp.parseLineups);
+  };
+
   /* amistosos: só os do Brasil (ou de times que você segue) para não encher a tela */
   Sp.visible = function (g, follow) {
     var lg = Sp.league(g.league);
