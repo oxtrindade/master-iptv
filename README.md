@@ -412,3 +412,6 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 ## 1.60.1
 - **Trailer dublado no Android:** a busca do YouTube agora usa User-Agent de computador (igual ao proxy da LG). Com o do WebView do celular o YouTube devolvia a página móvel, com outro formato, e a busca lia vídeos mas não achava o dublado (na LG já funcionava).
 - O diagnóstico do trailer passa a mostrar também os 4 primeiros títulos lidos em cada busca ("ex.: …").
+
+## 1.60.2
+- **Esportes · Placares:** os jogos do dia agora ficam em uma lista só, em ordem de horário (em vez de agrupados por campeonato). O campeonato continua no topo de cada card. "Ao vivo agora" segue primeiro.

@@ -1350,7 +1350,8 @@
         body.appendChild(h('div', { cls: 'spgroup' }, [h('div', { cls: 'sptitle', text: 'Ao vivo agora' }), h('div', { cls: 'spgrid' }, live.map(function (g) { return spCard(g); }))]));
       }
     }
-    spGroupByLeague(games).forEach(function (el) { body.appendChild(el); });
+    games.sort(function (x, y) { return x.start - y.start || (x.leagueName || '').localeCompare(y.leagueName || ''); });   // por horário (não por campeonato)
+    if (games.length) { body.appendChild(h('div', { cls: 'spgroup' }, [h('div', { cls: 'sptitle', text: 'Por horário' }), h('div', { cls: 'spgrid' }, games.map(function (g) { return spCard(g); }))])); }
     if (!body.querySelector('.spgroup')) { body.appendChild(spNote(sp.pend[key] || !sp.days[key] ? 'Carregando…' : 'Nenhum jogo das ligas acompanhadas neste dia.')); }
     if (sp.failed && sp.failed.length >= Math.ceil(Sports.LEAGUES.length / 2)) {
       body.appendChild(h('div', { cls: 'spwarn', text: 'Não carregou: ' + sp.failed.map(function (id) { var l = Sports.league(id); return l ? l.short : id; }).join(', ') + '.' }));
@@ -3778,7 +3779,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.60.1']
+      ['Versão do app', '1.60.2']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
