@@ -104,7 +104,7 @@ var Tmdb = (function () {
         html = String(html || '');
         if (html.indexOf('\\x22') >= 0) { html = html.replace(/\\x([0-9a-fA-F]{2})/g, function (m, x) { return String.fromCharCode(parseInt(x, 16)); }); }
         var n = parseResults(html).length, id = pickDub(html, nameWords, dub);
-        diag.push('"' + q + '": ' + n + ' vídeos' + (id ? ', achou ' + id : ', nenhum dublado') + ' [' + html.length + ' bytes, videoId×' + (html.match(/"videoId":"/g) || []).length + ', ' + (html.indexOf('ytInitialData') >= 0 ? 'initialData' : 'sem initialData') + (n ? '' : ', amostra: ' + (function () { var i = html.indexOf('"videoId":"'); return i < 0 ? '-' : html.slice(i, i + 220).replace(/[\r\n]+/g, ' '); })()) + (/consent\.youtube|CONSENT/.test(html) ? ', CONSENTIMENTO' : '') + ']');
+        diag.push('"' + q + '": ' + n + ' vídeos' + (id ? ', achou ' + id : ', nenhum dublado') + ' [' + html.length + ' bytes, videoId×' + (html.match(/"videoId":"/g) || []).length + ', ' + (html.indexOf('ytInitialData') >= 0 ? 'initialData' : 'sem initialData') + (n ? ', ex.: ' + parseResults(html).slice(0, 4).map(function (r) { return String(r.title).slice(0, 38); }).join(' / ') : ', amostra: ' + (function () { var i = html.indexOf('"videoId":"'); return i < 0 ? '-' : html.slice(i, i + 220).replace(/[\r\n]+/g, ' '); })()) + (/consent\.youtube|CONSENT/.test(html) ? ', CONSENTIMENTO' : '') + ']');
         return id;
       }).then(null, function (e) { diag.push('"' + q + '": falha de rede'); return ''; });
     }

@@ -408,3 +408,7 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 - **Escalação no campo virtual:** ao abrir um jogo, aparece um campo com os 11 titulares de cada time na formação (ex.: 4-3-3), com número e sobrenome. Vem da ESPN quando a escalação já foi divulgada; antes disso, aviso "ainda não divulgada". Na TV o campo é horizontal; no celular em pé, vertical.
 - **YouTube em segundo plano:** o app procura, sozinho, nos canais do YouTube (CazéTV, SportyNet, ge tv, TNT Sports) a transmissão dos jogos ao vivo ou prestes a começar (uma página por canal a cada ~3 min, só Android/LG). Achou: o card mostra "CazéTV (YouTube) · ao vivo" e, no jogo, o botão "Assistir ao vivo na CazéTV (YouTube)" abre direto o vídeo, como os canais do provedor.
 - Inclui os ajustes de escudo da 1.59.1 (fallback pelo id da ESPN e iniciais).
+
+## 1.60.1
+- **Trailer dublado no Android:** a busca do YouTube agora usa User-Agent de computador (igual ao proxy da LG). Com o do WebView do celular o YouTube devolvia a página móvel, com outro formato, e a busca lia vídeos mas não achava o dublado (na LG já funcionava).
+- O diagnóstico do trailer passa a mostrar também os 4 primeiros títulos lidos em cada busca ("ex.: …").

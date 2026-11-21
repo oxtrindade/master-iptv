@@ -177,8 +177,8 @@ public class MainActivity extends Activity {
         try {
             HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
             c.setConnectTimeout(10000); c.setReadTimeout(15000);
-            String ua = inHeaders != null ? inHeaders.get("User-Agent") : null;
-            if (ua != null) { c.setRequestProperty("User-Agent", ua); }
+            // User-Agent de computador (igual ao proxy da LG): com o do WebView móvel o YouTube devolve a página mobile, com outro formato de resultados
+            c.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
             c.setRequestProperty("Accept-Language", "pt-BR,pt;q=0.9");
             c.setRequestProperty("Cookie", "CONSENT=YES+1; SOCS=CAI");
             int code = c.getResponseCode();
