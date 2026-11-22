@@ -421,3 +421,6 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 
 ## 1.60.4
 - **Conteúdo adulto fora do histórico:** filmes, séries e canais adultos (categoria ou nome com XXX, +18, porn, hentai, erótico…) não entram mais no histórico (base das recomendações), no "Continuar assistindo", nos canais recentes nem no último canal, mesmo com "Ocultar conteúdo adulto" desligado. O ponto onde parou também não é guardado. Ao conectar, o que já estava salvo desse tipo é apagado.
+
+## 1.60.5
+- **Vídeo vertical no formato original (Android, celular):** o player não força mais tudo deitado. Quando o vídeo carrega e a altura é maior que a largura, a tela fica em pé (retrato); os demais continuam deitados. Ao trocar para um vídeo horizontal (ex.: próximo episódio), volta a deitar; ao fechar o player, volta a seguir a rotação do celular. Na TV não muda nada. Nova ponte `NativeApp.setVideoPortrait`.

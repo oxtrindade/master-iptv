@@ -255,6 +255,22 @@ public class MainActivity extends Activity {
             });
         }
 
+        /** Vídeo vertical (retrato): o player deixa a tela em pé em vez de forçar deitada. Só vale com o player aberto. */
+        @JavascriptInterface
+        public void setVideoPortrait(final boolean portrait) {
+            if (tv) {
+                return;
+            }
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    setRequestedOrientation(portrait
+                            ? android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
+                            : android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+                }
+            });
+        }
+
         /** A página avisa se há vídeo tocando: só nesse caso o botão Home vira janela flutuante (PiP). */
         @JavascriptInterface
         public void setPlaying(boolean on) {

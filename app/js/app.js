@@ -3803,7 +3803,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.60.4']
+      ['Versão do app', '1.60.5']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
@@ -4194,7 +4194,7 @@
 
   /* app Android no celular: o player abre em tela cheia (deitado) e, ao sair, volta à orientação do aparelho */
   function nativeFull(on) {
-    try { if (window.NativeApp && window.NativeApp.setFullscreen) { window.NativeApp.setFullscreen(!!on); } } catch (e) {}
+    try { if (window.NativeApp && window.NativeApp.setFullscreen) { window.NativeApp.setFullscreen(!!on); } } catch (e) {}   // (setFullscreen deita a tela; onResize endireita se o vídeo for vertical)
     // o brilho ajustado por gesto vale só dentro do player
     if (!on) { try { if (window.NativeApp && window.NativeApp.setBrightness) { window.NativeApp.setBrightness(-1); } } catch (e2) {} }
   }
@@ -4848,6 +4848,8 @@
       onBuffer: function (on) { $('buffer').classList.toggle('hidden', !on); },
       onTracks: function () { if (S.ctx) { applyPrefs(); } },
       onResize: function (w, hh) {
+        // vídeo vertical (retrato) toca em pé, no formato original; os demais seguem deitados
+        try { if (window.NativeApp && window.NativeApp.setVideoPortrait && S.mode === 'player' && w && hh) { window.NativeApp.setVideoPortrait(hh > w * 1.05); } } catch (e) {}
         var r = $('osd-res');
         r.textContent = resLabel(w, hh);
         r.classList.remove('hidden');
