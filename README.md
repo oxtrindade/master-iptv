@@ -418,3 +418,6 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 
 ## 1.60.3
 - **Escalação em "sanfona":** na tela do jogo a escalação começa oculta, com uma linha "▸ Escalação · mostrar"; OK abre o campo virtual e fecha de novo ("▾ … ocultar"). Assim a lista de canais para assistir não fica empurrada para baixo.
+
+## 1.60.4
+- **Conteúdo adulto fora do histórico:** filmes, séries e canais adultos (categoria ou nome com XXX, +18, porn, hentai, erótico…) não entram mais no histórico (base das recomendações), no "Continuar assistindo", nos canais recentes nem no último canal, mesmo com "Ocultar conteúdo adulto" desligado. O ponto onde parou também não é guardado. Ao conectar, o que já estava salvo desse tipo é apagado.

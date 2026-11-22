@@ -250,6 +250,7 @@
       cache[section] = prov.categories(section).then(function (cats) {
         var m = {};
         cats.forEach(function (c) { if (RE_ADCAT.test(c.name || '') && !/adult swim/i.test(c.name || '')) { m[c.id] = 1; } });
+        (S.adultCats = S.adultCats || {})[section] = m;
         return m;
       }, function () { delete cache[section]; return {}; });
       return cache[section];
@@ -260,6 +261,7 @@
     }
     var w = {}, k;
     for (k in prov) { if (Object.prototype.hasOwnProperty.call(prov, k)) { w[k] = prov[k]; } }
+    S.adultMap = bad;
     w.categories = function (section) {
       return prov.categories(section).then(function (cats) {
         return adultHide() ? cats.filter(function (c) { return !(RE_ADCAT.test(c.name || '') && !/adult swim/i.test(c.name || '')); }) : cats;
@@ -271,6 +273,24 @@
       return bad(section).then(function (m) { return m[catId] ? [] : prov.items(section, catId).then(function (l) { return clean(section, l); }); });
     };
     return w;
+  }
+
+  /* conteúdo adulto nunca entra no histórico, no "continuar assistindo", nos recentes nem nas recomendações (vale mesmo com "ocultar adulto" desligado) */
+  function isAdultItem(it) {
+    if (!it) { return false; }
+    var m = S.adultCats && S.adultCats[it.type === 'series' ? 'series' : it.type === 'live' ? 'live' : 'movie'];
+    return !!(m && m[it.cat]) || RE_ADITEM.test(it.name || '');
+  }
+  function purgeAdultHistory() {
+    var n = 0;
+    Object.keys(S.cont || {}).forEach(function (k) { if (isAdultItem(S.cont[k].item)) { delete S.cont[k]; delete S.resume[k]; n++; } });
+    var hist = store.get('hist', []).filter(function (x) { return !isAdultItem(x); });
+    if (hist.length !== store.get('hist', []).length) { store.set('hist', hist); n++; }
+    var rec = (S.recent || []).filter(function (x) { return !isAdultItem(x); });
+    if (rec.length !== (S.recent || []).length) { S.recent = rec; store.set('recent', rec); n++; }
+    var ll = store.get('lastlive', null);
+    if (ll && isAdultItem(ll.item)) { store.set('lastlive', null); n++; }
+    if (n) { store.set('cont', S.cont); store.set('resume', S.resume); }
   }
 
   /* perfil infantil: só categorias/canais infantis (desenho, animação, família, Disney, Gloob…), nunca adultas */
@@ -1905,6 +1925,7 @@
       if (!r.info.ok) { throw new Error('Usuário ou senha inválidos (ou conta inativa).'); }
       cfg = r.cfg;
       S.provider = kidsWrap(adultWrap(camWrap(r.prov))); S.info = r.info;
+      Promise.all(['movie', 'series', 'live'].map(function (sec) { return S.adultMap(sec); })).then(purgeAdultHistory, function () {});
       S.offline = false;
       S.cfg = cfg;
       store.set('cfg', cfg);
@@ -3782,7 +3803,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.60.3']
+      ['Versão do app', '1.60.4']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
@@ -4199,6 +4220,7 @@
 
   /* histórico do perfil (filmes e séries já iniciados): base das recomendações */
   function pushHist(it) {
+    if (isAdultItem(it)) { return; }
     var id = it.type + ':' + it.id, out = [slimItem(it)];
     out[0].at = Date.now();
     store.get('hist', []).forEach(function (x) { if (x.type + ':' + x.id !== id && out.length < 40) { out.push(x); } });
@@ -4206,6 +4228,7 @@
   }
 
   function pushRecent(ch) {
+    if (isAdultItem(ch)) { return; }
     var id = fk(ch), out = [slimItem(ch)];
     S.recent.forEach(function (x) { if (fk(x) !== id && out.length < 12) { out.push(x); } });
     S.recent = out;
@@ -4220,7 +4243,7 @@
       title = (ch.num ? ch.num + '  ' : '') + ch.name;
       logo = ch.logo;
       pushRecent(ch);
-      store.set('lastlive', { item: slimItem(ch), at: Date.now() });
+      if (!isAdultItem(ch)) { store.set('lastlive', { item: slimItem(ch), at: Date.now() }); }
     } else {
       var it = c.item, ep = c.kind === 'ep' ? c.eps[c.idx] : null;
       if (ep) {
@@ -4555,6 +4578,7 @@
   function saveResume() {
     var c = S.ctx;
     if (!c || c.kind === 'live' || !c.rk) { return; }
+    if (isAdultItem(c.item)) { return; }
     var t = Player.time(), d = Player.duration();
     if (!isFinite(d) || d < 120) { return; }
     if (t > d * 0.95) { delete S.resume[c.rk]; delete S.cont[c.rk]; markDone(c.rk); }
