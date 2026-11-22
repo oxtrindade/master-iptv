@@ -428,3 +428,6 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 ## 1.61.0
 - **Estatísticas em "sanfona":** igual à escalação, começam ocultas ("▸ Estatísticas · mostrar"); OK abre e fecha.
 - **YouTube sem depender do guia:** o guia (ESPN) nem sempre acerta o canal (ex.: aponta SportyNet e o jogo passa na CazéTV). Agora o app procura, em segundo plano, o jogo em **todos** os canais conhecidos (CazéTV, ge tv, TNT Sports, SportyNet). Onde achar, o card e a tela do jogo mostram um botão direto por canal (se o mesmo jogo passa em dois, aparecem os dois). Sem achar, fica só "Procurar no YouTube", que busca o jogo em qualquer canal ao vivo.
+
+## 1.61.1
+- **TV: banner da Início já abre com o foco no "Assistir" e o trailer inicia.** Bug: quando o banner vinha do cache (quase sempre, depois da 1ª abertura) a regra que move o foco para o botão ainda não tinha o ponto de partida definido e falhava; o foco ficava no menu (Início/TV ao vivo…) e o trailer, que só toca com o banner "em foco", não começava. Agora o foco vai para o Assistir mesmo com o banner do cache, sem tirar o foco se você já desceu para uma fileira. Teste reproduz a falha antes da correção.

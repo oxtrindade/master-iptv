@@ -738,7 +738,13 @@ Promise.all([listen(api), listen(px), startSync()]).then(function () {
       go('home');
       assert.ok($('.hero:not(.hidden)'), 'banner aparece na hora com o cache');
       w.localStorage.removeItem('iptv.herocache:movie,series');
-      step('Início: banner aparece a partir do cache');
+      return new Promise(function (r) { setTimeout(r, 500); }).then(function () {
+        var f = $('.focus');
+        assert.ok(f && f.getAttribute('data-k') === 'hero-play', 'banner vindo do cache: foco já cai no Assistir (trailer inicia): ' + (f && (f.getAttribute('data-k') || f.className)));
+        step('Início: banner aparece a partir do cache, com o foco no Assistir');
+      });
+    }).then(function () {
+      step('Início: banner (cache)');
       // Filmes por gênero (catálogo grande): banner de destaque com trailer, igual à Início
       w.__pvTest = true;
       w.Tmdb.findId = function () { return Promise.resolve(5); };

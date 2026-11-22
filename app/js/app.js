@@ -3292,7 +3292,7 @@
         txt.classList.remove('swap');
         if (focusK) { var fb = btns.querySelector('[data-k="' + focusK + '"]'); if (fb) { Nav.focus(fb); } }
         // 1º destaque: a seleção sai do menu e vai para o botão Assistir (só se o usuário ainda não mexeu no foco)
-        if (wantFocus) { wantFocus = false; if (Nav.current() === S.homeFocus0) { var pb = btns.querySelector('[data-k="hero-play"]'); if (pb) { Nav.focus(pb); } } }
+        if (wantFocus) { wantFocus = false; var cf = Nav.current(); if (!cf || cf === S.homeFocus0 || (S.headEl && S.headEl.contains(cf) && Date.now() - (S.homeAt || 0) < 6000)) { var pb = btns.querySelector('[data-k="hero-play"]'); if (pb) { Nav.focus(pb); } } }
         pvEnd(); pvSchedule();
         if (!heroInfo[key]) { loadInfo(sl, cur); }
       }, 220);
@@ -3372,7 +3372,7 @@
       rebuildDots();
       show(0);
       // a seleção começa no banner (▲ sobe ao menu: Início / TV ao vivo / Filmes / Séries)
-      wantFocus = !!(hopts && hopts.focusHero && S.homeFocus0 && Nav.current() === S.homeFocus0);
+      wantFocus = !!(hopts && hopts.focusHero);   // (1.61.1: antes exigia homeFocus0 já definido; com o banner vindo do cache ele ainda não existia e o foco ficava no menu)
       if (isTvDevice() && slides.length > 1) { hero.classList.add('tvh'); }
       // garantia (LG): se o trailer do destaque não iniciou na largada (tela ainda se acomodando), tenta de novo enquanto o banner está à vista
       clearInterval(S.heroRetry);
@@ -3460,6 +3460,7 @@
     }
     var rows = h('div', { cls: 'hrows' });
     page.appendChild(rows);
+    S.homeAt = Date.now();
     heroBanner(rows, { focusHero: !S.hubFocus });
 
     var conts = contList().slice(0, 12);
@@ -3813,7 +3814,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.61.0']
+      ['Versão do app', '1.61.1']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
