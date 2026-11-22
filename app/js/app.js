@@ -1044,10 +1044,11 @@
 
   /* segundo plano: procura nos canais do YouTube (CazéTV, SportyNet, ge tv…) a transmissão de cada jogo ao vivo ou prestes a começar
      e deixa o botão pronto (como os canais do provedor). Uma página /streams por canal, reaproveitada para todos os jogos dele. */
-  function spYtHit(g) {
-    var h0 = S.sp && S.sp.yt && S.sp.yt[spGame(g)];
-    return h0 && Date.now() - h0.at < 15 * 60000 ? h0 : null;
+  function spYtHits(g) {
+    var l = (S.sp && S.sp.yt && S.sp.yt[spGame(g)]) || [];
+    return l.filter(function (x) { return Date.now() - x.at < 15 * 60000; });
   }
+  function spYtHit(g) { return spYtHits(g)[0] || null; }
   function spYtScan(force) {
     var sp = S.sp, now = Date.now(), token = S.loadToken;
     if (!sp || sp.ytBusy || !(window.NativeApp && window.NativeApp.openUrl || window.PalmServiceBridge)) { return; }
@@ -1056,27 +1057,29 @@
     sp.games.forEach(function (g) {
       if (g.state === 'post' || !Sports.visible(g, fol)) { return; }
       if (!(g.state === 'in' || (g.state === 'pre' && g.start - now < 40 * 60000 && g.start - now > -3 * 3600000))) { return; }
-      Sports.youtubeLinks(Sports.whereToWatch(g), true).forEach(function (y) {
+      Sports.youtubeAll().forEach(function (y) {   // procura em todos os canais: o guia pode apontar um canal e o jogo passar em outro (ou em vários)
         if (!groups[y.label]) { groups[y.label] = { y: y, games: [] }; order.push(y.label); }
         groups[y.label].games.push(g);
       });
     });
     if (!order.length) { return; }
     sp.ytBusy = true; sp.ytAt = now; sp.yt = sp.yt || {};
-    var chain = Promise.resolve();
+    var seen = {}, chain = Promise.resolve();
     order.slice(0, 5).forEach(function (lab) {
       chain = chain.then(function () {
         var gr = groups[lab];
         if (!gr.y.streams) { return null; }
         return ytGet(gr.y.streams).then(function (html) {
           gr.games.forEach(function (g) {
-            var pick = Sports.pickLive(html, g, lab, true);
-            if (pick) { sp.yt[spGame(g)] = { id: pick.id, y: gr.y, at: Date.now() }; }
+            var k = spGame(g), pick = Sports.pickLive(html, g, lab, true);
+            if (!seen[k]) { seen[k] = []; }
+            if (pick) { seen[k].push({ id: pick.id, y: gr.y, at: Date.now() }); }
           });
         }, function () {});
       });
     });
     chain.then(function () {
+      Object.keys(seen).forEach(function (k) { if (seen[k].length || !(sp.yt[k] && sp.yt[k].length)) { sp.yt[k] = seen[k]; } else { sp.yt[k] = sp.yt[k]; } });
       sp.ytBusy = false;
       if (token !== S.loadToken) { return; }
       if (S.section === 'sports') { paintSports(); }
@@ -1313,7 +1316,7 @@
     var wr = g.state === 'post' ? null : Sports.whereToWatch(g), wh = wr ? h('div', { cls: 'spwh' }, [h('span', { text: 'Onde: ' + wr.short })]) : null;
     var ch = null, yh = spYtHit(g);
     if (!hits.length && yh) {
-      ch = h('div', { cls: 'spch yt' }, [icon('live', 18), h('span', { text: yh.y.label + ' (YouTube) · ao vivo' })]);
+      ch = h('div', { cls: 'spch yt' }, [icon('live', 18), h('span', { text: spYtHits(g).map(function (x) { return x.y.label; }).join(' + ') + ' (YouTube) · ao vivo' })]);
     } else if (hits.length) {
       ch = h('div', { cls: 'spch' }, [icon('live', 18), h('span', { text: hits[0].ch.name + (hits.length > 1 ? '  +' + (hits.length - 1) : '') })]);
     } else if (spGuess(g).length) {
@@ -1480,6 +1483,16 @@
     return h('div', { cls: 'spstat' }, [h('span', { cls: 'a', text: a || '–' }), h('span', { cls: 'l', text: label }), h('span', { cls: 'b', text: b || '–' })]);
   }
 
+  /* "sanfona" (mostrar/ocultar) usada na escalação e nas estatísticas: começa fechada para não empurrar os canais para baixo */
+  function spAcc(body, key, title) {
+    var sp = S.sp, acc = (sp.acc = sp.acc || {}), open = !!acc[key];
+    body.appendChild(h('button', { cls: 'f spacc' + (open ? ' open' : ''), type: 'button', 'data-k': 'acc:' + key, on: { click: function () {
+      acc[key] = !acc[key]; sp.autoFocus = false; paintSports();
+      var b = document.querySelector('.spacc[data-k="acc:' + key + '"]'); if (b) { Nav.focus(b); }
+    } } }, [h('span', { cls: 'spaccarrow', text: open ? '▾' : '▸' }), h('span', { text: title }), h('span', { cls: 'spaccsub', text: open ? 'ocultar' : 'mostrar' })]));
+    return open;
+  }
+
   /* campo virtual com as escalações (só aparecem quando a fonte já divulgou os titulares) */
   function spLineup(body, g) {
     var sp = S.sp, k = spGame(g), c = (sp.lineups = sp.lineups || {});
@@ -1493,11 +1506,8 @@
       if (g.state === 'pre') { body.appendChild(h('div', { cls: 'spnote small', text: 'Escalação ainda não divulgada (costuma sair cerca de 1 hora antes do jogo).' })); }
       return;
     }
-    var vert = document.body.classList.contains('portrait'), open = !!sp.lineupOpen;
-    // "sanfona": começa fechada para não empurrar os canais para baixo; OK abre/fecha
-    body.appendChild(h('button', { cls: 'f spacc' + (open ? ' open' : ''), type: 'button', 'data-k': 'lineup', on: { click: function () { sp.lineupOpen = !sp.lineupOpen; sp.autoFocus = false; paintSports(); var b = $('.spacc'); if (b) { Nav.focus(b); } } } },
-      [h('span', { cls: 'spaccarrow', text: open ? '▾' : '▸' }), h('span', { text: 'Escalação' }), h('span', { cls: 'spaccsub', text: open ? 'ocultar' : 'mostrar' })]));
-    if (!open) { return; }
+    var vert = document.body.classList.contains('portrait');
+    if (!spAcc(body, 'lineup', 'Escalação')) { return; }
     var names = h('div', { cls: 'splnames' }, l.map(function (t) { return h('div', { cls: 'splname' + (t.home ? '' : ' away'), text: (t.home ? g.home.name : g.away.name) + (t.formation ? '  ' + t.formation : '') }); }));
     var pitch = h('div', { cls: 'sppitch' + (vert ? ' vert' : '') }, [h('div', { cls: 'spmid' }), h('div', { cls: 'spcircle' }), h('div', { cls: 'spbox l' }), h('div', { cls: 'spbox r' })]);
     l.forEach(function (t) {
@@ -1531,7 +1541,7 @@
     }
     var rows = [spStatRow('Posse de bola', a.poss && a.poss + '%', b.poss && b.poss + '%'), spStatRow('Finalizações', a.shots, b.shots), spStatRow('No alvo', a.sot, b.sot),
       spStatRow('Escanteios', a.corners, b.corners), spStatRow('Faltas', a.fouls, b.fouls), spStatRow('Amarelos', a.yellow, b.yellow), spStatRow('Vermelhos', a.red, b.red)].filter(Boolean);
-    if (rows.length && g.state !== 'pre') { body.appendChild(h('div', { cls: 'sptitle', text: 'Estatísticas' })); body.appendChild(h('div', { cls: 'spstats' }, rows)); }
+    if (rows.length && g.state !== 'pre' && spAcc(body, 'stats', 'Estatísticas')) { body.appendChild(h('div', { cls: 'spstats' }, rows)); }
     body.appendChild(h('div', { cls: 'sptitle', text: 'Onde assistir (seus canais)' }));
     if (hits.length) {
       body.appendChild(h('div', { cls: 'spwatch' }, hits.slice(0, 6).map(function (x, i) {
@@ -1556,14 +1566,14 @@
         h('div', { cls: 'spnote small', text: 'Serviços como HBO Max, Paramount+, Prime Video e YouTube não têm guia de programação no seu servidor, por isso não viram botão de canal. Direitos conforme a imprensa (nov/2026); podem variar por jogo.' })
       ])));
     }
-    var yts = Sports.youtubeLinks(wr, g.state !== 'post');
-    if (yts.length) {
-      var yh = spYtHit(g);
-      body.appendChild(h('div', { cls: 'spwatch' }, yts.map(function (y) {
-        var found = yh && yh.y.label === y.label ? yh : null;
-        return h('button', { cls: 'f btn primary' + (found ? ' spplay' : ''), type: 'button', 'data-k': 'yt:' + y.label, on: { click: function () { openYouTube(y, g, found && found.id); } } },
-          [icon('play', 22), found ? 'Assistir ao vivo na ' + y.label + ' (YouTube)' : 'Procurar ao vivo na ' + y.label + ' (YouTube)']);
-      })));
+    if (g.state !== 'post') {
+      // YouTube: botões diretos para os canais onde o jogo foi achado (pode ser mais de um); senão, uma busca geral no YouTube
+      var yhs = spYtHits(g), anyY = { label: 'YouTube', any: true, generic: true, url: 'https://www.youtube.com/results?search_query=' + encodeURIComponent(Sports.ptName(g.home.name) + ' x ' + Sports.ptName(g.away.name) + ' ao vivo') + '&sp=EgJAAQ%3D%3D' };
+      var btns = yhs.map(function (x) {
+        return h('button', { cls: 'f btn primary spplay', type: 'button', 'data-k': 'yt:' + x.y.label, on: { click: function () { openYouTube(x.y, g, x.id); } } }, [icon('play', 22), 'Assistir ao vivo na ' + x.y.label + ' (YouTube)']);
+      });
+      btns.push(h('button', { cls: 'f btn' + (yhs.length ? '' : ' primary'), type: 'button', 'data-k': 'yt:any', on: { click: function () { openYouTube(anyY, g); } } }, [icon('search', 22), 'Procurar no YouTube']));
+      body.appendChild(h('div', { cls: 'spwatch' }, btns));
     }
     body.appendChild(h('div', { cls: 'spwatch' }, [g.home, g.away].map(function (t) {
       var on = !!fol[t.id];
@@ -1582,7 +1592,7 @@
   }
   function openYouTube(y, g, vid) {
     var label = y.label, android = !!(window.NativeApp && window.NativeApp.openUrl), webos = !android && !!window.PalmServiceBridge;
-    var searchUrl = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(Sports.ptName(g.home.name) + ' x ' + Sports.ptName(g.away.name) + ' ' + label + ' ao vivo') + '&sp=EgJAAQ%3D%3D';
+    var searchUrl = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(Sports.ptName(g.home.name) + ' x ' + Sports.ptName(g.away.name) + ' ' + (y.any ? '' : label + ' ') + 'ao vivo') + '&sp=EgJAAQ%3D%3D';
     var failMsg = 'Abra o YouTube e procure por ' + label + '.';
     if (!android && !webos) { toast(failMsg, 5000); return; }
     var lunaCall = function (uri, params, cb) {
@@ -1620,7 +1630,7 @@
         return Sports.pickFeed(xml, g, Date.now());
       }, function (e) { diag.push('feed: erro ' + ((e && e.message) || '?')); return null; });
     };
-    toast('Procurando o jogo na ' + label + '…', 3000);
+    toast('Procurando o jogo ' + (y.any ? 'no YouTube' : 'na ' + label) + '…', 3000);
     var cidKnown = y.cid || null, readable = false;
     var scan = function (name, url, any, own) {
       return ytGet(url).then(function (html) {
@@ -1646,8 +1656,8 @@
       return pick || (y.generic || readable ? null : viaFeed(cidKnown));   // feed não diferencia live de agendada/replay: só se as páginas não puderam ser lidas
     }).then(function (pick) {
       if (pick) { launch(pick.id); return; }
-      if (y.generic) { toast('Não há transmissão ao vivo de ' + g.home.name + ' x ' + g.away.name + ' na ' + label + ' agora. (' + diag.join('; ') + ')', 9000); return; }
-      toast('Não achei ' + g.home.name + ' x ' + g.away.name + ' ao vivo na ' + label + ' agora (pode não ter começado). (' + diag.join('; ') + ')', 9000);
+      if (y.generic) { toast('Não há transmissão ao vivo de ' + g.home.name + ' x ' + g.away.name + ' ' + (y.any ? 'no YouTube' : 'na ' + label) + ' agora. (' + diag.join('; ') + ')', 9000); return; }
+      toast('Não achei ' + g.home.name + ' x ' + g.away.name + ' ao vivo ' + (y.any ? 'no YouTube' : 'na ' + label) + ' agora (pode não ter começado). (' + diag.join('; ') + ')', 9000);
       if (!readable) { launch(null); }   // página ilegível: abre o canal; com página lida, não leva para live agendada de outro jogo
     });
   }
@@ -3803,7 +3813,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.60.5']
+      ['Versão do app', '1.61.0']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {

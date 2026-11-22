@@ -614,10 +614,12 @@ Promise.all([listen(api), listen(px), startSync()]).then(function () {
       var gu = $('.spch.guess');
       assert.ok(gu && /Palpite: Premiere 3/.test(gu.textContent), 'jogo sem canal no guia: palpite com o Premiere sem guia');
       $('.spcard.live').click();
-      assert.ok(/Raphael Veiga/.test($('.sports').textContent) && /Posse de bola/.test($('.sports').textContent) && /55%/.test($('.sports').textContent), 'gols e estatísticas');
-      return waitFor(function () { return $('.spacc'); }, 'escalação (sanfona)');
+      assert.ok(/Raphael Veiga/.test($('.sports').textContent) && !/Posse de bola/.test($('.sports').textContent), 'gols; estatísticas começam ocultas');
+      $('.spacc[data-k="acc:stats"]').click();
+      assert.ok(/Posse de bola/.test($('.sports').textContent) && /55%/.test($('.sports').textContent), 'estatísticas abrem na sanfona');
+      return waitFor(function () { return $('.spacc[data-k="acc:lineup"]'); }, 'escalação (sanfona)');
     }).then(function () {
-      assert.ok($('.spacc') && !$('.sppitch'), 'escalação começa oculta (sanfona)'); $('.spacc').click(); assert.ok($$('.sppitch .spplayer').length === 22 && /4-3-3/.test($('.splnames').textContent), 'escalação abre com formação');
+      assert.ok($('.spacc[data-k="acc:lineup"]') && !$('.sppitch'), 'escalação começa oculta (sanfona)'); $('.spacc[data-k="acc:lineup"]').click(); assert.ok($$('.sppitch .spplayer').length === 22 && /4-3-3/.test($('.splnames').textContent), 'escalação abre com formação');
       var pl = $$('.spplay')[0];
       assert.ok(pl && /Canal Esporte 2/.test(pl.textContent), 'botão para assistir no canal');
       var fb = $$('.sports .btn').filter(function (b) { return /Seguir Palmeiras/.test(b.textContent); })[0];

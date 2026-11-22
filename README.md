@@ -424,3 +424,7 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 
 ## 1.60.5
 - **Vídeo vertical no formato original (Android, celular):** o player não força mais tudo deitado. Quando o vídeo carrega e a altura é maior que a largura, a tela fica em pé (retrato); os demais continuam deitados. Ao trocar para um vídeo horizontal (ex.: próximo episódio), volta a deitar; ao fechar o player, volta a seguir a rotação do celular. Na TV não muda nada. Nova ponte `NativeApp.setVideoPortrait`.
+
+## 1.61.0
+- **Estatísticas em "sanfona":** igual à escalação, começam ocultas ("▸ Estatísticas · mostrar"); OK abre e fecha.
+- **YouTube sem depender do guia:** o guia (ESPN) nem sempre acerta o canal (ex.: aponta SportyNet e o jogo passa na CazéTV). Agora o app procura, em segundo plano, o jogo em **todos** os canais conhecidos (CazéTV, ge tv, TNT Sports, SportyNet). Onde achar, o card e a tela do jogo mostram um botão direto por canal (se o mesmo jogo passa em dois, aparecem os dois). Sem achar, fica só "Procurar no YouTube", que busca o jogo em qualquer canal ao vivo.

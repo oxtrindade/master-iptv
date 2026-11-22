@@ -324,6 +324,8 @@
     { re: /SportyNet/, label: 'SportyNet', url: 'https://www.youtube.com/channel/UCMcc9elPZGpg6eU4i3YaCpA/live', streams: 'https://www.youtube.com/channel/UCMcc9elPZGpg6eU4i3YaCpA/streams', cid: 'UCMcc9elPZGpg6eU4i3YaCpA',
       tries: ['https://www.youtube.com/channel/UCMcc9elPZGpg6eU4i3YaCpA/live'] }
   ];
+  /* todos os canais do YouTube conhecidos (a fonte do guia nem sempre acerta onde o jogo passa; o app procura em todos) */
+  Sp.youtubeAll = function () { return YT.map(function (y) { return { label: y.label, url: y.url, tries: y.tries, streams: y.streams, cid: y.cid }; }); };
   Sp.youtubeLinks = function (wr, any) {
     var txt = wr && wr.lines ? wr.lines.join('\n') : '', out = [];
     YT.forEach(function (y) { if (y.re.test(txt)) { out.push({ label: y.label, url: y.url, tries: y.tries, streams: y.streams, cid: y.cid }); } });
