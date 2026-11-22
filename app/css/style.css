@@ -1259,3 +1259,13 @@ body.portrait .splnames { font-size: 14px; }
 .spacc.f.focus { background: #fff; color: #0b101a; box-shadow: 0 0 0 3px #3ab4e0; } .spacc.f.focus .spaccsub { color: #4a566b; }
 body.compact .spacc { height: 44px; font-size: 18px; } body.compact .spacc .spaccsub { font-size: 14px; }
 body.portrait .spacc { height: 46px; font-size: 16px; } body.portrait .spacc .spaccsub { font-size: 13px; }
+
+/* pular abertura (séries) */
+#skipintro { position: absolute; right: 48px; bottom: 150px; z-index: 6; padding: 14px 30px; border-radius: 10px; border: 2px solid #fff; background: rgba(10,16,28,.82); color: #fff; font: 700 26px/1 inherit; font-family: inherit; cursor: pointer; }
+#skipintro.hidden { display: none; }
+body.compact #skipintro { font-size: 18px; padding: 10px 20px; bottom: 120px; right: 28px; }
+body.portrait #skipintro { font-size: 15px; padding: 9px 16px; bottom: 110px; right: 16px; }
+/* avatar do perfil no topo do Início: um pouco maior */
+.sechead.hub .avatar { width: 66px; height: 66px; font-size: 28px; }
+body.compact .sechead.hub .avatar { width: 48px; height: 48px; }
+body.portrait .sechead.hub .avatar { width: 40px; height: 40px; }

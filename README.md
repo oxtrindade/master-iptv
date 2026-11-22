@@ -437,3 +437,7 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
   - **Receber chave de outro aparelho:** mostra um código de 16 caracteres; no aparelho que já tem a chave, digita-se o código e aperta **Enviar chave**. O app valida a chave (TMDB) antes de salvar.
   - **Login pelo celular:** "Enviar login para a TV" agora leva junto a chave do TMDB do celular; a TV que ainda não tem chave passa a ter (e já mostra o ranking real e as recomendações).
   - O código é de uso único (apagado do servidor ao ser lido); a chave não é sincronizada pelo código de sincronização, para não misturar o histórico de cada pessoa. Não precisa publicar o Worker de novo.
+
+## 1.63.0
+- **Pular abertura (séries)**: o botão "Pular abertura" aparece no player durante a abertura do episódio (OK no controle ou toque). Os tempos vêm da TheIntroDB (base pública da comunidade, sem chave), buscados pelo id do TMDB + temporada + episódio; precisa da chave do TMDB. Sem registro para o episódio, nada aparece. Pode ser desligado com a chave `skipintro` do perfil.
+- Avatar do perfil no topo do Início um pouco maior.

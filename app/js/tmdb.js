@@ -245,6 +245,20 @@ var Tmdb = (function () {
         return out;
       });
     },
+    /* abertura do episódio (TheIntroDB, base pública da comunidade, sem chave): {s, e} em segundos; null = sem registro.
+       start_ms nulo = começo do vídeo; end_ms nulo = sem fim conhecido (ignorado). Falha de rede lança erro (não vira "sem registro") */
+    intro: function (tvId, season, episode) {
+      if (!http) { return Promise.reject(new Error('sem rede')); }
+      var url = 'https://api.theintrodb.org/v4/media?tmdb_id=' + tvId + '&season=' + season + '&episode=' + episode;
+      return Promise.resolve(http(url)).then(function (t) {
+        var r = typeof t === 'string' ? JSON.parse(t) : t, l = (r && r.intro) || [], i, x;
+        for (i = 0; i < l.length; i++) {
+          x = l[i];
+          if (x && typeof x.end_ms === 'number' && x.end_ms > 0) { return { s: Math.max(0, (x.start_ms || 0) / 1000), e: x.end_ms / 1000 }; }
+        }
+        return null;
+      }, function (e) { if (e && e.status === 404) { return null; } throw e; });
+    },
     findId: function (kind, title, year, key) {
       var extra = '&query=' + encodeURIComponent(norm(title)) + (year ? (kind === 'tv' ? '&first_air_date_year=' : '&year=') + year : '');
       return getJson('/search/' + kind, key, extra).then(function (r) {

@@ -47,6 +47,24 @@ t('TMDB: versões do mesmo título (dublado, legendado, 4K) e preferência', fun
     assert.strictEqual(id, 'OFICIALOFI1', 'nome em português do TMDB + oficial de estúdio, sem reação');
     Tmdb.init(function () { return Promise.resolve(html); });
   }).then(function () {
+    // pular abertura (TheIntroDB, simulada): início nulo = 0; sem fim = ignora; 404 = null; erro de rede propaga
+    var u = '';
+    Tmdb.init(function (x) { u = x; return Promise.resolve('{"intro":[{"start_ms":null,"end_ms":92500}]}'); });
+    return Tmdb.intro(1396, 1, 2).then(function (r) {
+      assert.deepStrictEqual(r, { s: 0, e: 92.5 });
+      assert.ok(/tmdb_id=1396&season=1&episode=2/.test(u), u);
+      Tmdb.init(function () { return Promise.resolve('{"intro":[{"start_ms":5000,"end_ms":null}],"recap":[]}'); });
+      return Tmdb.intro(1, 1, 1);
+    }).then(function (r) {
+      assert.strictEqual(r, null);
+      Tmdb.init(function () { var e = new Error('nf'); e.status = 404; return Promise.reject(e); });
+      return Tmdb.intro(1, 1, 1);
+    }).then(function (r) {
+      assert.strictEqual(r, null);
+      Tmdb.init(function () { var e = new Error('x'); e.status = 0; return Promise.reject(e); });
+      return Tmdb.intro(1, 1, 1).then(function () { assert.fail('devia falhar'); }, function () {});
+    }).then(function () { Tmdb.init(function () { return Promise.resolve(html); }); });
+  }).then(function () {
     // caso real: catálogo "O Diario Mágico (2018)", trailer dublado de 2023 com o título original entre parênteses (Elite Filmes)
     var urls = [];
     Tmdb.init(function (u) { urls.push(u); return Promise.resolve(/2018/.test(decodeURIComponent(u)) ? '' : '"videoRenderer":{"videoId":"F72L-f-VRPQ","title":{"runs":[{"text":"O Diário Mágico  (King\'s Gambit) | Trailer Dublado"}]},"ownerText":{"runs":[{"text":"Elite Filmes"}]}}'); });
