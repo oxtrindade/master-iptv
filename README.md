@@ -441,3 +441,7 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 ## 1.63.0
 - **Pular abertura (séries)**: o botão "Pular abertura" aparece no player durante a abertura do episódio (OK no controle ou toque). Os tempos vêm da TheIntroDB (base pública da comunidade, sem chave), buscados pelo id do TMDB + temporada + episódio; precisa da chave do TMDB. Sem registro para o episódio, nada aparece. Pode ser desligado com a chave `skipintro` do perfil.
 - Avatar do perfil no topo do Início um pouco maior.
+
+## 1.63.1
+- **Jogo**: os botões de assistir (canal do provedor primeiro, depois YouTube) subiram para logo abaixo do placar e ficaram maiores; gols, escalação e estatísticas vêm abaixo.
+- **Início na TV (LG e Android TV)**: o foco vai para o Assistir do banner mesmo quando os destaques demoram a chegar (antes só valia nos primeiros 6 s), então o trailer começa sem mexer no controle.

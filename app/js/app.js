@@ -1532,37 +1532,29 @@
       h('div', { cls: 'splg', text: g.leagueName }), h('div', { cls: 'spst' + (g.state === 'in' ? ' live' : ''), text: Sports.statusText(g) }),
       h('div', { cls: 'spdate', text: SP_WD[new Date(g.start).getDay()] + ' ' + new Date(g.start).getDate() + '/' + (new Date(g.start).getMonth() + 1) + (g.venue ? ' · ' + g.venue : '') })
     ]), big(g.away)]));
-    spLineup(body, g);
-    if (g.goals.length) {
-      body.appendChild(h('div', { cls: 'sptitle', text: 'Gols' }));
-      body.appendChild(h('div', { cls: 'spgoals' }, g.goals.map(function (x) {
-        return h('div', { cls: 'spgoal' + (x.home ? '' : ' away'), text: (x.min ? x.min + '  ' : '') + x.who + (x.pen ? ' (pênalti)' : '') + (x.own ? ' (contra)' : '') });
-      })));
-    }
-    var rows = [spStatRow('Posse de bola', a.poss && a.poss + '%', b.poss && b.poss + '%'), spStatRow('Finalizações', a.shots, b.shots), spStatRow('No alvo', a.sot, b.sot),
-      spStatRow('Escanteios', a.corners, b.corners), spStatRow('Faltas', a.fouls, b.fouls), spStatRow('Amarelos', a.yellow, b.yellow), spStatRow('Vermelhos', a.red, b.red)].filter(Boolean);
-    if (rows.length && g.state !== 'pre' && spAcc(body, 'stats', 'Estatísticas')) { body.appendChild(h('div', { cls: 'spstats' }, rows)); }
-    body.appendChild(h('div', { cls: 'sptitle', text: 'Onde assistir (seus canais)' }));
+    var slot = h('div', { cls: 'spslot' });   // botões de assistir logo abaixo do placar; escalação e estatísticas vêm depois
+    body.appendChild(slot);
+    slot.appendChild(h('div', { cls: 'sptitle', text: 'Assistir' }));
     if (hits.length) {
-      body.appendChild(h('div', { cls: 'spwatch' }, hits.slice(0, 6).map(function (x, i) {
+      slot.appendChild(h('div', { cls: 'spwatch' }, hits.slice(0, 6).map(function (x, i) {
         return h('button', { cls: 'f btn spplay' + (i === 0 ? ' primary' : ''), type: 'button', 'data-k': 'p:' + i, on: { click: function () { spPlay(g, i); } } },
           [icon('play', 22), x.ch.name, h('small', { text: x.prog && x.prog.title ? x.prog.title : '' })]);
       })));
     } else if (spGuess(g).length) {
-      body.appendChild(h('div', { cls: 'spnote small', text: 'Não achei este jogo no guia. Palpite: o Premiere exibe todos os jogos do Brasileirão e estes canais seus estão sem guia — confira qual deles está passando.' }));
-      body.appendChild(h('div', { cls: 'spwatch' }, spGuess(g).slice(0, 8).map(function (ch, i) {
+      slot.appendChild(h('div', { cls: 'spnote small', text: 'Não achei este jogo no guia. Palpite: o Premiere exibe todos os jogos do Brasileirão e estes canais seus estão sem guia — confira qual deles está passando.' }));
+      slot.appendChild(h('div', { cls: 'spwatch' }, spGuess(g).slice(0, 8).map(function (ch, i) {
         return h('button', { cls: 'f btn spplay', type: 'button', 'data-k': 'p:' + i, on: { click: function () { spPlay(g, i); } } }, [icon('play', 22), ch.name, h('small', { text: 'sem guia' })]);
       })));
     } else {
       if (S.provider && S.provider.hasEpg && !sp.scanning && g.state !== 'post') {
-        body.appendChild(h('div', { cls: 'spwatch' }, [h('button', { cls: 'f btn', type: 'button', 'data-k': 'rescan', on: { click: function () { toast('Procurando de novo nos seus canais…', 2500); spScan(true, true); } } }, [icon('search', 22), 'Procurar canais de novo'])]));
+        slot.appendChild(h('div', { cls: 'spwatch' }, [h('button', { cls: 'f btn', type: 'button', 'data-k': 'rescan', on: { click: function () { toast('Procurando de novo nos seus canais…', 2500); spScan(true, true); } } }, [icon('search', 22), 'Procurar canais de novo'])]));
       }
-      body.appendChild(h('div', { cls: 'spnote small', text: !S.provider || !S.provider.hasEpg ? 'Este servidor não tem guia de programação.' : (sp.scanning ? 'Procurando nos seus canais…' + (sp.prog && sp.prog.total ? ' (' + sp.prog.done + ' de ' + sp.prog.total + ')' : '') : 'Nenhum dos seus canais parece passar este jogo agora (ou o provedor escreve os nomes de outro jeito).') }));
+      slot.appendChild(h('div', { cls: 'spnote small', text: !S.provider || !S.provider.hasEpg ? 'Este servidor não tem guia de programação.' : (sp.scanning ? 'Procurando nos seus canais…' + (sp.prog && sp.prog.total ? ' (' + sp.prog.done + ' de ' + sp.prog.total + ')' : '') : 'Nenhum dos seus canais parece passar este jogo agora (ou o provedor escreve os nomes de outro jeito).') }));
     }
     var wr = Sports.whereToWatch(g);
     if (wr) {
-      body.appendChild(h('div', { cls: 'sptitle', text: 'Onde assistir (outras fontes)' }));
-      body.appendChild(h('div', { cls: 'spwhlist' }, wr.lines.map(function (l) { return h('div', { cls: 'spwhrow', text: l }); }).concat([
+      slot.appendChild(h('div', { cls: 'sptitle', text: 'Onde assistir (outras fontes)' }));
+      slot.appendChild(h('div', { cls: 'spwhlist' }, wr.lines.map(function (l) { return h('div', { cls: 'spwhrow', text: l }); }).concat([
         h('div', { cls: 'spnote small', text: 'Serviços como HBO Max, Paramount+, Prime Video e YouTube não têm guia de programação no seu servidor, por isso não viram botão de canal. Direitos conforme a imprensa (nov/2026); podem variar por jogo.' })
       ])));
     }
@@ -1573,8 +1565,18 @@
         return h('button', { cls: 'f btn primary spplay', type: 'button', 'data-k': 'yt:' + x.y.label, on: { click: function () { openYouTube(x.y, g, x.id); } } }, [icon('play', 22), 'Assistir ao vivo na ' + x.y.label + ' (YouTube)']);
       });
       btns.push(h('button', { cls: 'f btn' + (yhs.length ? '' : ' primary'), type: 'button', 'data-k': 'yt:any', on: { click: function () { openYouTube(anyY, g); } } }, [icon('search', 22), 'Procurar no YouTube']));
-      body.appendChild(h('div', { cls: 'spwatch' }, btns));
+      slot.appendChild(h('div', { cls: 'spwatch' }, btns));
     }
+    spLineup(body, g);
+    if (g.goals.length) {
+      body.appendChild(h('div', { cls: 'sptitle', text: 'Gols' }));
+      body.appendChild(h('div', { cls: 'spgoals' }, g.goals.map(function (x) {
+        return h('div', { cls: 'spgoal' + (x.home ? '' : ' away'), text: (x.min ? x.min + '  ' : '') + x.who + (x.pen ? ' (pênalti)' : '') + (x.own ? ' (contra)' : '') });
+      })));
+    }
+    var rows = [spStatRow('Posse de bola', a.poss && a.poss + '%', b.poss && b.poss + '%'), spStatRow('Finalizações', a.shots, b.shots), spStatRow('No alvo', a.sot, b.sot),
+      spStatRow('Escanteios', a.corners, b.corners), spStatRow('Faltas', a.fouls, b.fouls), spStatRow('Amarelos', a.yellow, b.yellow), spStatRow('Vermelhos', a.red, b.red)].filter(Boolean);
+    if (rows.length && g.state !== 'pre' && spAcc(body, 'stats', 'Estatísticas')) { body.appendChild(h('div', { cls: 'spstats' }, rows)); }
     body.appendChild(h('div', { cls: 'spwatch' }, [g.home, g.away].map(function (t) {
       var on = !!fol[t.id];
       return h('button', { cls: 'f btn', type: 'button', 'data-k': 'f:' + t.id, on: { click: function () { spToggleFollow(t); paintSports(); } } },
@@ -3294,7 +3296,8 @@
         txt.classList.remove('swap');
         if (focusK) { var fb = btns.querySelector('[data-k="' + focusK + '"]'); if (fb) { Nav.focus(fb); } }
         // 1º destaque: a seleção sai do menu e vai para o botão Assistir (só se o usuário ainda não mexeu no foco)
-        if (wantFocus) { wantFocus = false; var cf = Nav.current(); if (!cf || cf === S.homeFocus0 || (S.headEl && S.headEl.contains(cf) && Date.now() - (S.homeAt || 0) < 6000)) { var pb = btns.querySelector('[data-k="hero-play"]'); if (pb) { Nav.focus(pb); } } }
+        if (wantFocus) { wantFocus = false; var cf = Nav.current(); if (!cf || cf === S.homeFocus0 || (Date.now() - (S.homeAt || 0) < 20000 && ((S.headEl && S.headEl.contains(cf)) || (cf.closest && cf.closest('.hubtabs, .hub-tiles'))))) {   // (1.63.1: na TV os destaques chegam depois de 6 s; aceita o foco em qualquer item do menu superior)
+           var pb = btns.querySelector('[data-k="hero-play"]'); if (pb) { Nav.focus(pb); } } }
         pvEnd(); pvSchedule();
         if (!heroInfo[key]) { loadInfo(sl, cur); }
       }, 220);
@@ -3854,7 +3857,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.63.0']
+      ['Versão do app', '1.63.1']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {

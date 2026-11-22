@@ -1269,3 +1269,8 @@ body.portrait #skipintro { font-size: 15px; padding: 9px 16px; bottom: 110px; ri
 .sechead.hub .avatar { width: 66px; height: 66px; font-size: 28px; }
 body.compact .sechead.hub .avatar { width: 48px; height: 48px; }
 body.portrait .sechead.hub .avatar { width: 40px; height: 40px; }
+
+/* jogo: botões de assistir em destaque */
+.spslot .spplay.primary { font-size: 30px; padding: 22px 38px; box-shadow: 0 0 0 3px rgba(58,180,224,.55); }
+body.compact .spslot .spplay.primary { font-size: 20px; padding: 14px 24px; }
+body.portrait .spslot .spplay.primary { font-size: 17px; padding: 12px 18px; width: 100%; box-sizing: border-box; justify-content: center; }
