@@ -214,18 +214,24 @@
   /* ---------- login da TV pelo celular ----------
      A TV mostra um código aleatório (o segredo). O celular grava o login nele; a TV lê, apaga e entra. */
   function pairUrl(url, code) { return Sy.normUrl(url) + '/sync/' + Sy.normCode(code); }
-  Sy.pairSend = function (url, code, login) {
-    return request('POST', pairUrl(url, code), JSON.stringify({ v: 1, login: { server: login.server, user: login.user, pass: login.pass }, at: Date.now() })).then(function (w) {
+  /* login (opcional) e/ou chave do TMDB (opcional) enviados a um código de 16 caracteres que o outro aparelho está mostrando */
+  Sy.pairSend = function (url, code, login, tmdb) {
+    var body = { v: 1, at: Date.now() };
+    if (login) { body.login = { server: login.server, user: login.user, pass: login.pass }; }
+    if (tmdb) { body.tmdb = String(tmdb); }
+    return request('POST', pairUrl(url, code), JSON.stringify(body)).then(function (w) {
       if (w.status < 200 || w.status >= 300) { throw new Error('Servidor recusou (' + w.status + ')'); }
       return true;
     });
   };
-  Sy.pairPoll = function (url, code) {   // -> Promise(login | null)
+  Sy.pairPoll = function (url, code) {   // -> Promise({ server, user, pass, tmdb } | null); server ausente = só a chave do TMDB
     return request('GET', pairUrl(url, code)).then(function (r) {
       if (r.status !== 200) { return null; }
       var j; try { j = JSON.parse(r.text); } catch (e) { return null; }
-      var l = j && j.login;
-      return l && l.server && l.user && l.pass ? { server: String(l.server), user: String(l.user), pass: String(l.pass) } : null;
+      var l = j && j.login, out = {}, any = false;
+      if (l && l.server && l.user && l.pass) { out.server = String(l.server); out.user = String(l.user); out.pass = String(l.pass); any = true; }
+      if (j && typeof j.tmdb === 'string' && /^[\w.-]{20,400}$/.test(j.tmdb)) { out.tmdb = j.tmdb; any = true; }
+      return any ? out : null;
     });
   };
   Sy.pairWipe = function (url, code) { return request('POST', pairUrl(url, code), '{}').then(function () { return true; }, function () { return false; }); };

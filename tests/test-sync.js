@@ -37,6 +37,18 @@ function step(s) { console.log('  ok  ', s); }
   assert.deepStrictEqual(JSON.parse(JSON.stringify(await Sync.pairPoll(pu, pc))), { server: 'http://s.com:80', user: 'joao', pass: 'x y' }, 'TV recebe o login');
   await Sync.pairWipe(pu, pc);
   assert.strictEqual(await Sync.pairPoll(pu, pc), null, 'depois de lido, o login é apagado do servidor');
+  // chave do TMDB: junto com o login ou sozinha
+  var pc2 = Sync.newCode(), key = 'a'.repeat(32);
+  await Sync.pairSend(pu, pc2, null, key);
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(await Sync.pairPoll(pu, pc2))), { tmdb: key }, 'só a chave do TMDB');
+  await Sync.pairWipe(pu, pc2);
+  await Sync.pairSend(pu, pc2, { server: 'http://s.com:80', user: 'joao', pass: 'x' }, key);
+  var both = await Sync.pairPoll(pu, pc2);
+  assert.ok(both.server === 'http://s.com:80' && both.tmdb === key, 'login e chave juntos');
+  await Sync.pairWipe(pu, pc2);
+  await Sync.pairSend(pu, pc2, null, 'curta<');
+  assert.strictEqual(await Sync.pairPoll(pu, pc2), null, 'chave com formato estranho é ignorada');
+  await Sync.pairWipe(pu, pc2);
   step('login da TV pelo celular: enviar, receber e apagar');
   var pg = await call('GET', 'https://abc.workers.dev/p/' + pc);
   assert.strictEqual(pg.status, 200, 'página do QR Code abre');

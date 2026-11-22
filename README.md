@@ -431,3 +431,9 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 
 ## 1.61.1
 - **TV: banner da Início já abre com o foco no "Assistir" e o trailer inicia.** Bug: quando o banner vinha do cache (quase sempre, depois da 1ª abertura) a regra que move o foco para o botão ainda não tinha o ponto de partida definido e falhava; o foco ficava no menu (Início/TV ao vivo…) e o trailer, que só toca com o banner "em foco", não começava. Agora o foco vai para o Assistir mesmo com o banner do cache, sem tirar o foco se você já desceu para uma fileira. Teste reproduz a falha antes da correção.
+
+## 1.62.0
+- **Compartilhar a chave do TMDB com a família (recomendações):** a chave não vai para o repositório. Em Configurações → TMDB:
+  - **Receber chave de outro aparelho:** mostra um código de 16 caracteres; no aparelho que já tem a chave, digita-se o código e aperta **Enviar chave**. O app valida a chave (TMDB) antes de salvar.
+  - **Login pelo celular:** "Enviar login para a TV" agora leva junto a chave do TMDB do celular; a TV que ainda não tem chave passa a ter (e já mostra o ranking real e as recomendações).
+  - O código é de uso único (apagado do servidor ao ser lido); a chave não é sincronizada pelo código de sincronização, para não misturar o histórico de cada pessoa. Não precisa publicar o Worker de novo.

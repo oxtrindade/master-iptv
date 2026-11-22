@@ -1890,6 +1890,8 @@
         if (!l) { return; }
         clearInterval(S.pairT); S.pairT = null;
         Sync.pairWipe(url, code);   // a senha não fica no servidor
+        if (l.tmdb && !tmdbKey()) { store.set('tmdbkey', l.tmdb); clearTmdbCache(); }   // chave do TMDB (recomendações) veio junto
+        if (!l.server) { st.textContent = 'Recebi só a chave do TMDB. Aguardando o login…'; showPair(msg, canCancel); return; }
         st.textContent = 'Login recebido, conectando…';
         connect({ mode: 'xtream', server: l.server, user: l.user, pass: l.pass });
       }, function () { busy = false; st.textContent = 'Sem conexão com o servidor de sincronização…'; });
@@ -3705,10 +3707,48 @@
       }, function () { status.textContent = 'Chave inválida (use a "Chave da API" v3 do themoviedb.org).'; });
     }
     input.addEventListener('keydown', function (e) { if (e.keyCode === 13) { save(); } });
+    /* compartilhar a chave entre aparelhos da família por um código de 16 caracteres (não passa pelo repositório nem mistura histórico) */
+    var syncUrl = function () { return Sync.normUrl(store.get('syncurl', '') || Sync.DEFAULT_URL); };
+    var shIn = h('input', { cls: 'f input', type: 'text', placeholder: 'Código mostrado no outro aparelho' });
+    var shSt = h('div', { cls: 'swd' });
+    function shSend() {
+      var c = Sync.normCode(shIn.value), k = tmdbKey();
+      if (!k) { shSt.textContent = 'Salve uma chave aqui antes de enviar.'; return; }
+      if (!Sync.validCode(c)) { shSt.textContent = 'Código inválido: 16 letras e números.'; return; }
+      shSt.textContent = 'Enviando…';
+      Sync.pairSend(syncUrl(), c, null, k).then(function () { shSt.textContent = 'Enviada! O outro aparelho recebe em alguns segundos.'; shIn.value = ''; },
+        function (e) { shSt.textContent = 'Falha: ' + ((e && e.message) || 'sem conexão'); });
+    }
+    shIn._enter = shSend;
+    var rcBox = h('div', { cls: 'swd' }), rcT = null;
+    function shReceive() {
+      clearInterval(rcT);
+      var code = Sync.newCode(), t0 = Date.now(), busy = false;
+      rcBox.textContent = 'Digite este código no outro aparelho (Configurações → Chave do TMDB → Enviar): ' + Sync.fmtCode(code);
+      rcT = setInterval(function () {
+        if (!document.body.contains(rcBox) || Date.now() - t0 > 15 * 60000) { clearInterval(rcT); return; }
+        if (busy) { return; }
+        busy = true;
+        Sync.pairPoll(syncUrl(), code).then(function (l) {
+          busy = false;
+          if (!l || !l.tmdb) { return; }
+          clearInterval(rcT); Sync.pairWipe(syncUrl(), code);
+          Tmdb.check(l.tmdb).then(function () {
+            store.set('tmdbkey', l.tmdb); clearTmdbCache(); input.value = l.tmdb;
+            rcBox.textContent = 'Chave recebida e válida. Recomendações do TMDB ativas.'; status.textContent = 'Chave salva. Ranking real e recomendações ativos.';
+          }, function () { rcBox.textContent = 'A chave recebida não é válida.'; });
+        }, function () { busy = false; });
+      }, 3000);
+    }
     return h('div', {}, [
       h('div', { cls: 'swd tmdbhelp', text: 'Gratuito: crie conta em themoviedb.org, abra Configurações → API e copie a Chave da API. Cole abaixo.' }),
       h('div', { cls: 'citybox' }, [input, h('button', { cls: 'f btn', text: 'Salvar', on: { click: save } })]),
       status,
+      h('div', { cls: 'swd tmdbhelp', text: 'Compartilhar com a família: no aparelho que tem a chave, digite o código mostrado pelo outro aparelho (que apertou "Receber chave").' }),
+      h('div', { cls: 'citybox' }, [shIn, h('button', { cls: 'f btn', text: 'Enviar chave', on: { click: shSend } })]),
+      shSt,
+      h('div', { cls: 'sbtns' }, [h('button', { cls: 'f btn', text: 'Receber chave de outro aparelho', on: { click: shReceive } })]),
+      rcBox,
       h('div', { cls: 'swd tmdbhelp', text: 'Este produto usa a API do TMDB, mas não é endossado nem certificado pelo TMDB.' })
     ]);
   }
@@ -3814,7 +3854,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.61.1']
+      ['Versão do app', '1.62.0']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
@@ -3827,8 +3867,8 @@
         var c = Sync.normCode(pcIn.value);
         if (!Sync.validCode(c)) { pcSt.textContent = 'Código inválido: 16 letras e números, como mostra a TV.'; return; }
         pcSt.textContent = 'Enviando…';
-        Sync.pairSend(Sync.normUrl(store.get('syncurl', '') || Sync.DEFAULT_URL), c, S.cfg).then(function () {
-          pcSt.textContent = 'Enviado! A TV entra em alguns segundos.'; pcIn.value = '';
+        Sync.pairSend(Sync.normUrl(store.get('syncurl', '') || Sync.DEFAULT_URL), c, S.cfg, tmdbKey() || null).then(function () {
+          pcSt.textContent = 'Enviado! A TV entra em alguns segundos' + (tmdbKey() ? ' (junto com a chave do TMDB)' : '') + '.'; pcIn.value = '';
         }, function (e) { pcSt.textContent = 'Falha: ' + ((e && e.message) || 'sem conexão'); });
       };
       pcIn._enter = sendTv;
