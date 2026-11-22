@@ -1252,3 +1252,10 @@ body.portrait .spplayer .spnum { min-width: 24px; height: 24px; line-height: 24p
 body.portrait .splnames { font-size: 14px; }
 
 .spch.yt { color: #ff9a9a; }
+
+.spacc { display: flex; align-items: center; width: 100%; height: 64px; padding: 0 22px; margin: 6px 0 12px; border: 0; border-radius: 14px; background: #131d33; color: #fff; font-size: 26px; font-weight: 700; text-align: left; }
+.spacc .spaccarrow { width: 34px; color: #3ab4e0; }
+.spacc .spaccsub { margin-left: auto; font-size: 20px; font-weight: 500; color: #8a97ad; }
+.spacc.f.focus { background: #fff; color: #0b101a; box-shadow: 0 0 0 3px #3ab4e0; } .spacc.f.focus .spaccsub { color: #4a566b; }
+body.compact .spacc { height: 44px; font-size: 18px; } body.compact .spacc .spaccsub { font-size: 14px; }
+body.portrait .spacc { height: 46px; font-size: 16px; } body.portrait .spacc .spaccsub { font-size: 13px; }

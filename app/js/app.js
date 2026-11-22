@@ -1473,8 +1473,11 @@
       if (g.state === 'pre') { body.appendChild(h('div', { cls: 'spnote small', text: 'Escalação ainda não divulgada (costuma sair cerca de 1 hora antes do jogo).' })); }
       return;
     }
-    var vert = document.body.classList.contains('portrait');
-    body.appendChild(h('div', { cls: 'sptitle', text: 'Escalação' }));
+    var vert = document.body.classList.contains('portrait'), open = !!sp.lineupOpen;
+    // "sanfona": começa fechada para não empurrar os canais para baixo; OK abre/fecha
+    body.appendChild(h('button', { cls: 'f spacc' + (open ? ' open' : ''), type: 'button', 'data-k': 'lineup', on: { click: function () { sp.lineupOpen = !sp.lineupOpen; sp.autoFocus = false; paintSports(); var b = $('.spacc'); if (b) { Nav.focus(b); } } } },
+      [h('span', { cls: 'spaccarrow', text: open ? '▾' : '▸' }), h('span', { text: 'Escalação' }), h('span', { cls: 'spaccsub', text: open ? 'ocultar' : 'mostrar' })]));
+    if (!open) { return; }
     var names = h('div', { cls: 'splnames' }, l.map(function (t) { return h('div', { cls: 'splname' + (t.home ? '' : ' away'), text: (t.home ? g.home.name : g.away.name) + (t.formation ? '  ' + t.formation : '') }); }));
     var pitch = h('div', { cls: 'sppitch' + (vert ? ' vert' : '') }, [h('div', { cls: 'spmid' }), h('div', { cls: 'spcircle' }), h('div', { cls: 'spbox l' }), h('div', { cls: 'spbox r' })]);
     l.forEach(function (t) {
@@ -3779,7 +3782,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.60.2']
+      ['Versão do app', '1.60.3']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {

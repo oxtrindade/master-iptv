@@ -415,3 +415,6 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 
 ## 1.60.2
 - **Esportes · Placares:** os jogos do dia agora ficam em uma lista só, em ordem de horário (em vez de agrupados por campeonato). O campeonato continua no topo de cada card. "Ao vivo agora" segue primeiro.
+
+## 1.60.3
+- **Escalação em "sanfona":** na tela do jogo a escalação começa oculta, com uma linha "▸ Escalação · mostrar"; OK abre o campo virtual e fecha de novo ("▾ … ocultar"). Assim a lista de canais para assistir não fica empurrada para baixo.
