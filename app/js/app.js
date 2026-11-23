@@ -3857,7 +3857,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.65.0']
+      ['Versão do app', '1.65.1']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
@@ -4316,7 +4316,7 @@
       if (!fromStart && r && r.t > 30 && r.t < r.d - 45) { o.startAt = r.t; }
     }
     c.autoDone = !!o.startAt;
-    c.intro = null; c.seg = null; hideSkip();
+    c.intro = null; c.seg = null; c.nxtT = null; c.noAuto = false; hideSkip();
     if (c.kind === 'ep') { loadIntro(c, c.eps[c.idx]); }
     $('buffer').classList.remove('hidden');
     S.prefApplied = {};
@@ -4368,7 +4368,14 @@
     bi.classList.toggle('hidden', !(c.intro && t >= c.intro.s - 0.5 && t < c.intro.e - 1));
     // créditos: início vindo da base; sem registro, usa os últimos ~40 s (só em episódios longos); precisa existir próximo episódio
     var cs = c.seg && c.seg.cs !== null ? c.seg.cs : (isFinite(d) && d > 300 ? d - 40 : 0), has = c.kind === 'ep' && c.idx + 1 < c.eps.length;
-    bn.classList.toggle('hidden', !(has && cs > 0 && t >= cs && !(c.intro && !bi.classList.contains('hidden'))));
+    var show = has && cs > 0 && t >= cs && !(c.intro && !bi.classList.contains('hidden'));
+    bn.classList.toggle('hidden', !show);
+    if (!show) { c.nxtT = null; bn.textContent = 'Próximo episódio ▶'; return; }
+    // automático: 5 s (do tempo do vídeo, então pausar congela) depois que o botão aparece; qualquer ←/→ cancela
+    if (c.nxtT === null || c.nxtT === undefined) { c.nxtT = t; }
+    if (c.noAuto || store.get('autonext', true) === false) { return; }
+    var left = Math.ceil(5 - (t - c.nxtT));
+    if (left <= 0) { doNextEp(); } else { bn.textContent = 'Próximo episódio em ' + left + ' ▶'; }
   }
 
   function setOsd(title, sub, sub2, logo, vod) {
@@ -4831,6 +4838,7 @@
     S.seekCount = (now - S.seekAt < 700) ? S.seekCount + 1 : 0;
     S.seekAt = now;
     var steps = [10, 10, 20, 30, 60, 60, 120];
+    if (S.ctx) { S.ctx.noAuto = true; }   // mexeu na linha do tempo: cancela o próximo episódio automático
     Player.seek(dir * steps[Math.min(S.seekCount, steps.length - 1)]);
     showOsd(S.osdMenu);
     updateBar(Player.time(), Player.duration());

@@ -403,8 +403,10 @@ Promise.all([listen(api), listen(px), startSync()]).then(function () {
       assert.ok($('#skipnext').classList.contains('hidden'), 'no meio do episódio não mostra "Próximo episódio"');
       vt = 2670; $('#video').dispatchEvent(new w.Event('timeupdate'));
       assert.ok(!$('#skipnext').classList.contains('hidden'), 'nos créditos mostra "Próximo episódio"');
-      $('#skipnext').click();
-      assert.ok(/7002\.mp4$/.test(vsrc()) && $('#skipnext').classList.contains('hidden'), 'clicar toca o E2: ' + vsrc());
+      vt = 2673; $('#video').dispatchEvent(new w.Event('timeupdate'));
+      assert.ok(/em [23]/.test($('#skipnext').textContent), 'contagem regressiva: ' + $('#skipnext').textContent);
+      vt = 2676; $('#video').dispatchEvent(new w.Event('timeupdate'));
+      assert.ok(/7002\.mp4$/.test(vsrc()), 'passados 5 s toca o E2 sozinho: ' + vsrc());
       key(34);
       vd = NaN; vt = 0;
       step('séries: próximo/anterior episódio (menu e CH+/CH-)');

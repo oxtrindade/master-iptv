@@ -457,3 +457,6 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 
 ## 1.65.0
 - **Próximo episódio sem esperar os créditos**: quando os créditos começam, aparece o botão "Próximo episódio" (OK ou toque), que marca o atual como visto e já toca o seguinte. O início dos créditos vem da TheIntroDB; sem registro, o botão aparece nos últimos ~40 s (episódios com mais de 5 min). Não aparece no último episódio.
+
+## 1.65.1
+- Próximo episódio **automático**: ao aparecer o botão nos créditos, uma contagem de 5 s toca o seguinte sozinha (pausar congela a contagem; ←/→ ou OK/toque no botão cancelam/antecipam). Desligável pela chave `autonext` do aparelho.
