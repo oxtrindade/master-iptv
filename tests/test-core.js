@@ -51,12 +51,16 @@ t('TMDB: versões do mesmo título (dublado, legendado, 4K) e preferência', fun
     var u = '';
     Tmdb.init(function (x) { u = x; return Promise.resolve('{"intro":[{"start_ms":null,"end_ms":92500}]}'); });
     return Tmdb.intro(1396, 1, 2).then(function (r) {
-      assert.deepStrictEqual(r, { s: 0, e: 92.5 });
+      assert.deepStrictEqual(r, { s: 0, e: 92.5, cs: null });
       assert.ok(/tmdb_id=1396&season=1&episode=2/.test(u), u);
       Tmdb.init(function () { return Promise.resolve('{"intro":[{"start_ms":5000,"end_ms":null}],"recap":[]}'); });
       return Tmdb.intro(1, 1, 1);
     }).then(function (r) {
       assert.strictEqual(r, null);
+      Tmdb.init(function () { return Promise.resolve('{"credits":[{"start_ms":2500000,"end_ms":null}]}'); });
+      return Tmdb.intro(1, 1, 1);
+    }).then(function (r) {
+      assert.deepStrictEqual(r, { s: null, e: null, cs: 2500 }, 'créditos');
       Tmdb.init(function () { var e = new Error('nf'); e.status = 404; return Promise.reject(e); });
       return Tmdb.intro(1, 1, 1);
     }).then(function (r) {

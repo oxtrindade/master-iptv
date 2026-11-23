@@ -398,6 +398,15 @@ Promise.all([listen(api), listen(px), startSync()]).then(function () {
       assert.ok($('#tracks').classList.contains('hidden') && /7101\.mkv$/.test(vsrc()), 'clicar num episódio troca e fecha a lista: ' + vsrc());
       key(34); key(34);
       assert.ok(/7001\.mp4$/.test(vsrc()), 'volta ao E1 para os próximos passos: ' + vsrc());
+      // "Próximo episódio" nos créditos (sem registro na base: últimos 40 s)
+      vd = 2700; vt = 100; $('#video').dispatchEvent(new w.Event('timeupdate'));
+      assert.ok($('#skipnext').classList.contains('hidden'), 'no meio do episódio não mostra "Próximo episódio"');
+      vt = 2670; $('#video').dispatchEvent(new w.Event('timeupdate'));
+      assert.ok(!$('#skipnext').classList.contains('hidden'), 'nos créditos mostra "Próximo episódio"');
+      $('#skipnext').click();
+      assert.ok(/7002\.mp4$/.test(vsrc()) && $('#skipnext').classList.contains('hidden'), 'clicar toca o E2: ' + vsrc());
+      key(34);
+      vd = NaN; vt = 0;
       step('séries: próximo/anterior episódio (menu e CH+/CH-)');
       vd = 2700; vt = 10;
       $('#video').dispatchEvent(new w.Event('timeupdate'));

@@ -1261,10 +1261,10 @@ body.compact .spacc { height: 44px; font-size: 18px; } body.compact .spacc .spac
 body.portrait .spacc { height: 46px; font-size: 16px; } body.portrait .spacc .spaccsub { font-size: 13px; }
 
 /* pular abertura (séries) */
-#skipintro { position: absolute; right: 48px; bottom: 150px; z-index: 6; padding: 14px 30px; border-radius: 10px; border: 2px solid #fff; background: rgba(10,16,28,.82); color: #fff; font: 700 26px/1 inherit; font-family: inherit; cursor: pointer; }
-#skipintro.hidden { display: none; }
-body.compact #skipintro { font-size: 18px; padding: 10px 20px; bottom: 120px; right: 28px; }
-body.portrait #skipintro { font-size: 15px; padding: 9px 16px; bottom: 110px; right: 16px; }
+#skipintro, #skipnext { position: absolute; right: 48px; bottom: 150px; z-index: 6; padding: 14px 30px; border-radius: 10px; border: 2px solid #fff; background: rgba(10,16,28,.82); color: #fff; font: 700 26px/1 inherit; font-family: inherit; cursor: pointer; }
+#skipintro.hidden, #skipnext.hidden { display: none; }
+body.compact #skipintro, body.compact #skipnext { font-size: 18px; padding: 10px 20px; bottom: 120px; right: 28px; }
+body.portrait #skipintro, body.portrait #skipnext { font-size: 15px; padding: 9px 16px; bottom: 110px; right: 16px; }
 /* avatar do perfil no topo do Início: um pouco maior */
 .sechead.hub .avatar { width: 66px; height: 66px; font-size: 28px; }
 body.compact .sechead.hub .avatar { width: 48px; height: 48px; }

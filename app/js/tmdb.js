@@ -245,18 +245,22 @@ var Tmdb = (function () {
         return out;
       });
     },
-    /* abertura do episódio (TheIntroDB, base pública da comunidade, sem chave): {s, e} em segundos; null = sem registro.
-       start_ms nulo = começo do vídeo; end_ms nulo = sem fim conhecido (ignorado). Falha de rede lança erro (não vira "sem registro") */
+    /* trechos do episódio (TheIntroDB, base pública da comunidade, sem chave): {s, e} = abertura e cs = início dos créditos, em segundos
+       (campos ausentes = null); null = sem registro nenhum. start_ms nulo = começo do vídeo. Falha de rede lança erro (não vira "sem registro") */
     intro: function (tvId, season, episode) {
       if (!http) { return Promise.reject(new Error('sem rede')); }
       var url = 'https://api.theintrodb.org/v4/media?tmdb_id=' + tvId + '&season=' + season + '&episode=' + episode;
       return Promise.resolve(http(url)).then(function (t) {
-        var r = typeof t === 'string' ? JSON.parse(t) : t, l = (r && r.intro) || [], i, x;
-        for (i = 0; i < l.length; i++) {
+        var r = typeof t === 'string' ? JSON.parse(t) : t, l = (r && r.intro) || [], cr = (r && r.credits) || [], i, x, out = { s: null, e: null, cs: null };
+        for (i = 0; i < l.length && out.e === null; i++) {
           x = l[i];
-          if (x && typeof x.end_ms === 'number' && x.end_ms > 0) { return { s: Math.max(0, (x.start_ms || 0) / 1000), e: x.end_ms / 1000 }; }
+          if (x && typeof x.end_ms === 'number' && x.end_ms > 0) { out.s = Math.max(0, (x.start_ms || 0) / 1000); out.e = x.end_ms / 1000; }
         }
-        return null;
+        for (i = 0; i < cr.length && out.cs === null; i++) {
+          x = cr[i];
+          if (x && typeof x.start_ms === 'number' && x.start_ms > 0) { out.cs = x.start_ms / 1000; }
+        }
+        return out.e === null && out.cs === null ? null : out;
       }, function (e) { if (e && e.status === 404) { return null; } throw e; });
     },
     findId: function (kind, title, year, key) {

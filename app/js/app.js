@@ -3857,7 +3857,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.64.1']
+      ['Versão do app', '1.65.0']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
@@ -4316,7 +4316,7 @@
       if (!fromStart && r && r.t > 30 && r.t < r.d - 45) { o.startAt = r.t; }
     }
     c.autoDone = !!o.startAt;
-    c.intro = null; hideSkip();
+    c.intro = null; c.seg = null; hideSkip();
     if (c.kind === 'ep') { loadIntro(c, c.eps[c.idx]); }
     $('buffer').classList.remove('hidden');
     S.prefApplied = {};
@@ -4330,8 +4330,20 @@
   }
 
   /* ---------- pular abertura (séries): janela da abertura vinda da TheIntroDB ---------- */
-  function hideSkip() { var b = $('skipintro'); if (b) { b.classList.add('hidden'); } }
-  function skipVisible() { var b = $('skipintro'); return !!b && !b.classList.contains('hidden'); }
+  function hideSkip() { ['skipintro', 'skipnext'].forEach(function (id) { var b = $(id); if (b) { b.classList.add('hidden'); } }); }
+  function skipVisible() { return !$('skipintro').classList.contains('hidden'); }
+  function nextVisible() { return !$('skipnext').classList.contains('hidden'); }
+  /* "Próximo episódio" sem esperar os créditos: abre o próximo e marca este como visto */
+  function doNextEp() {
+    var c = S.ctx;
+    if (!c || c.kind !== 'ep' || c.idx + 1 >= c.eps.length) { return; }
+    hideSkip();
+    delete S.resume[c.rk]; delete S.cont[c.rk]; markDone(c.rk);
+    store.set('resume', S.resume); store.set('cont', S.cont);
+    c.idx++;
+    S.osdSel = osdDefault();
+    playCurrent(true);
+  }
   function doSkipIntro() {
     var c = S.ctx;
     if (!c || !c.intro) { return; }
@@ -4341,19 +4353,22 @@
   function loadIntro(c, ep) {
     var key = tmdbKey(), it = c.item;
     if (!key || !ep || store.get('skipintro', true) === false) { return; }
-    var kk = 'tmdbintro:' + it.id + ':' + ep.season + ':' + ep.num;
+    var kk = 'tmdbseg:' + it.id + ':' + ep.season + ':' + ep.num;
     tmdbCached(kk, 24 * 30, function () {
       return tmdbCached('tmdbid:tv:' + it.id, 24 * 90, function () {
         return Tmdb.findId('tv', it.name, Tmdb.yearOf(it.name) || parseInt(it.year, 10) || 0, key);
       }).then(function (id) { return id ? Tmdb.intro(id, ep.season, ep.num) : null; });
     }).then(function (r) {
-      if (S.ctx === c && c.eps[c.idx] === ep) { c.intro = r && r.e > r.s ? r : null; }
+      if (S.ctx === c && c.eps[c.idx] === ep) { c.intro = r && r.e !== null && r.e > r.s ? r : null; c.seg = r; }
     }, function () {});
   }
-  function checkSkip(t) {
-    var c = S.ctx, b = $('skipintro');
-    if (!b || !c || !c.intro) { if (b) { b.classList.add('hidden'); } return; }
-    b.classList.toggle('hidden', !(t >= c.intro.s - 0.5 && t < c.intro.e - 1));
+  function checkSkip(t, d) {
+    var c = S.ctx, bi = $('skipintro'), bn = $('skipnext');
+    if (!bi || !bn || !c) { return; }
+    bi.classList.toggle('hidden', !(c.intro && t >= c.intro.s - 0.5 && t < c.intro.e - 1));
+    // créditos: início vindo da base; sem registro, usa os últimos ~40 s (só em episódios longos); precisa existir próximo episódio
+    var cs = c.seg && c.seg.cs !== null ? c.seg.cs : (isFinite(d) && d > 300 ? d - 40 : 0), has = c.kind === 'ep' && c.idx + 1 < c.eps.length;
+    bn.classList.toggle('hidden', !(has && cs > 0 && t >= cs && !(c.intro && !bi.classList.contains('hidden'))));
   }
 
   function setOsd(title, sub, sub2, logo, vod) {
@@ -4859,7 +4874,7 @@
       case KEY.PLAY: if (Player.isPaused()) { Player.toggle(); } showOsd(); break;
       case KEY.PAUSE: if (!Player.isPaused()) { Player.toggle(); } showOsd(); break;
       case KEY.ENTER:
-        if (skipVisible() && !(S.osdMenu && !$('osd').classList.contains('hidden'))) { doSkipIntro(); }
+        if ((skipVisible() || nextVisible()) && !(S.osdMenu && !$('osd').classList.contains('hidden'))) { if (skipVisible()) { doSkipIntro(); } else { doNextEp(); } }
         else if (S.osdMenu && !$('osd').classList.contains('hidden') && S.osdSel !== $('osd-bar')) { activateOsdSel(); }   // menu aberto: OK ativa a opção escolhida
         else if (live) { showOsd(true); }
         else { Player.toggle(); showOsd(S.osdMenu); }
@@ -4990,7 +5005,7 @@
       },
       onTime: function (t, d) {
         if (!S.ctx || S.ctx.kind === 'live') { return; }
-        checkSkip(t);
+        checkSkip(t, d);
         if (!$('osd').classList.contains('hidden')) { updateBar(t, d); }
         var now = Date.now();
         if (now - S.lastSave > 10000) { S.lastSave = now; saveResume(); }
@@ -5044,6 +5059,7 @@
       if (el && sc && sc.contains(el)) { Nav.focus(el); }
     });
     $('skipintro').addEventListener('click', function (e) { e.stopPropagation(); doSkipIntro(); });
+    $('skipnext').addEventListener('click', function (e) { e.stopPropagation(); doNextEp(); });
     document.addEventListener('click', function () { if (S.mode === 'player' && !S.tracksOpen) { showOsd(); } });
     window.__itemSheet = openItemSheet;
     window.__genreRows = function (sec, cats, list) { return genreRows(sec, cats, list); };
