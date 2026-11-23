@@ -1158,7 +1158,7 @@ body.compact .paircode { font-size: 26px; letter-spacing: 2px; padding: 12px 14p
 #detail .dtitle, #detail .dmeta, #detail .dplot, #detail .dcast { transition: opacity .3s; }
 #detail.tplay .dtitle { font-size: 26px; max-height: 40px; margin-bottom: 10px; }
 body.portrait #detail.tplay .dtitle { font-size: 17px; }
-#detail.tplay .dmeta, #detail.tplay .dplot, #detail.tplay .dcast { display: none; }
+#detail.tplay .dmeta, #detail.tplay .dplot { display: none; }   /* 1.63.2: o elenco continua visível (e clicável) com o trailer tocando */
 .tdiag { position: absolute; left: 12px; right: 12px; bottom: 4px; font-size: 11px; color: #8a96ab; z-index: 5; pointer-events: none; word-break: break-all; }
 .tdiag:empty { display: none; }
 
