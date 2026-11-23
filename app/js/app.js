@@ -3857,7 +3857,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.64.0']
+      ['Versão do app', '1.64.1']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
@@ -5067,6 +5067,8 @@
     $('pguide').addEventListener('click', function (e) { e.stopPropagation(); });
     $('osd-prevep').insertBefore(icon('skipprev', 28), $('osd-prevep').firstChild);
     $('osd-nextep').insertBefore(icon('skipnext', 28), $('osd-nextep').firstChild);
+    $('osd-eps').insertBefore(icon('series', 28), $('osd-eps').firstChild);
+    $('osd-eps').addEventListener('click', function (e) { e.stopPropagation(); openPlayerEps(); });
     $('osd-prevep').addEventListener('click', function (e) { e.stopPropagation(); stepEpisode(-1); });
     $('osd-nextep').addEventListener('click', function (e) { e.stopPropagation(); stepEpisode(1); });
 

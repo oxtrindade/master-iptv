@@ -451,3 +451,6 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 
 ## 1.64.0
 - **Lista de episódios no player (séries)**: no menu de baixo do player (↓) há o botão "Episódios". Abre um painel com as temporadas (←/→ ou toque) e os episódios, mostrando o atual e quanto falta nos já iniciados; OK/toque troca de episódio.
+
+## 1.64.1
+- Celular: o botão "Episódios" do player agora responde ao toque (só o controle da TV funcionava).

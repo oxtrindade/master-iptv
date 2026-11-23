@@ -389,8 +389,8 @@ Promise.all([listen(api), listen(px), startSync()]).then(function () {
       $('#osd').classList.add('hidden');
       key(40); key(38); key(37);
       assert.ok($('#osd-eps').classList.contains('focus'), '← de Áudio e legenda vai para "Episódios"');
-      key(13);
-      assert.ok(!$('#tracks').classList.contains('hidden') && $$('#tracks .topt').length >= 1, 'OK abre a lista de episódios');
+      $('#osd-eps').click();   // toque (celular)
+      assert.ok(!$('#tracks').classList.contains('hidden') && $$('#tracks .topt').length >= 1, 'toque em "Episódios" abre a lista');
       assert.ok($$('#tracks .t-seasons .btn').length === 2, 'botões de temporada: ' + $('#tracks').textContent);
       $$('#tracks .t-seasons .btn')[1].click();
       assert.ok($$('#tracks .topt').length === 1, 'T2 lista os episódios da temporada 2');
