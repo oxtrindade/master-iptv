@@ -210,15 +210,20 @@ listen(api).then(function () {
     assert.ok(/baixando/.test($$('#detail .ep')[0].textContent) && $$('#detail .epdl').length === 1, 'E1 marcado; E2 ainda com botão');
     T.btn('Baixar temporada', '#detail').click();
     urls = Object.keys(dlState).map(function (k) { return dlState[k].url; });
-    assert.ok(urls.some(function (u) { return /7002\.mp4$/.test(u); }), 'temporada: baixa o que faltava');
-    assert.strictEqual(urls.filter(function (u) { return /7001\.mp4$/.test(u); }).length, 1, 'não baixa o E1 duas vezes');
+    assert.ok(!urls.some(function (u) { return /7002\.mp4$/.test(u); }), 'um download por vez: o E2 espera na fila do app');
+    assert.ok(T.ls('dl')['e:7002'] && T.ls('dl')['e:7002'].id === 0, 'E2 guardado como "na fila"');
     assert.strictEqual($$('#detail .epdl').length, 0, 'todos marcados');
+    Object.keys(dlState).forEach(function (k) { if (/7001\.mp4$/.test(dlState[k].url)) { dlState[k].s = 'done'; dlState[k].b = dlState[k].t = 500000000; } });
+    return waitFor(function () { return Object.keys(dlState).some(function (k) { return /7002\.mp4$/.test(dlState[k].url); }); }, 'terminou o E1: o E2 começa sozinho').then(function () {
+    urls = Object.keys(dlState).map(function (k) { return dlState[k].url; });
+    assert.strictEqual(urls.filter(function (u) { return /7001\.mp4$/.test(u); }).length, 1, 'não baixa o E1 duas vezes');
     step('série: baixar episódio e temporada inteira (sem repetir)');
     Object.keys(dlState).forEach(function (k) { if (/7001|7002/.test(dlState[k].url)) { dlState[k].s = 'done'; dlState[k].b = dlState[k].t = 500000000; } });
     key(27);   // volta da série para a lista
     $('.backbtn').click();   // e daí para a Início
     $('.menubtn').click(); $('.drawer-dl').click();
     return waitFor(function () { return $$('.dlrow').length === 2 && $$('.dlrow').every(function (r) { return /Assistir/.test(r.textContent); }); }, 'dois episódios baixados');
+    });
   }).then(function () {
     var row = $$('.dlrow').filter(function (r) { return /E1/.test(r.querySelector('.dlt').textContent); })[0];
     assert.ok(row, 'título do episódio na lista: ' + $$('.dlt').map(function (e) { return e.textContent; }).join(' | '));

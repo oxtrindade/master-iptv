@@ -547,17 +547,34 @@
   function dlRefresh() {
     var m = dlAll(), rks = Object.keys(m), st = {}, changed = false;
     if (!rks.length || !hasDl()) { return st; }
-    var res = dlQuery(rks.map(function (k) { return m[k].id; }));
+    var live = rks.filter(function (k) { return m[k].id > 0; });
+    var res = live.length ? dlQuery(live.map(function (k) { return m[k].id; })) : [];
     if (!res) { return S.dlState || st; }
     var byId = {};
     res.forEach(function (o) { byId[o.id] = o; });
     rks.forEach(function (k) {
+      if (!(m[k].id > 0)) { st[k] = { id: 0, s: 'queued', b: 0, t: 0, r: 0 }; return; }   // na fila do app (ainda não foi ao Android)
       var o = byId[m[k].id];
       if (o) { st[k] = o; } else { delete m[k]; changed = true; }
     });
     if (changed) { dlSave(m); }
+    dlPump(m, st);
     S.dlState = st;
     return st;
+  }
+
+  /* um download por vez: o provedor limita as conexões e recusava o que passava disso ("Não foi possível baixar").
+     Enquanto há um rodando/na fila do Android/esperando para repetir, os outros ficam na fila do app e entram em ordem. */
+  function dlBusy(m, st) {
+    return Object.keys(m).some(function (k) { var o = st[k]; return m[k].id > 0 && o && (o.s === 'running' || o.s === 'pending' || o.s === 'paused'); });
+  }
+  function dlPump(m, st) {
+    if (dlBusy(m, st)) { return; }
+    var qs = Object.keys(m).filter(function (k) { return !(m[k].id > 0) && m[k].q; }).sort(function (a, b) { return m[a].at - m[b].at; });
+    if (!qs.length) { return; }
+    var en = m[qs[0]], id = NaN;
+    try { id = parseInt(window.NativeApp.dlStart(en.q.url, en.q.file, en.title, dlWifiOnly(), navigator.userAgent || ''), 10); } catch (e) {}
+    if (id > 0) { en.id = id; delete en.q; dlSave(m); st[qs[0]] = { id: id, s: 'pending', b: 0, t: 0, r: 0 }; }
   }
 
   function dlPct(st) { return st && st.t > 0 ? Math.max(0, Math.min(100, Math.round(st.b / st.t * 100))) : 0; }
@@ -566,6 +583,7 @@
     if (!st) { return ''; }
     if (st.s === 'done') { return 'Baixado · ' + fmtBytes(st.t || st.b); }
     if (st.s === 'running') { return st.t > 0 ? 'Baixando ' + dlPct(st) + '% · ' + fmtBytes(st.b) + ' de ' + fmtBytes(st.t) : 'Baixando…'; }
+    if (st.s === 'queued') { return 'Na fila · começa quando o anterior terminar'; }
     if (st.s === 'pending') { return 'Na fila'; }
     if (st.s === 'paused') { return st.r === 3 ? 'Aguardando Wi-Fi' : (st.r === 2 ? 'Aguardando conexão' : (st.r === 1 ? 'Tentando de novo…' : 'Pausado')); }
     return 'Falhou';
@@ -576,6 +594,7 @@
     if (!hasDl() || !rk) { return ''; }
     var en = dlAll()[rk];
     if (!en) { return ''; }
+    if (!(en.id > 0)) { return ''; }
     var res = dlQuery([en.id]), i;
     for (i = 0; res && i < res.length; i++) {
       if (res[i].id === en.id && res[i].s === 'done' && res[i].u) { return res[i].u; }
@@ -589,19 +608,22 @@
     if (!/^https?:\/\//i.test(url || '') || /\.m3u8(\?|$)/i.test(url)) { if (!quiet) { toast('Este conteúdo não pode ser baixado', 3500); } return false; }
     var ext = ((String(url).split('?')[0].match(/\.([A-Za-z0-9]{2,4})$/) || [0, 'mp4'])[1]).toLowerCase();
     var title = it.name + (ep ? ' · T' + ep.season + ' E' + ep.num : '');
-    var id = NaN;
-    try { id = parseInt(window.NativeApp.dlStart(url, 'iptv-' + rk.replace(':', '-') + '.' + ext, title, dlWifiOnly(), navigator.userAgent || ''), 10); } catch (e) {}
-    if (!(id > 0)) { if (!quiet) { toast('Não foi possível iniciar o download', 3500); } return false; }
+    var fname = 'iptv-' + rk.replace(':', '-') + '.' + ext, id = NaN, queued = false;
+    if (dlBusy(m, dlRefresh())) { queued = true; id = 0; }
+    else { try { id = parseInt(window.NativeApp.dlStart(url, fname, title, dlWifiOnly(), navigator.userAgent || ''), 10); } catch (e) {} }
+    if (!queued && !(id > 0)) { if (!quiet) { toast('Não foi possível iniciar o download', 3500); } return false; }
+    m = dlAll();
     m[rk] = { rk: rk, id: id, kind: ep ? 'ep' : 'movie', item: slimItem(it), ep: ep ? slimEp(ep) : null, title: title, at: Date.now() };
+    if (queued) { m[rk].q = { url: url, file: fname }; }
     dlSave(m);
-    if (!quiet) { toast('Baixando: ' + title + (dlWifiOnly() ? ' (só no Wi-Fi)' : ''), 3500); }
+    if (!quiet) { toast((queued ? 'Na fila: ' : 'Baixando: ') + title + (dlWifiOnly() ? ' (só no Wi-Fi)' : ''), 3500); }
     return true;
   }
 
   function dlRemove(rk) {
     var m = dlAll(), en = m[rk];
     if (!en) { return; }
-    try { window.NativeApp.dlRemove(String(en.id)); } catch (e) {}
+    if (en.id > 0) { try { window.NativeApp.dlRemove(String(en.id)); } catch (e) {} }
     delete m[rk];
     dlSave(m);
   }
@@ -3622,6 +3644,7 @@
 
   function sgroup(t) { return h('div', { cls: 'sgroup', text: t }); }
 
+  window.__setOpt = function (k, v) { setOpt(k, v); };   // (usado nos testes: as chaves de SD/HD ficaram fora da tela)
   function switchRow(label, desc, key) {
     var sw = h('span', { cls: 'sw' + (opt(key) ? ' on' : '') }, [h('span', { cls: 'knob' })]);
     return h('div', { cls: 'f swrow', on: { click: function () {
@@ -3857,7 +3880,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.65.1']
+      ['Versão do app', '1.66.0']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
@@ -3910,15 +3933,15 @@
       PD.ultima ? 'Interrompida: ' + PD.ultima : ''
     ].forEach(function (t) { if (t) { page.appendChild(h('div', { cls: 'swd', style: 'margin:-6px 40px 10px 4px;white-space:normal;word-break:break-word;max-width:1500px', text: t })); } });
     if (S.opts.lite === undefined) { S.opts.lite = liteOn(); }
-    page.appendChild(switchRow('Modo leve (TV simples)', 'Tira animações e sombras para a navegação ficar mais rápida em TV de entrada. Já vem ligado em TV com pouco processamento; o trailer ao parar no card continua.', 'lite'));
-    page.appendChild(switchRow('Ocultar canais SD', 'Esconde da lista os canais com "SD" no nome.', 'hideSD'));
-    page.appendChild(switchRow('Ocultar canais HD', 'Esconde da lista os canais com "HD" no nome (FHD e 4K continuam).', 'hideHD'));
+    // (1.66.0: opção escondida; vale o padrão do app / o que já estava salvo)
+    // (1.66.0: opção escondida; vale o padrão do app / o que já estava salvo)
+    // (1.66.0: opção escondida; vale o padrão do app / o que já estava salvo)
     camOn();
     adultHide();
     page.appendChild(switchRow('Ocultar conteúdo adulto', 'Esconde categorias e títulos adultos (+18, XXX…) em TV ao vivo, filmes e séries. Já vem ligado.', 'hideAdult'));
-    page.appendChild(switchRow('Ocultar filmes de cinema (gravação)', 'Esconde filmes de categoria/etiqueta Cinema ou CAM, que são gravações de sala com qualidade baixa.', 'hideCam'));
+    // (1.66.0: opção escondida; vale o padrão do app / o que já estava salvo)
     dubOn();
-    page.appendChild(switchRow('Preferir trailer dublado', 'Procura trailer dublado em português (TMDB e YouTube); se não achar, usa o do provedor ou o de qualquer idioma (original). Desligado, usa o do provedor primeiro.', 'pvdub'));
+    // (1.66.0: opção escondida; vale o padrão do app / o que já estava salvo)
     page.appendChild(h('div', { cls: 'sbtns' }, [h('button', { cls: 'f btn', text: 'Limpar cache de trailers', on: { click: function () {
       store.set('trcache', {}); TR = {};
       store.set('herocache:movie,series', null); store.set('herocache:movie', null); store.set('herocache:series', null);
@@ -4992,6 +5015,7 @@
   function boot() {
     Weather.init(http);
     Tmdb.init(http);
+    setInterval(function () { if (hasDl() && dlCount()) { dlRefresh(); } }, 4000);   // fila de downloads: entra o próximo quando o atual termina
     Tmdb.initYt(ytGet);
     Tmdb.setTv4k(/Web0S|webOS|SMART-?TV/i.test(navigator.userAgent) || document.body.classList.contains('tv'));
     Tmdb.setPref(store.get('verpref', 'dub'));

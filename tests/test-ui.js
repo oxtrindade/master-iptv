@@ -521,12 +521,11 @@ Promise.all([listen(api), listen(px), startSync()]).then(function () {
       assert.ok(/127\.0\.0\.1/.test(txt) && /joao/.test(txt));
       var ver = require('../app/appinfo.json').version;
       assert.ok(txt.indexOf('Versão do app') >= 0 && txt.indexOf(ver) >= 0, 'versão do app em Configurações deve ser a do appinfo.json (' + ver + ')');
-      assert.strictEqual($$('.swrow').length, 7, 'sete chaves (inclui conteúdo adulto)');
+      assert.strictEqual($$('.swrow').length, 2, 'só duas chaves (inclui conteúdo adulto): ' + $$('.swl').map(function (e) { return e.textContent; }).join(' | '));
+      assert.ok(/conteúdo adulto/.test($('.settings').textContent) && !/canais SD|canais HD|filmes de cinema|trailer dublado|Modo leve/.test($('.settings').textContent), 'SD/HD/cinema/dublado/modo leve fora da tela');
       step('configurações');
       // ocultar SD / HD: a categoria "Filmes e séries 24h" tem Cine HD, Cine SD e Cine FHD
-      $$('.swrow')[2].click(); // SD
-      assert.ok($$('.sw')[2].classList.contains('on'));
-      $$('.swrow')[3].click(); // HD
+      w.__setOpt('hideSD', true); w.__setOpt('hideHD', true);
       $('.backbtn').click();
       go('live');
       return waitFor(function () { return $$('.cat').length === 4; }, 'ao vivo de novo');
@@ -540,7 +539,7 @@ Promise.all([listen(api), listen(px), startSync()]).then(function () {
       go('settings');
       return waitFor(function () { return $('.settings .sgroup'); }, 'config 2');
     }).then(function () {
-      $$('.swrow')[2].click(); $$('.swrow')[3].click(); // desliga os dois
+      w.__setOpt('hideSD', false); w.__setOpt('hideHD', false); // desliga os dois
       // cidade do clima
       $('#city').value = 'Campinas';
       $('#city').focus();

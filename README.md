@@ -460,3 +460,7 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 
 ## 1.65.1
 - Próximo episódio **automático**: ao aparecer o botão nos créditos, uma contagem de 5 s toca o seguinte sozinha (pausar congela a contagem; ←/→ ou OK/toque no botão cancelam/antecipam). Desligável pela chave `autonext` do aparelho.
+
+## 1.66.0
+- **Downloads em fila (um por vez)**: o provedor limita as conexões e recusava os downloads simultâneos ("Não foi possível baixar" / "Aguardando para repetir"). Agora o app manda um por vez ao Android; os outros aparecem como "Na fila · começa quando o anterior terminar" e entram sozinhos, em ordem, quando o atual termina (mesmo com o app em segundo plano aberto).
+- **Configurações**: ficou só a chave "Ocultar conteúdo adulto" entre as opções de filtro; Modo leve, SD, HD, filmes de cinema e trailer dublado seguem o padrão do app (ou o que já estava salvo).
