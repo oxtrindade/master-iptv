@@ -448,3 +448,6 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 
 ## 1.63.2
 - Tela do filme/série: com o trailer tocando, o **elenco** (e a filmografia ao clicar no ator) continua visível; só sinopse e nota somem para não atrapalhar o vídeo.
+
+## 1.64.0
+- **Lista de episódios no player (séries)**: no menu de baixo do player (↓) há o botão "Episódios". Abre um painel com as temporadas (←/→ ou toque) e os episódios, mostrando o atual e quanto falta nos já iniciados; OK/toque troca de episódio.

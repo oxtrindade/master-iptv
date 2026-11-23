@@ -3857,7 +3857,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.63.2']
+      ['Versão do app', '1.64.0']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
@@ -4453,6 +4453,45 @@
     renderTracks(null);
   }
 
+  /* lista de episódios dentro do player (como na Netflix): temporadas em cima, episódios embaixo; OK troca de episódio */
+  function renderPlayerEps(focusId) {
+    var c = S.ctx, host = $('tracks'), cur = c.eps[c.idx], seasons = [], i;
+    host.innerHTML = '';
+    c.eps.forEach(function (e) { if (seasons.indexOf(e.season) < 0) { seasons.push(e.season); } });
+    if (S.epsSeason === undefined || seasons.indexOf(S.epsSeason) < 0) { S.epsSeason = cur.season; }
+    host.appendChild(h('div', { cls: 't-title' }, [icon('series', 40), c.item.name]));
+    if (seasons.length > 1) {
+      host.appendChild(h('div', { cls: 't-seasons' }, seasons.map(function (sn) {
+        return h('button', { cls: 'f btn' + (sn === S.epsSeason ? ' primary' : ''), type: 'button', 'data-t': 's' + sn, text: 'T' + sn,
+          on: { click: function () { S.epsSeason = sn; renderPlayerEps('s' + sn); } } });
+      })));
+    }
+    c.eps.forEach(function (e, n) {
+      if (e.season !== S.epsSeason) { return; }
+      var r = S.resume['e:' + e.id], left = r && r.d > 0 && r.t > 30 && r.t < r.d - 45 ? Math.max(1, Math.round((r.d - r.t) / 60)) + ' min restantes' : '';
+      host.appendChild(h('button', { cls: 'f topt' + (n === c.idx ? ' on' : ''), type: 'button', 'data-t': 'e' + e.id, on: { click: function () {
+        closeTracks();
+        if (n !== c.idx) { saveResume(); c.idx = n; S.osdSel = osdDefault(); playCurrent(false); }
+      } } }, [h('span', { cls: 't-lbl', text: 'E' + e.num + ' — ' + e.title + (left ? '  ·  ' + left : '') }), n === c.idx ? icon('check', 30) : h('span', { cls: 't-nochk' })]));
+    });
+    host.appendChild(h('div', { cls: 't-foot', text: 'Cima/Baixo: escolher · Esq./Dir.: temporada · Voltar: fechar' }));
+    var el = host.querySelector('[data-t="' + focusId + '"]');
+    Nav.focus(el || host.querySelector('.topt.on') || host.querySelector('.topt') || null);
+  }
+
+  function openPlayerEps() {
+    var c = S.ctx;
+    if (S.tracksOpen || !c || c.kind !== 'ep') { return; }
+    S.tracksOpen = true;
+    S.tracksScope = Nav.getScope();
+    S.epsSeason = undefined;
+    $('tracks').classList.remove('hidden');
+    clearTimeout(S.osdTimer);
+    $('osd').classList.add('hidden'); setOsdMenu(false);
+    Nav.setScope($('tracks'));
+    renderPlayerEps('e' + c.eps[c.idx].id);
+  }
+
   function closeTracks() {
     if (!S.tracksOpen) { return; }
     S.tracksOpen = false;
@@ -4466,6 +4505,8 @@
     switch (k) {
       case KEY.UP: Nav.move('up'); break;
       case KEY.DOWN: Nav.move('down'); break;
+      case KEY.LEFT: Nav.move('left'); break;
+      case KEY.RIGHT: Nav.move('right'); break;
       case KEY.ENTER: Nav.activate(); break;
       default: break;
     }
@@ -4586,13 +4627,13 @@
   function osdDefault() { return S.ctx && S.ctx.kind === 'live' ? $('osd-guide') : $('osd-bar'); }   // filme/série: abre na linha do tempo (←/→ já avançam)
 
   function osdBtns() {
-    return [$('osd-prevep'), $('osd-tracks'), $('osd-guide'), $('osd-nextep')].filter(function (b) { return !b.classList.contains('hidden'); });
+    return [$('osd-prevep'), $('osd-eps'), $('osd-tracks'), $('osd-guide'), $('osd-nextep')].filter(function (b) { return !b.classList.contains('hidden'); });
   }
 
   function setOsdMenu(on) {
     S.osdMenu = !!on;
     if (!S.osdSel || S.osdSel.classList.contains('hidden')) { S.osdSel = osdDefault(); }
-    [$('osd-prevep'), $('osd-tracks'), $('osd-guide'), $('osd-nextep'), $('osd-bar')].forEach(function (b) { b.classList.toggle('focus', !!on && b === S.osdSel); });
+    [$('osd-prevep'), $('osd-eps'), $('osd-tracks'), $('osd-guide'), $('osd-nextep'), $('osd-bar')].forEach(function (b) { b.classList.toggle('focus', !!on && b === S.osdSel); });
   }
 
   function moveOsdSel(d) {
@@ -4607,6 +4648,7 @@
     if (b === $('osd-prevep')) { stepEpisode(-1); }
     else if (b === $('osd-nextep')) { stepEpisode(1); }
     else if (b === $('osd-guide')) { openPGuide(); }
+    else if (b === $('osd-eps')) { openPlayerEps(); }
     else { openTracks(); }
   }
 
@@ -4627,6 +4669,7 @@
     $('osd').classList.toggle('hasep', !!ep);
     $('osd-guide').classList.toggle('hidden', !(c && c.kind === 'live'));
     $('osd-tracks').classList.toggle('hidden', !!(c && c.kind === 'live'));
+    $('osd-eps').classList.toggle('hidden', !(ep && c.eps.length > 1));
     $('osd-prevep').classList.toggle('hidden', !pv);
     $('osd-nextep').classList.toggle('hidden', !nx);
     if (pv) { $('osd-prevep').lastChild.textContent = 'Anterior · T' + pv.season + ' E' + pv.num; }

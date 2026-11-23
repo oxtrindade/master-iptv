@@ -1274,3 +1274,7 @@ body.portrait .sechead.hub .avatar { width: 40px; height: 40px; }
 .spslot .spplay.primary { font-size: 30px; padding: 22px 38px; box-shadow: 0 0 0 3px rgba(58,180,224,.55); }
 body.compact .spslot .spplay.primary { font-size: 20px; padding: 14px 24px; }
 body.portrait .spslot .spplay.primary { font-size: 17px; padding: 12px 18px; width: 100%; box-sizing: border-box; justify-content: center; }
+
+/* lista de episódios no player */
+.t-seasons { display: flex; flex-wrap: wrap; margin: 4px 0 14px; }
+.t-seasons .btn { margin: 0 10px 10px 0; min-width: 84px; }
