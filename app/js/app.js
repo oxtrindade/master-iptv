@@ -163,13 +163,6 @@
   function opt(k) { return !!S.opts[k]; }
   function pvOn() { return true; }   // 1.47.0: prévia (trailer) sempre ligada, sem chave
   /* modo leve: sem animações/sombras pesadas (TV de entrada). Automático em TV com pouco hardware; dá para forçar em Configurações. */
-  function liteOn() {
-    var tv = false, cores = navigator.hardwareConcurrency || 4, mem = navigator.deviceMemory || 0;
-    try { tv = !!(window.NativeApp && window.NativeApp.isTv && window.NativeApp.isTv()); } catch (e) {}
-    tv = tv || /Web0S|webOS|SMART-?TV|Tizen|AFTM|BRAVIA|TCL/i.test(navigator.userAgent) || document.body.classList.contains('tv');
-    return tv && (cores <= 4 || (mem > 0 && mem <= 2));
-  }
-  function applyLite() { document.body.classList.toggle('lite', liteOn()); }
   function setOpt(k, v) { S.opts[k] = !!v; store.set('opts', S.opts); if (k === 'bgplay') { applyBg(); } }
   /* Android (celular): tocar com a tela bloqueada / app em segundo plano (padrão: ligado) */
   function hasBg() { try { return !!(window.NativeApp && window.NativeApp.setBackground && !(window.NativeApp.isTv && window.NativeApp.isTv())); } catch (e) { return false; } }
@@ -772,7 +765,7 @@
 
   function reloadProfileData() {
     S.favs = store.get('fav', {}); S.resume = store.get('resume', {}); S.last = store.get('last', {});
-    S.cont = store.get('cont', {}); S.recent = store.get('recent', []); S.opts = store.get('opts', {}); S.pref = store.get('trackpref', {}); applyLite();
+    S.cont = store.get('cont', {}); S.recent = store.get('recent', []); S.opts = store.get('opts', {}); S.pref = store.get('trackpref', {});
     Tmdb.setPref(store.get('verpref', 'dub'));
   }
 
@@ -3891,7 +3884,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.69.0']
+      ['Versão do app', '1.69.1']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {

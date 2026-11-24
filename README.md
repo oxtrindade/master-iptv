@@ -476,3 +476,6 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 ## 1.69.0
 - **Banner da Início (TV)**: com o anel branco no banner (foco em qualquer botão dele, não só Assistir/Ver episódios) o trailer agora toca; antes a checagem de "banner à vista" podia barrar mesmo com o foco ali. Cada movimento dentro do banner tenta de novo se o trailer não está tocando.
 - **Modo leve** removido de vez: não há mais chave nem valor salvo; fica só o ajuste automático para TVs fracas.
+
+## 1.69.1
+- **Modo leve removido por completo** (opção, ajuste automático em TV fraca e CSS): o app usa sempre o modo normal.
