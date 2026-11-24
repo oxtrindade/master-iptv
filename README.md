@@ -482,3 +482,6 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 
 ## 1.69.2
 - Diagnóstico de erro de reprodução: ao falhar, o app testa o servidor do provedor (código HTTP) e mostra no aviso e em Configurações ("Último erro ao reproduzir": tentativas do player + resposta do servidor).
+
+## 1.69.3
+- Diagnóstico de reprodução: o aviso de erro aparece mesmo com o player já fechado, e o "Último erro ao reproduzir" fica salvo e sempre visível em Configurações (mostra a versão instalada quando não há erro).

@@ -3898,7 +3898,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.69.2']
+      ['Versão do app', '1.69.3']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
@@ -3949,7 +3949,7 @@
       'Diagnóstico do trailer — foco em filmes/séries: ' + PD.foco + ' · agendadas: ' + PD.agendadas + ' · iniciadas: ' + PD.iniciadas + ' · tocando: ' + PD.tocando + (PD.bloqueio ? ' · bloqueio: ' + PD.bloqueio : ''),
       PD.falha ? 'Última falha: ' + PD.falha : '',
       PD.ultima ? 'Interrompida: ' + PD.ultima : '',
-      S.playDiag ? 'Último erro ao reproduzir: ' + S.playDiag : ''
+      (S.playDiag || store.get('playdiag', '')) ? 'Último erro ao reproduzir: ' + (S.playDiag || store.get('playdiag', '')) : 'Último erro ao reproduzir: nenhum desde a instalação (a versão instalada é a 1.69.3)'
     ].forEach(function (t) { if (t) { page.appendChild(h('div', { cls: 'swd', style: 'margin:-6px 40px 10px 4px;white-space:normal;word-break:break-word;max-width:1500px', text: t })); } });
     // (1.66.0: opção escondida; vale o padrão do app / o que já estava salvo)
     // (1.66.0: opção escondida; vale o padrão do app / o que já estava salvo)
@@ -5079,10 +5079,12 @@
       onError: function () {
         var why = Player.diag();
         S.playDiag = new Date().toLocaleTimeString().slice(0, 5) + ' · ' + why + ' · ' + (S.playLive ? 'ao vivo' : 'VOD') + ' · testando o servidor…';
+        store.set('playdiag', S.playDiag);
         probePlay(S.playUrl, function (st) {
           var host = ''; try { host = String(S.playUrl).replace(/^\w+:\/\//, '').split(/[\/:?]/)[0]; } catch (e) {}
           S.playDiag = S.playDiag.replace('testando o servidor…', 'servidor ' + host + ' respondeu ' + (st ? 'HTTP ' + st : 'nada (sem resposta/bloqueado)'));
-          if (S.mode === 'player') { toast('Não foi possível reproduzir (' + (st ? 'servidor: HTTP ' + st : 'servidor sem resposta') + ')', 5000); }
+          store.set('playdiag', S.playDiag);
+          toast('Erro ao reproduzir — ' + (st ? 'servidor: HTTP ' + st : 'servidor sem resposta') + ' · detalhes em Configurações', 7000);
         });
         toast('Não foi possível reproduzir este conteúdo.', 4000);
         if (S.ctx && S.ctx.kind !== 'live') { closePlayer(); }
