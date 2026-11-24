@@ -214,12 +214,87 @@
     dot(36, 49, 3.8) + dot(64, 49, 3.8) + c(35, 48, 1.2, '#fff') + c(63, 48, 1.2, '#fff') + ln('M30 42 Q36 39 42 43 M58 43 Q64 39 70 42', '#9a622a', 2.4) +
     ln('M50 67 L50 72 M50 72 Q44 77 40 73 M50 72 Q56 77 60 73', INK, 2.4) + p('M45 75 Q50 91 56 75 Z', '#ff6f8a') + ln('M50 76 L50 85', '#c73a58', 1.4));
 
+
+  /* ---- fantasia (personagens originais) ---- */
+  art('a_dragao', '#6f4de0',
+    p('M18 40 L10 14 L34 28 Z', '#ffd24a') + p('M82 40 L90 14 L66 28 Z', '#ffd24a') +
+    e(50, 58, 32, 29, '#43b86a') + p('M44 24 L50 12 L56 24 Z', '#2e9a52') + p('M36 30 L40 22 L45 29 Z', '#2e9a52') + p('M64 30 L60 22 L55 29 Z', '#2e9a52') +
+    e(50, 72, 20, 13, '#8fdc9e') + c(43, 71, 2.2, '#2e7a46') + c(57, 71, 2.2, '#2e7a46') +
+    eye(36, 52, 6.4, '#e8a21a') + eye(64, 52, 6.4, '#e8a21a') + ln('M42 80 Q50 85 58 80', INK, 2.6));
+  art('a_unicornio', '#f06aa8',
+    p('M26 44 L22 18 L42 34 Z', '#f7f1ff') + p('M74 44 L78 18 L58 34 Z', '#f7f1ff') + p('M50 4 L56 30 L44 30 Z', '#ffd24a') + ln('M46 22 L54 18 M47 14 L53 11', '#e8a21a', 2) +
+    e(50, 60, 30, 28, '#f7f1ff') + p('M20 44 Q10 66 22 86 Q24 62 34 48 Z', '#7a5be0') + p('M80 44 Q90 66 78 86 Q76 62 66 48 Z', '#3ab4e0') +
+    p('M40 34 Q50 24 60 34 Q50 40 40 34 Z', '#f06aa8') + eye(38, 56, 5.6, '#7a5be0') + eye(62, 56, 5.6, '#7a5be0') +
+    e(50, 76, 13, 9, '#ffd9e6') + c(45, 76, 1.6, '#c85a86') + c(55, 76, 1.6, '#c85a86') + c(30, 66, 4.4, '#f06aa8', ' opacity=".4"') + c(70, 66, 4.4, '#f06aa8', ' opacity=".4"'));
+  art('a_sereia', '#1fb5c8',
+    p('M14 60 Q8 30 36 20 Q50 14 64 20 Q92 30 86 60 Q80 92 70 96 L30 96 Q20 92 14 60 Z', '#e8503a') +
+    c(50, 56, 21, '#f4c7a1') + p('M28 52 Q30 30 50 28 Q70 30 72 52 Q62 40 50 40 Q38 40 28 52 Z', '#e8503a') +
+    ln('M40 58 Q43 54 47 58 M53 58 Q57 54 60 58', INK, 2.6) + smile(44, 56, 68, 4) + c(36, 64, 3.6, '#f08aa0', ' opacity=".5"') + c(64, 64, 3.6, '#f08aa0', ' opacity=".5"') +
+    p('M44 26 L50 18 L56 26 Q50 30 44 26 Z', '#ffd24a') + c(50, 24, 2.4, '#fff') + p('M30 86 Q50 96 70 86 Q66 98 50 98 Q34 98 30 86 Z', '#3ad0a0'));
+  art('a_fada', '#8a5be8',
+    p('M50 50 Q10 6 6 40 Q8 62 50 56 Z', '#bfeaff', ' opacity=".85"') + p('M50 50 Q90 6 94 40 Q92 62 50 56 Z', '#bfeaff', ' opacity=".85"') +
+    c(50, 58, 21, '#f4c7a1') + p('M28 56 Q26 26 50 24 Q74 26 72 56 Q64 40 50 40 Q36 40 28 56 Z', '#ffb43a') + c(50, 24, 7, '#ffb43a') +
+    ln('M40 58 Q43 54 47 58 M53 58 Q57 54 60 58', INK, 2.6) + smile(44, 56, 68, 4) + c(36, 64, 3.6, '#f08aa0', ' opacity=".5"') + c(64, 64, 3.6, '#f08aa0', ' opacity=".5"') +
+    p('M44 16 L50 4 L56 16 Q50 20 44 16 Z', '#ffe45a') + c(86, 22, 2, '#fff') + c(14, 20, 1.6, '#fff') + c(88, 62, 1.6, '#fff') + r(36, 80, 28, 16, 8, '#3ad0a0'));
+  art('a_bruxa', '#43a864',
+    p('M50 2 L68 34 L32 34 Z', '#2a2540') + e(50, 36, 38, 7, '#1d1830') + r(34, 26, 32, 6, 2, '#e8483a') +
+    c(50, 60, 24, '#a8e0a0') + p('M26 56 Q16 80 24 96 Q30 76 34 62 Z', '#2a2540') + p('M74 56 Q84 80 76 96 Q70 76 66 62 Z', '#2a2540') +
+    eye(40, 56, 5.6, '#c8a21a') + eye(60, 56, 5.6, '#c8a21a') + p('M50 58 L46 68 L54 68 Z', '#86c88a') + ln('M42 74 Q50 80 58 74', INK, 2.6) + c(54, 72, 1.5, '#fff'));
+  art('a_genio', '#f2b632',
+    p('M30 96 Q18 72 40 66 Q62 60 52 80 Q46 92 60 96 Z', '#6fd0ff', ' opacity=".9"') +
+    c(50, 46, 24, '#4aa8f0') + r(34, 14, 32, 12, 5, '#e8483a') + e(50, 16, 20, 5, '#ff6a4a') + c(50, 8, 5, '#ffd24a') +
+    eye(40, 46, 5.6, '#1d2433') + eye(60, 46, 5.6, '#1d2433') + ln('M34 38 L45 41 M66 38 L55 41', INK, 2.8) + smile(43, 57, 56, 5) +
+    p('M30 62 Q50 78 70 62 Q68 82 50 84 Q32 82 30 62 Z', '#1d2e6a') + c(50, 74, 3, '#ffd24a'));
+  art('a_vampirinho', '#7a1f3a',
+    c(50, 58, 28, '#e8e2f0') + p('M22 44 Q50 10 78 44 Q50 34 22 44 Z', '#1d1830') + p('M14 52 L22 14 L38 34 Z', '#1d1830') + p('M86 52 L78 14 L62 34 Z', '#1d1830') +
+    eye(39, 56, 5.8, '#e8483a') + eye(61, 56, 5.8, '#e8483a') + ln('M32 47 L45 51 M68 47 L55 51', INK, 2.6) +
+    p('M40 70 Q50 78 60 70 Z', '#1d1830') + p('M43 70 L45.5 76 L48 70 Z', '#fff') + p('M52 70 L54.5 76 L57 70 Z', '#fff') + c(30, 66, 4, '#f08aa0', ' opacity=".4"') + c(70, 66, 4, '#f08aa0', ' opacity=".4"'));
+  art('a_yeti', '#5fc4f0',
+    c(50, 54, 38, '#e8f6ff') + c(50, 60, 26, '#bfe3f7') + e(50, 58, 22, 20, '#fbd9c4') +
+    eye(40, 52, 6, '#3a6aa8') + eye(60, 52, 6, '#3a6aa8') + p('M46 60 L54 60 L50 65 Z', '#d86a7a') + ln('M42 71 Q50 77 58 71', INK, 2.6) + p('M44 71 L46 75 L48 72 Z', '#fff') +
+    p('M26 24 L34 10 L42 24 Z', '#e8f6ff') + p('M58 24 L66 10 L74 24 Z', '#e8f6ff') + c(14, 20, 1.8, '#fff') + c(86, 30, 1.8, '#fff') + c(84, 80, 1.4, '#fff'));
+
+  /* ---- esportes e palco ---- */
+  art('a_craque', '#2fae5c',
+    c(50, 54, 29, '#d9a679') + p('M21 50 Q26 20 50 20 Q74 20 79 50 Q66 36 50 36 Q34 36 21 50 Z', '#1d1830') +
+    eye(40, 56, 5.4, '#3a2a1a') + eye(60, 56, 5.4, '#3a2a1a') + smile(42, 58, 68, 6) + c(33, 64, 3.6, '#f08aa0', ' opacity=".45"') + c(67, 64, 3.6, '#f08aa0', ' opacity=".45"') +
+    p('M24 96 Q26 82 40 80 L60 80 Q74 82 76 96 Z', '#ffd24a') + p('M40 80 L50 88 L60 80 Z', '#2fae5c') + c(84, 80, 11, '#fff') + p('M84 74 L89 78 L87 84 L81 84 L79 78 Z', '#1d2433'));
+  art('a_goleiro', '#e8641e',
+    c(50, 52, 28, '#f4c7a1') + p('M22 46 Q28 20 50 20 Q72 20 78 46 Q64 34 50 34 Q36 34 22 46 Z', '#8a4a1e') +
+    eye(40, 54, 5.4, '#2a4a8a') + eye(60, 54, 5.4, '#2a4a8a') + ln('M33 46 L44 48 M67 46 L56 48', INK, 2.6) + e(50, 68, 6, 4.4, '#7a2a2a') +
+    e(16, 74, 13, 15, '#7ae05a') + e(84, 74, 13, 15, '#7ae05a') + ln('M10 68 L22 68 M10 74 L22 74 M78 68 L90 68 M78 74 L90 74', '#3a9a2a', 2) + p('M30 96 Q32 84 50 84 Q68 84 70 96 Z', '#2a3a7a'));
+  art('a_surfista', '#18b6d8',
+    p('M0 80 Q18 66 36 80 Q54 94 72 80 Q90 66 100 78 L100 100 L0 100 Z', '#0f7fb8') + p('M0 88 Q20 76 40 88 Q60 100 80 88 Q92 82 100 86 L100 100 L0 100 Z', '#fff', ' opacity=".35"') +
+    c(50, 52, 26, '#e0b088') + p('M22 50 Q20 20 50 18 Q80 20 78 50 Q70 32 56 34 Q36 30 22 50 Z', '#f2d04a') + ln('M26 44 Q22 62 30 72', '#f2d04a', 6) +
+    r(30, 48, 18, 10, 5, '#1d2433') + r(52, 48, 18, 10, 5, '#1d2433') + r(46, 51, 8, 3, 1, '#1d2433') + smile(42, 58, 66, 6));
+  art('a_ciclista', '#ff7a2a',
+    p('M20 56 Q22 24 50 22 Q78 24 80 56 Q50 46 20 56 Z', '#2a6ae8') + r(46, 16, 8, 10, 3, '#fff', ' opacity=".7"') + ln('M30 34 Q50 26 70 34 M26 42 Q50 34 74 42', '#fff', 2.4) +
+    c(50, 64, 21, '#f4c7a1') + r(26, 56, 48, 12, 6, '#1d2433') + r(30, 58, 18, 8, 4, '#59b8ff', ' opacity=".8"') + r(52, 58, 18, 8, 4, '#59b8ff', ' opacity=".8"') + smile(42, 58, 78, 5));
+  art('a_lutador', '#c8283a',
+    c(50, 56, 28, '#d9a679') + p('M22 50 Q26 24 50 22 Q74 24 78 50 Q66 40 50 40 Q34 40 22 50 Z', '#1d1830') + r(20, 36, 60, 10, 4, '#ffd24a') +
+    eye(40, 56, 5.4, '#2a1a0a') + eye(60, 56, 5.4, '#2a1a0a') + ln('M32 46 L45 50 M68 46 L55 50', INK, 3.4) + ln('M42 70 Q50 66 58 70', INK, 3) +
+    e(14, 80, 13, 12, '#e8483a') + e(86, 80, 13, 12, '#e8483a') + r(8, 78, 12, 4, 2, '#fff', ' opacity=".7"') + r(80, 78, 12, 4, 2, '#fff', ' opacity=".7"'));
+  art('a_chef', '#3a4a8a',
+    c(32, 24, 14, '#fff') + c(50, 18, 16, '#fff') + c(68, 24, 14, '#fff') + r(30, 24, 40, 18, 3, '#fff') + r(30, 38, 40, 5, 2, '#dfe6f2') +
+    c(50, 62, 22, '#f4c7a1') + p('M30 66 Q50 92 70 66 Q66 84 50 86 Q34 84 30 66 Z', '#6a4a2a') + p('M34 66 Q50 72 66 66 Q60 74 50 74 Q40 74 34 66 Z', '#6a4a2a') +
+    eye(41, 56, 4.8, '#3a2a1a') + eye(59, 56, 4.8, '#3a2a1a') + smile(44, 56, 70, 4) + c(34, 62, 3.4, '#f08aa0', ' opacity=".5"') + c(66, 62, 3.4, '#f08aa0', ' opacity=".5"'));
+  art('a_rockstar', '#1d1830',
+    p('M20 50 Q18 14 50 12 Q82 14 80 50 L78 60 Q76 36 66 30 L60 44 L50 28 L40 44 L34 30 Q24 36 22 60 Z', '#e8283a') +
+    c(50, 58, 23, '#f4c7a1') + r(28, 50, 44, 10, 5, '#1d2433') + c(40, 55, 3, '#59b8ff', ' opacity=".7"') + c(60, 55, 3, '#59b8ff', ' opacity=".7"') + ln('M42 72 Q50 78 58 72', INK, 2.8) +
+    p('M58 96 L76 66 L82 70 L66 98 Z', '#c8703a') + r(76, 56, 6, 16, 2, '#6a4a2a') + c(24, 14, 1.8, '#ffd24a') + c(88, 30, 1.8, '#ffd24a') + c(10, 40, 1.4, '#fff'));
+  art('a_dj', '#7a2ad8',
+    p('M24 50 Q24 18 50 18 Q76 18 76 50 L70 50 Q70 28 50 28 Q30 28 30 50 Z', '#1d2433') + r(20, 44, 14, 24, 6, '#ff4aa0') + r(66, 44, 14, 24, 6, '#ff4aa0') + r(24, 48, 6, 16, 3, '#1d2433') + r(70, 48, 6, 16, 3, '#1d2433') +
+    c(50, 60, 21, '#d9a679') + p('M30 52 Q36 40 50 40 Q64 40 70 52 Q60 46 50 46 Q40 46 30 52 Z', '#1d1830') +
+    eye(42, 60, 4.8, '#2a1a0a') + eye(58, 60, 4.8, '#2a1a0a') + smile(43, 57, 72, 5) + ln('M6 30 L12 30 M88 30 L94 30 M8 22 L12 26 M92 22 L88 26', '#ffd24a', 2.4));
+
   A.GROUPS = [
     { id: 'caes', name: 'Cachorros', items: [['a_labrador', 'Labrador'], ['a_husky', 'Husky'], ['a_dalmata', 'Dálmata'], ['a_pug', 'Pug'], ['a_beagle', 'Beagle'], ['a_poodle', 'Poodle'], ['a_shihtzu', 'Shih Tzu'], ['a_viralata', 'Vira-lata']] },
     { id: 'bichos', name: 'Bichinhos', items: [['a_gato', 'Gato'], ['a_raposa', 'Raposa'], ['a_panda', 'Panda'], ['a_coruja', 'Coruja'], ['a_urso', 'Urso'], ['a_sapo', 'Sapo'], ['a_coelho', 'Coelho'], ['a_porco', 'Porquinho']] },
     { id: 'robos', name: 'Robôs', items: [['a_robo1', 'Visor'], ['a_robo2', 'Ciclope'], ['a_robo3', 'Tela'], ['a_robo4', 'Coração'], ['a_robo5', 'Fones'], ['a_robo6', 'Engrenagem'], ['a_robo7', 'Listras'], ['a_robo8', 'Retrô']] },
     { id: 'monstros', name: 'Monstrinhos', items: [['a_monstro1', 'Olhão'], ['a_monstro2', 'Peludo'], ['a_monstro3', 'Três olhos'], ['a_monstro4', 'Antenas'], ['a_monstro5', 'Língua'], ['a_fantasma', 'Fantasma'], ['a_monstro6', 'Espinhos'], ['a_gelatina', 'Gelatina']] },
-    { id: 'aventura', name: 'Aventureiros', items: [['a_astronauta', 'Astronauta'], ['a_ninja', 'Ninja'], ['a_mago', 'Mago'], ['a_pirata', 'Pirata'], ['a_viking', 'Viking'], ['a_cavaleiro', 'Cavaleiro'], ['a_detetive', 'Detetive'], ['a_alien', 'Alien']] }
+    { id: 'aventura', name: 'Aventureiros', items: [['a_astronauta', 'Astronauta'], ['a_ninja', 'Ninja'], ['a_mago', 'Mago'], ['a_pirata', 'Pirata'], ['a_viking', 'Viking'], ['a_cavaleiro', 'Cavaleiro'], ['a_detetive', 'Detetive'], ['a_alien', 'Alien']] },
+    { id: 'fantasia', name: 'Fantasia', items: [['a_dragao', 'Dragãozinho'], ['a_unicornio', 'Unicórnio'], ['a_sereia', 'Sereia'], ['a_fada', 'Fada'], ['a_bruxa', 'Bruxinha'], ['a_genio', 'Gênio'], ['a_vampirinho', 'Vampirinho'], ['a_yeti', 'Yeti']] },
+    { id: 'palco', name: 'Esportes e palco', items: [['a_craque', 'Craque'], ['a_goleiro', 'Goleiro'], ['a_surfista', 'Surfista'], ['a_ciclista', 'Ciclista'], ['a_lutador', 'Lutador'], ['a_chef', 'Chef'], ['a_rockstar', 'Rockstar'], ['a_dj', 'DJ']] }
   ].map(function (g) { return { id: g.id, name: g.name, items: g.items.map(function (i) { return { key: i[0], name: i[1] }; }) }; });
 
   A.svg = function (key) { return ART[key] || ''; };

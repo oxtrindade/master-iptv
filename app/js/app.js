@@ -865,7 +865,7 @@
       swBtns.push(b); sw.appendChild(b);
     });
     function addTile(box, k, name) {
-      var b = avSet(h('button', { cls: 'f aicon' + (k ? ' art' : ''), type: 'button', title: name, on: { click: function () { p.icon = k; paint(); autoSave(); } } }), { name: p.name, icon: k });
+      var b = avSet(h('button', { cls: 'f aicon' + (k ? ' art' : ''), type: 'button', title: name, on: { click: function () { p.icon = k; paint(); pickDone(); } } }), { name: p.name, icon: k });
       b._k = k; icBtns.push(b); box.appendChild(b);
     }
     var first = h('div', { cls: 'pgrow' });
@@ -908,6 +908,16 @@
       e.p = p;
       if (p.id === curProf) { try { var hb = document.querySelector('#head .avatar'); if (hb) { avSet(hb, p); hb.style.backgroundColor = PCOLORS[p.color % PCOLORS.length]; } } catch (x) {} }
       toast('Avatar salvo', 1200);
+    }
+    /* escolher o avatar já salva (perfil novo é criado) e volta à seleção de perfis */
+    function pickDone() {
+      p.name = (input.value || '').replace(/^\s+|\s+$/g, '') || p.name;
+      var l2 = e.isNew ? list.concat([p]) : list.map(function (x) { return x.id === p.id ? p : x; });
+      store.set('profiles', l2);
+      if (!e.isNew && p.id === curProf) { try { var hb = document.querySelector('#head .avatar'); if (hb) { avSet(hb, p); hb.style.backgroundColor = PCOLORS[p.color % PCOLORS.length]; } } catch (x) {} }
+      S.profEdit = null;
+      renderProfiles();
+      toast(e.isNew ? 'Perfil criado' : 'Avatar salvo', 1400);
     }
     function paint() {
       swBtns.forEach(function (b, i) { b.classList.toggle('on', i === p.color); });
@@ -3880,7 +3890,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.66.0']
+      ['Versão do app', '1.67.0']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {

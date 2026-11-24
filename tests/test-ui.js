@@ -690,9 +690,8 @@ Promise.all([listen(api), listen(px), startSync()]).then(function () {
       assert.ok($$('#profiles .aicon').length >= 12, 'editor oferece ícones de avatar');
       w.Nav.focus($$('#profiles .aicon')[2]);
       $$('#profiles .aicon')[2].click();
-      assert.ok($$('#profiles .aicon')[2].classList.contains('on') && $('#profiles .pav svg'), 'ícone escolhido aparece no avatar');
-      assert.strictEqual(w.Nav.current(), $$('#profiles .aicon')[2], 'o foco continua no ícone escolhido');
-      $$('#profiles .btn').filter(function (b) { return b.textContent === 'Salvar'; })[0].click();
+      // perfil novo: escolher o avatar já cria o perfil e volta à seleção de perfis
+      assert.ok(!$('#profiles .aicon') && /Quem está assistindo|Gerenciar perfis/.test($('#profiles').textContent), 'voltou à seleção de perfis');
       assert.strictEqual($$('#profiles .pcard').length, 3, 'dois perfis + adicionar');
       assert.ok($$('#profiles .pcard')[1].querySelector('svg'), 'o perfil salvo mostra o ícone em vez da inicial');
       // perfil existente: escolher o avatar já grava, sem apertar "Salvar"
@@ -700,10 +699,9 @@ Promise.all([listen(api), listen(px), startSync()]).then(function () {
       var ic5 = $$('#profiles .aicon')[5];
       assert.ok(ic5, 'edição do perfil Ana abriu');
       ic5.click();
+      assert.ok(!$('#profiles .aicon'), 'escolher o avatar volta à seleção de perfis');
       var saved = w.JSON.parse(w.localStorage.getItem('iptv.profiles')).filter(function (x) { return x.name === 'Ana'; })[0];
       assert.ok(saved && saved.icon === ic5._k, 'avatar gravado ao escolher, sem Salvar: ' + (saved && saved.icon) + ' / ' + ic5._k);
-      $$('#profiles .btn').filter(function (b) { return b.textContent === 'Cancelar'; })[0].click();
-      assert.ok(w.JSON.parse(w.localStorage.getItem('iptv.profiles')).filter(function (x) { return x.name === 'Ana'; })[0].icon === ic5._k, 'Cancelar não desfaz o avatar já escolhido');
       $$('#profiles .btn').filter(function (b) { return b.textContent === 'Concluído'; })[0].click();
       $$('#profiles .pcard')[1].click(); // entra no perfil Ana
       assert.ok($('#profiles').classList.contains('hidden') && $('.hubtab'), 'entrou no menu do novo perfil');

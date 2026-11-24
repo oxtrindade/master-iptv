@@ -464,3 +464,7 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 ## 1.66.0
 - **Downloads em fila (um por vez)**: o provedor limita as conexões e recusava os downloads simultâneos ("Não foi possível baixar" / "Aguardando para repetir"). Agora o app manda um por vez ao Android; os outros aparecem como "Na fila · começa quando o anterior terminar" e entram sozinhos, em ordem, quando o atual termina (mesmo com o app em segundo plano aberto).
 - **Configurações**: ficou só a chave "Ocultar conteúdo adulto" entre as opções de filtro; Modo leve, SD, HD, filmes de cinema e trailer dublado seguem o padrão do app (ou o que já estava salvo).
+
+## 1.67.0
+- **16 avatares novos** (personagens originais): grupo "Fantasia" (dragãozinho, unicórnio, sereia, fada, bruxinha, gênio, vampirinho, yeti) e "Esportes e palco" (craque, goleiro, surfista, ciclista, lutador, chef, rockstar, DJ).
+- Ao escolher um avatar no editor de perfil, ele já salva (perfil novo é criado) e volta para a seleção de perfis.
