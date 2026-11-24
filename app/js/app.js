@@ -164,14 +164,13 @@
   function pvOn() { return true; }   // 1.47.0: prévia (trailer) sempre ligada, sem chave
   /* modo leve: sem animações/sombras pesadas (TV de entrada). Automático em TV com pouco hardware; dá para forçar em Configurações. */
   function liteOn() {
-    if (S.opts.lite !== undefined) { return !!S.opts.lite; }
     var tv = false, cores = navigator.hardwareConcurrency || 4, mem = navigator.deviceMemory || 0;
     try { tv = !!(window.NativeApp && window.NativeApp.isTv && window.NativeApp.isTv()); } catch (e) {}
     tv = tv || /Web0S|webOS|SMART-?TV|Tizen|AFTM|BRAVIA|TCL/i.test(navigator.userAgent) || document.body.classList.contains('tv');
     return tv && (cores <= 4 || (mem > 0 && mem <= 2));
   }
   function applyLite() { document.body.classList.toggle('lite', liteOn()); }
-  function setOpt(k, v) { S.opts[k] = !!v; store.set('opts', S.opts); if (k === 'bgplay') { applyBg(); } if (k === 'lite') { applyLite(); } }
+  function setOpt(k, v) { S.opts[k] = !!v; store.set('opts', S.opts); if (k === 'bgplay') { applyBg(); } }
   /* Android (celular): tocar com a tela bloqueada / app em segundo plano (padrão: ligado) */
   function hasBg() { try { return !!(window.NativeApp && window.NativeApp.setBackground && !(window.NativeApp.isTv && window.NativeApp.isTv())); } catch (e) { return false; } }
   function applyBg() {
@@ -3339,12 +3338,14 @@
     /* o banner só toca se estiver na tela e o foco não estiver numa fileira (senão ficava só o som, com o banner fora da vista) */
     function heroSeen() {
       var r = hero.getBoundingClientRect(), f = Nav.current();
+      if (f && hero.contains(f)) { return true; }   // 1.69.0: foco em qualquer coisa do banner (anel branco) conta como "selecionado"
       if (!window.__pvTest && (r.bottom < 160 || r.top > window.innerHeight * 0.6)) { return false; }
       if (f && !hero.contains(f) && f.closest && f.closest('.hrow')) { return false; }
       // 1.56.3: na TV o trailer do banner toca sozinho, com o foco nos botões ou no menu de cima; só para quando o foco desce para uma fileira
       return true;
     }
     S.heroEnd = function () { pvEnd(); };
+    S.heroAgain = function () { if (isTvDevice() && token === S.homeToken && !hero._yt && !hero.classList.contains('pv')) { pvSchedule(); } };   // anel no banner mas sem trailer: tenta de novo a cada movimento dentro dele
     S.heroSel = function (on) { if (!isTvDevice() || token !== S.homeToken) { return; } if (on) { pvSchedule(); } else if (!heroSeen()) { pvEnd(); } };
     function pvEnd() {
       clearTimeout(pvStop);
@@ -3890,7 +3891,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.68.0']
+      ['Versão do app', '1.69.0']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
@@ -3942,7 +3943,6 @@
       PD.falha ? 'Última falha: ' + PD.falha : '',
       PD.ultima ? 'Interrompida: ' + PD.ultima : ''
     ].forEach(function (t) { if (t) { page.appendChild(h('div', { cls: 'swd', style: 'margin:-6px 40px 10px 4px;white-space:normal;word-break:break-word;max-width:1500px', text: t })); } });
-    if (S.opts.lite === undefined) { S.opts.lite = liteOn(); }
     // (1.66.0: opção escondida; vale o padrão do app / o que já estava salvo)
     // (1.66.0: opção escondida; vale o padrão do app / o que já estava salvo)
     // (1.66.0: opção escondida; vale o padrão do app / o que já estava salvo)
@@ -5075,7 +5075,7 @@
 
     Nav.onFocus(function (el) {
       var hr = document.querySelector('.hero');
-      if (hr) { var hs = hr.contains(el); if (hs !== hr.classList.contains('sel')) { hr.classList.toggle('sel', hs); if (S.heroSel) { S.heroSel(hs); } } }   // indicador de banner selecionado
+      if (hr) { var hs = hr.contains(el); if (hs !== hr.classList.contains('sel')) { hr.classList.toggle('sel', hs); if (S.heroSel) { S.heroSel(hs); } } else if (hs && S.heroAgain) { S.heroAgain(); } }   // indicador de banner selecionado
       if (el._gp && G && (G.over || S.section === 'guide')) { gFocus(el._gp); }
       pvFocus(el);
       var i = el.getAttribute('data-i');

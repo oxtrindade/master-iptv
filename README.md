@@ -472,3 +472,7 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 ## 1.68.0
 - **10 avatares de ciência** (grupo "Ciência"): cientista, cientista maluco, astrônomo, químico, bióloga, físico, paleontólogo, engenheira, botânica e meteorologista.
 - **YouTube dos jogos**: lives só de narração/áudio (ex.: "Narração ao vivo" da TNT Sports, sem o jogo) deixam de aparecer como transmissão no varredor e na busca.
+
+## 1.69.0
+- **Banner da Início (TV)**: com o anel branco no banner (foco em qualquer botão dele, não só Assistir/Ver episódios) o trailer agora toca; antes a checagem de "banner à vista" podia barrar mesmo com o foco ali. Cada movimento dentro do banner tenta de novo se o trailer não está tocando.
+- **Modo leve** removido de vez: não há mais chave nem valor salvo; fica só o ajuste automático para TVs fracas.
