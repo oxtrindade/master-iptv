@@ -479,3 +479,6 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 
 ## 1.69.1
 - **Modo leve removido por completo** (opção, ajuste automático em TV fraca e CSS): o app usa sempre o modo normal.
+
+## 1.69.2
+- Diagnóstico de erro de reprodução: ao falhar, o app testa o servidor do provedor (código HTTP) e mostra no aviso e em Configurações ("Último erro ao reproduzir": tentativas do player + resposta do servidor).

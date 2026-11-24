@@ -3543,6 +3543,20 @@
 
   function tmdbKey() { return store.get('tmdbkey', ''); }
 
+  /* diagnóstico de erro de reprodução: pede só o 1º byte e lê o código HTTP do servidor (0 = sem resposta) */
+  function probePlay(url, cb) {
+    var done = false, x = new XMLHttpRequest();
+    function fin(st) { if (done) { return; } done = true; try { x.abort(); } catch (e) {} cb(st); }
+    try {
+      x.open('GET', url, true);
+      x.setRequestHeader('Range', 'bytes=0-0');
+      x.onreadystatechange = function () { if (x.readyState >= 2) { fin(x.status); } };
+      x.onerror = function () { fin(0); };
+      setTimeout(function () { fin(0); }, 9000);
+      x.send();
+    } catch (e) { fin(0); }
+  }
+
   function tmdbCached(key, hours, fetchFn) {
     var c = store.get(key, null);
     if (c && Date.now() - c.at < hours * 3600000) { return Promise.resolve(c.data); }
@@ -3884,7 +3898,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.69.1']
+      ['Versão do app', '1.69.2']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
@@ -3934,7 +3948,8 @@
     [
       'Diagnóstico do trailer — foco em filmes/séries: ' + PD.foco + ' · agendadas: ' + PD.agendadas + ' · iniciadas: ' + PD.iniciadas + ' · tocando: ' + PD.tocando + (PD.bloqueio ? ' · bloqueio: ' + PD.bloqueio : ''),
       PD.falha ? 'Última falha: ' + PD.falha : '',
-      PD.ultima ? 'Interrompida: ' + PD.ultima : ''
+      PD.ultima ? 'Interrompida: ' + PD.ultima : '',
+      S.playDiag ? 'Último erro ao reproduzir: ' + S.playDiag : ''
     ].forEach(function (t) { if (t) { page.appendChild(h('div', { cls: 'swd', style: 'margin:-6px 40px 10px 4px;white-space:normal;word-break:break-word;max-width:1500px', text: t })); } });
     // (1.66.0: opção escondida; vale o padrão do app / o que já estava salvo)
     // (1.66.0: opção escondida; vale o padrão do app / o que já estava salvo)
@@ -4347,6 +4362,7 @@
     $('buffer').classList.remove('hidden');
     S.prefApplied = {};
     closeTracks();
+    S.playUrl = url; S.playLive = c.kind === 'live';
     Player.play(url, o);
     setOsd(title, sub, '', logo, vod);
     if (c.kind === 'ep') { $('osd-hint').textContent += ' · CH+/CH−: próximo/anterior episódio'; }
@@ -5061,6 +5077,13 @@
         }
       },
       onError: function () {
+        var why = Player.diag();
+        S.playDiag = new Date().toLocaleTimeString().slice(0, 5) + ' · ' + why + ' · ' + (S.playLive ? 'ao vivo' : 'VOD') + ' · testando o servidor…';
+        probePlay(S.playUrl, function (st) {
+          var host = ''; try { host = String(S.playUrl).replace(/^\w+:\/\//, '').split(/[\/:?]/)[0]; } catch (e) {}
+          S.playDiag = S.playDiag.replace('testando o servidor…', 'servidor ' + host + ' respondeu ' + (st ? 'HTTP ' + st : 'nada (sem resposta/bloqueado)'));
+          if (S.mode === 'player') { toast('Não foi possível reproduzir (' + (st ? 'servidor: HTTP ' + st : 'servidor sem resposta') + ')', 5000); }
+        });
         toast('Não foi possível reproduzir este conteúdo.', 4000);
         if (S.ctx && S.ctx.kind !== 'live') { closePlayer(); }
       }

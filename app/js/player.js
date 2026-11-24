@@ -2,7 +2,7 @@
 var Player = (function () {
   'use strict';
   var v, hls = null, mp = null, cb = {};
-  var attempts = [], ai = 0, opts = {}, startTimer = null, playing = false;
+  var tries = [], lastCode = null, attempts = [], ai = 0, opts = {}, startTimer = null, playing = false;
   var stale = [];   // faixas de legenda "órfãs" deixadas pelo hls.js em reproduções anteriores
 
   var LANGS = { pt: 'Português', por: 'Português', en: 'Inglês', eng: 'Inglês', es: 'Espanhol', spa: 'Espanhol',
@@ -106,7 +106,7 @@ var Player = (function () {
     v.addEventListener('ended', function () { if (cb.onEnded) { cb.onEnded(); } });
     v.addEventListener('pause', function () { if (cb.onState) { cb.onState(false); } });
     v.addEventListener('play', function () { if (cb.onState) { cb.onState(true); } });
-    v.addEventListener('error', function () { next('native-error'); });
+    v.addEventListener('error', function () { lastCode = v.error ? v.error.code : null; next('native-error'); });
     v.addEventListener('loadedmetadata', tracksChanged);
     function reportSize() { if (cb.onResize && v.videoWidth) { cb.onResize(v.videoWidth, v.videoHeight); } }
     v.addEventListener('loadedmetadata', reportSize);
@@ -189,8 +189,9 @@ var Player = (function () {
     startTimer = setTimeout(function () { if (!playing) { next('timeout'); } }, opts.live ? 12000 : 25000);
   }
 
-  function next() {
+  function next(why) {
     clearTimeout(startTimer);
+    if (attempts[ai]) { tries.push(attempts[ai].type + ':' + (why || '?') + (why === 'native-error' && lastCode ? '#' + lastCode : '')); }
     ai++;
     run();
   }
@@ -200,9 +201,10 @@ var Player = (function () {
     play: function (url, o) {
       opts = o || {};
       attempts = build(url, opts);
-      ai = 0;
+      ai = 0; tries = []; lastCode = null;
       run();
     },
+    diag: function () { return tries.join(' → '); },
     stop: function () { attempts = []; ai = 0; teardown(); },
     toggle: function () { if (v.paused) { v.play(); } else { v.pause(); } },
     isPaused: function () { return v.paused; },
