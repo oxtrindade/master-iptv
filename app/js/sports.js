@@ -396,11 +396,14 @@
     return l;
   }
   /* entre as transmissões AO VIVO, a que cita os times do jogo (e, de preferência, é do canal pedido) */
+  /* lives só de narradores/comentaristas/áudio (ex.: "Narração ao vivo" da TNT): o jogo não passa ali, então ficam de fora */
+  var NARR = /narracao|narrando|narrador|transmissao radiofonica|radio |so audio|apenas audio|sem imagens?|resenha|bate ?papo/;
   Sp.pickLive = function (html, g, chan, own) {
     var hw = teamWords(g.home.name), aw = teamWords(g.away.name), cn = chan ? Sp.norm(chan).replace(/ /g, '') : '', best = null, bs = 0;
     Sp.parseStreams(html).forEach(function (st) {
       if (!st.live) { return; }
       var t = ' ' + Sp.norm(st.text) + ' ';
+      if (NARR.test(t)) { return; }
       var has = function (ws) { return ws.some(function (w) { return t.indexOf(' ' + w) >= 0; }); };
       var sc = (has(hw) ? 2 : 0) + (has(aw) ? 2 : 0);
       if (!sc) { return; }
@@ -413,7 +416,7 @@
 
   /* transmissão ao vivo que cita os DOIS times, de qualquer canal conhecido (reações/watchalongs ficam de fora); o canal pedido ganha desempate */
   var OFFICIAL = /ge ?tv|caze ?tv|tnt sports|sportynet|globo|sportv|espn|record|sbt|xsports|cbf|fifa|conmebol|uefa|band|nsports|dazn|premiere/;
-  var NOISE = /react|reacao|watch ?along|assistindo (com|o jogo|junto)|narracao|narrando|comentando|simulacao|pes |efootball|fifa 2|ea fc|fc 2|fc ?26|game play|gameplay/;
+  var NOISE = /react|reacao|watch ?along|assistindo (com|o jogo|junto)|narracao|narrando|narrador|resenha|bate ?papo|sem imagens?|so audio|comentando|simulacao|pes |efootball|fifa 2|ea fc|fc 2|fc ?26|game play|gameplay/;
   Sp.pickLiveAny = function (html, g, chan) {
     var hw = teamWords(g.home.name), aw = teamWords(g.away.name), cn = chan ? Sp.norm(chan).replace(/ /g, '') : '', best = null, bs = 0;
     Sp.parseStreams(html).forEach(function (st) {
@@ -433,6 +436,7 @@
     Sp.parseFeed(xml).forEach(function (st) {
       if (st.at && (st.at < now - 14 * 86400000 || st.at > now + 3600000)) { return; }
       var t = ' ' + Sp.norm(st.title) + ' ';
+      if (NARR.test(t)) { return; }
       var has = function (ws) { return ws.some(function (w) { return t.indexOf(' ' + w) >= 0; }); };
       var sc = (has(hw) ? 2 : 0) + (has(aw) ? 2 : 0);
       // transmissão pode ser agendada dias antes: se o vídeo é antigo, só vale citando os dois times

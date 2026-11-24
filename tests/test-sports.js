@@ -56,6 +56,14 @@ ok(/Record/.test(Sports.whereToWatch(g).short) && /Prime/.test(Sports.whereToWat
 var ucl = Sports.parseEvent(ev('2026-11-04T20:00Z', 'pre', t('1', 'Real Madrid', 'RMA'), t('2', 'Liverpool', 'LIV'), '0', '0'), 'uefa.champions');
 ok(/HBO Max/.test(Sports.whereToWatch(ucl).short) && Sports.whereToWatch(ucl).lines.length >= 3, 'Champions: HBO Max, TNT e SBT');
 (function () {
+  // lives de narração (ex.: TNT Sports narradores, sem o jogo) ficam fora; a transmissão normal do mesmo jogo é escolhida
+  var g = { home: { name: 'Flamengo' }, away: { name: 'Palmeiras' } };
+  var narr = '"videoId":"nnnnnnnnnnn","title":{"runs":[{"text":"NARRAÇÃO AO VIVO | FLAMENGO x PALMEIRAS | TNT Sports"}]},"ownerText":{"runs":[{"text":"TNT Sports BR"}]},"badges":[{"label":"AO VIVO"}]';
+  var real = '"videoId":"rrrrrrrrrrr","title":{"runs":[{"text":"FLAMENGO x PALMEIRAS | AO VIVO | BRASILEIRÃO"}]},"ownerText":{"runs":[{"text":"CazéTV"}]},"badges":[{"label":"AO VIVO"}]';
+  ok(!Sports.pickLive(narr, g, 'TNT Sports', true) && !Sports.pickLiveAny(narr, g, 'TNT Sports'), 'live só de narração não vale como transmissão');
+  ok(Sports.pickLive(narr + real, g, 'CazéTV', true).id === 'rrrrrrrrrrr', 'com narração e transmissão, fica a transmissão');
+})();
+(function () {
   var sg = { home: { name: 'Serbia' }, away: { name: 'Germany' } };
   var pg2 = Sports.pickLive('"videoId":"abcdefghijk","title":{"runs":[{"text":"SÉRVIA x ALEMANHA | NATIONS LEAGUE | AO VIVO"}]},"ownerText":{"runs":[{"text":"ge tv"}]},"label":"AO VIVO"', sg, 'ge tv');
   ok(pg2 && pg2.id === 'abcdefghijk' && Sports.ptName('Germany') === 'Alemanha', 'seleções em inglês casam com título em português');

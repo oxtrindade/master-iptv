@@ -287,6 +287,56 @@
     c(50, 60, 21, '#d9a679') + p('M30 52 Q36 40 50 40 Q64 40 70 52 Q60 46 50 46 Q40 46 30 52 Z', '#1d1830') +
     eye(42, 60, 4.8, '#2a1a0a') + eye(58, 60, 4.8, '#2a1a0a') + smile(43, 57, 72, 5) + ln('M6 30 L12 30 M88 30 L94 30 M8 22 L12 26 M92 22 L88 26', '#ffd24a', 2.4));
 
+
+  /* ---- ciência ---- */
+  function face(sk, y) { return c(50, y || 52, 22, sk || '#f4c7a1'); }
+  art('a_cientista', '#2fa8a0',
+    p('M22 96 Q24 80 38 76 L62 76 Q76 80 78 96 Z', '#fff') + p('M44 76 L50 90 L56 76 Z', '#dfe6f2') + r(60, 82, 8, 6, 1, '#59b8ff') +
+    face() + p('M28 48 Q30 26 50 26 Q70 26 72 48 Q62 36 50 36 Q38 36 28 48 Z', '#5a3a2a') +
+    c(40, 54, 8.4, '#bfeaff', ' opacity=".35"') + c(60, 54, 8.4, '#bfeaff', ' opacity=".35"') + ln('M31 54 L22 52 M69 54 L78 52 M48 54 L52 54', INK, 2.2) + c(40, 54, 8.4, 'none', ' stroke="#1d2433" stroke-width="2.4"') + c(60, 54, 8.4, 'none', ' stroke="#1d2433" stroke-width="2.4"') +
+    dot(40, 54, 2.6) + dot(60, 54, 2.6) + smile(43, 57, 66, 5));
+  art('a_cientmaluco', '#e8641e',
+    p('M26 48 L8 30 L24 30 L14 10 L34 24 L40 2 L48 22 L58 4 L62 24 L78 8 L74 30 L92 26 L76 48 Z', '#f3f3f3') +
+    face('#f4c7a1', 56) + e(40, 54, 7.6, 8.4, '#fff') + e(60, 54, 7.6, 8.4, '#fff') + dot(41, 55, 2.8) + dot(59, 55, 2.8) + ln('M31 44 L45 47 M69 44 L55 47', INK, 2.8) +
+    e(50, 70, 7, 6, '#8a2a2a') + e(50, 72, 4, 2.6, '#e8708a') + p('M22 96 Q24 84 36 82 L64 82 Q76 84 78 96 Z', '#fff') + ln('M8 70 L14 62 L10 62 L16 54', '#ffe45a', 2.6));
+  art('a_astronomo', '#1d2e6a',
+    c(16, 18, 1.6, '#fff') + c(84, 12, 1.4, '#fff') + c(90, 54, 1.4, '#fff') + c(10, 50, 1.2, '#fff') + c(30, 8, 1, '#fff') +
+    p('M68 14 L96 30 L90 40 L62 24 Z', '#c8d2e2') + r(60, 22, 10, 7, 2, '#e8a21a', ' transform="rotate(30 65 25)"') + p('M82 40 L72 60 L78 62 L88 44 Z', '#8a96aa') +
+    face('#d9a679', 62) + p('M28 58 Q30 36 50 36 Q70 36 72 58 Q62 46 50 46 Q38 46 28 58 Z', '#2a1a1a') + p('M24 46 Q50 22 76 46 L72 50 Q50 34 28 50 Z', '#5a3ad0') +
+    eye(42, 62, 4.6, '#2a1a0a') + eye(58, 62, 4.6, '#2a1a0a') + smile(44, 56, 74, 4) + p('M30 96 Q32 86 50 84 Q68 86 70 96 Z', '#5a3ad0'));
+  art('a_quimico', '#7a5be0',
+    p('M72 40 L72 54 L84 82 Q86 90 78 90 L62 90 Q54 90 56 82 L68 54 L68 40 Z', '#e8f6ff', ' opacity=".85"') + p('M64 70 L82 70 L85 82 Q86 88 78 88 L66 88 Q58 88 60 82 Z', '#3ad07a') + c(72, 76, 2, '#fff') + c(77, 80, 1.6, '#fff') + r(66, 36, 12, 5, 2, '#c8d2e2') +
+    face('#e0b088', 58) + p('M28 54 Q30 34 50 34 Q70 34 72 54 Q62 44 50 44 Q38 44 28 54 Z', '#1d1830') + r(26, 50, 48, 12, 6, '#bfeaff', ' opacity=".6"') + ln('M26 56 L74 56', '#1d2433', 2.4) +
+    dot(41, 58, 2.8) + dot(59, 58, 2.8) + smile(44, 56, 70, 4) + p('M24 96 Q26 82 40 80 L60 80 Q74 82 76 96 Z', '#fff'));
+  art('a_biologo', '#43a864',
+    r(58, 50, 26, 8, 3, '#2a3a5a') + r(70, 22, 8, 32, 3, '#4a5a7a') + r(62, 20, 24, 6, 3, '#2a3a5a') + p('M60 58 L84 58 L84 72 L72 72 Z', '#2a3a5a') + r(56, 84, 34, 8, 3, '#2a3a5a') + c(78, 70, 6, '#59b8ff', ' opacity=".6"') +
+    face('#f4c7a1', 60) + p('M28 56 Q22 34 42 30 Q60 28 72 44 Q74 52 72 58 Q64 40 50 42 Q38 42 28 56 Z', '#b8481e') + c(34, 40, 6, '#b8481e') +
+    eye(42, 60, 4.8, '#2a6a3a') + eye(58, 60, 4.8, '#2a6a3a') + smile(44, 56, 72, 4) + c(36, 66, 3.4, '#f08aa0', ' opacity=".5"') + p('M22 96 Q24 84 38 82 L56 82 Q64 84 66 96 Z', '#fff'));
+  art('a_fisico', '#1d1830',
+    '<g fill="none" stroke="#59b8ff" stroke-width="2.4" opacity=".9"><ellipse cx="50" cy="50" rx="44" ry="15"/><ellipse cx="50" cy="50" rx="44" ry="15" transform="rotate(60 50 50)"/><ellipse cx="50" cy="50" rx="44" ry="15" transform="rotate(-60 50 50)"/></g>' +
+    c(94, 50, 3, '#ffd24a') + c(28, 12, 3, '#ffd24a') + c(28, 88, 3, '#ffd24a') +
+    face('#f4c7a1', 54) + p('M26 54 Q18 30 40 24 L48 36 L58 22 Q80 28 74 54 Q66 40 50 40 Q36 40 26 54 Z', '#e8e8f0') + ln('M30 44 Q40 38 50 42', '#c8c8d8', 2) +
+    eye(42, 54, 4.8, '#2a4a8a') + eye(58, 54, 4.8, '#2a4a8a') + smile(43, 57, 67, 5) + ln('M36 48 L46 50 M64 48 L54 50', '#9aa0b0', 2.6) + c(50, 50, 4, '#ffe45a'));
+  art('a_paleontologo', '#e8a21a',
+    p('M14 34 Q50 16 86 34 L82 40 Q50 28 18 40 Z', '#8a5a2a') + p('M30 34 Q34 12 50 12 Q66 12 70 34 Z', '#a8743a') + r(30, 30, 40, 6, 2, '#5a3a1a') +
+    face('#d9a679', 56) + p('M28 60 Q32 90 50 92 Q68 90 72 60 Q62 74 50 70 Q38 74 28 60 Z', '#6a3a1a', ' opacity=".5"') +
+    eye(42, 54, 4.8, '#2a1a0a') + eye(58, 54, 4.8, '#2a1a0a') + smile(44, 56, 66, 4) +
+    p('M70 80 Q84 70 94 76 L92 84 Q82 80 74 88 Z', '#f6ecd0') + p('M78 78 L80 72 L84 78 Z', '#f6ecd0') + c(24, 86, 6, '#f6ecd0') + c(32, 90, 4.4, '#f6ecd0') + r(26, 84, 14, 4, 2, '#f6ecd0'));
+  art('a_engenheira', '#3a7ad8',
+    p('M20 52 Q22 20 50 18 Q78 20 80 52 Z', '#ffd24a') + r(14, 48, 72, 8, 4, '#e8a21a') + r(44, 12, 12, 10, 3, '#e8a21a') +
+    face('#e0b088', 64) + p('M30 60 Q22 80 28 94 Q34 78 38 64 Z', '#2a1a1a') + p('M70 60 Q78 80 72 94 Q66 78 62 64 Z', '#2a1a1a') +
+    eye(42, 64, 4.8, '#2a1a0a') + eye(58, 64, 4.8, '#2a1a0a') + smile(44, 56, 76, 4) + c(36, 70, 3.4, '#f08aa0', ' opacity=".5"') + c(64, 70, 3.4, '#f08aa0', ' opacity=".5"') +
+    '<g fill="#e8f0ff"><circle cx="86" cy="86" r="9"/></g><circle cx="86" cy="86" r="3.6" fill="#3a7ad8"/><path d="M86 74 L86 78 M86 94 L86 98 M74 86 L78 86 M94 86 L98 86" stroke="#e8f0ff" stroke-width="3.4" stroke-linecap="round"/>');
+  art('a_botanica', '#8ad05a',
+    p('M50 94 Q40 70 20 66 Q22 84 50 94 Z', '#2e9a52') + p('M50 94 Q60 70 80 66 Q78 84 50 94 Z', '#2e9a52') + ln('M50 94 L50 74', '#2e7a46', 3) +
+    p('M50 8 Q60 16 50 26 Q40 16 50 8 Z', '#ff6aa0') + p('M40 18 Q52 20 52 30 Q40 28 40 18 Z', '#ff8ac0', ' opacity=".8"') + p('M60 18 Q48 20 48 30 Q60 28 60 18 Z', '#ff8ac0', ' opacity=".8"') + c(50, 22, 3.4, '#ffd24a') +
+    face('#e0b088', 54) + p('M28 50 Q30 32 50 32 Q70 32 72 50 Q62 42 50 42 Q38 42 28 50 Z', '#2a3a1a') + r(30, 36, 40, 7, 3, '#fff3b0', ' opacity=".9"') +
+    eye(42, 54, 4.8, '#2a4a1a') + eye(58, 54, 4.8, '#2a4a1a') + smile(43, 57, 66, 5) + c(36, 60, 3.4, '#f08aa0', ' opacity=".5"') + c(64, 60, 3.4, '#f08aa0', ' opacity=".5"'));
+  art('a_meteorologista', '#5aa8e8',
+    e(26, 22, 18, 10, '#fff', ' opacity=".9"') + e(40, 18, 14, 9, '#fff', ' opacity=".9"') + e(78, 28, 16, 9, '#fff', ' opacity=".85"') + p('M72 34 L64 52 L72 52 L66 68 L84 46 L75 46 L80 34 Z', '#ffd24a') +
+    face('#f4c7a1', 60) + p('M28 56 Q28 34 50 34 Q72 34 72 56 Q64 44 50 44 Q36 44 28 56 Z', '#3a2a1a') +
+    eye(42, 60, 4.8, '#2a4a8a') + eye(58, 60, 4.8, '#2a4a8a') + smile(43, 57, 72, 5) + p('M26 96 Q28 84 40 82 L60 82 Q72 84 74 96 Z', '#e8503a') + p('M44 82 L50 90 L56 82 Z', '#fff'));
+
   A.GROUPS = [
     { id: 'caes', name: 'Cachorros', items: [['a_labrador', 'Labrador'], ['a_husky', 'Husky'], ['a_dalmata', 'Dálmata'], ['a_pug', 'Pug'], ['a_beagle', 'Beagle'], ['a_poodle', 'Poodle'], ['a_shihtzu', 'Shih Tzu'], ['a_viralata', 'Vira-lata']] },
     { id: 'bichos', name: 'Bichinhos', items: [['a_gato', 'Gato'], ['a_raposa', 'Raposa'], ['a_panda', 'Panda'], ['a_coruja', 'Coruja'], ['a_urso', 'Urso'], ['a_sapo', 'Sapo'], ['a_coelho', 'Coelho'], ['a_porco', 'Porquinho']] },
@@ -295,6 +345,7 @@
     { id: 'aventura', name: 'Aventureiros', items: [['a_astronauta', 'Astronauta'], ['a_ninja', 'Ninja'], ['a_mago', 'Mago'], ['a_pirata', 'Pirata'], ['a_viking', 'Viking'], ['a_cavaleiro', 'Cavaleiro'], ['a_detetive', 'Detetive'], ['a_alien', 'Alien']] },
     { id: 'fantasia', name: 'Fantasia', items: [['a_dragao', 'Dragãozinho'], ['a_unicornio', 'Unicórnio'], ['a_sereia', 'Sereia'], ['a_fada', 'Fada'], ['a_bruxa', 'Bruxinha'], ['a_genio', 'Gênio'], ['a_vampirinho', 'Vampirinho'], ['a_yeti', 'Yeti']] },
     { id: 'palco', name: 'Esportes e palco', items: [['a_craque', 'Craque'], ['a_goleiro', 'Goleiro'], ['a_surfista', 'Surfista'], ['a_ciclista', 'Ciclista'], ['a_lutador', 'Lutador'], ['a_chef', 'Chef'], ['a_rockstar', 'Rockstar'], ['a_dj', 'DJ']] }
+    ,{ id: 'ciencia', name: 'Ciência', items: [['a_cientista', 'Cientista'], ['a_cientmaluco', 'Cientista maluco'], ['a_astronomo', 'Astrônomo'], ['a_quimico', 'Químico'], ['a_biologo', 'Bióloga'], ['a_fisico', 'Físico'], ['a_paleontologo', 'Paleontólogo'], ['a_engenheira', 'Engenheira'], ['a_botanica', 'Botânica'], ['a_meteorologista', 'Meteorologista']] }
   ].map(function (g) { return { id: g.id, name: g.name, items: g.items.map(function (i) { return { key: i[0], name: i[1] }; }) }; });
 
   A.svg = function (key) { return ART[key] || ''; };

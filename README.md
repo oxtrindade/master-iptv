@@ -468,3 +468,7 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 ## 1.67.0
 - **16 avatares novos** (personagens originais): grupo "Fantasia" (dragãozinho, unicórnio, sereia, fada, bruxinha, gênio, vampirinho, yeti) e "Esportes e palco" (craque, goleiro, surfista, ciclista, lutador, chef, rockstar, DJ).
 - Ao escolher um avatar no editor de perfil, ele já salva (perfil novo é criado) e volta para a seleção de perfis.
+
+## 1.68.0
+- **10 avatares de ciência** (grupo "Ciência"): cientista, cientista maluco, astrônomo, químico, bióloga, físico, paleontólogo, engenheira, botânica e meteorologista.
+- **YouTube dos jogos**: lives só de narração/áudio (ex.: "Narração ao vivo" da TNT Sports, sem o jogo) deixam de aparecer como transmissão no varredor e na busca.
