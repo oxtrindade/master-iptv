@@ -3898,7 +3898,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.69.3']
+      ['Versão do app', '1.70.0']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
@@ -3949,7 +3949,7 @@
       'Diagnóstico do trailer — foco em filmes/séries: ' + PD.foco + ' · agendadas: ' + PD.agendadas + ' · iniciadas: ' + PD.iniciadas + ' · tocando: ' + PD.tocando + (PD.bloqueio ? ' · bloqueio: ' + PD.bloqueio : ''),
       PD.falha ? 'Última falha: ' + PD.falha : '',
       PD.ultima ? 'Interrompida: ' + PD.ultima : '',
-      (S.playDiag || store.get('playdiag', '')) ? 'Último erro ao reproduzir: ' + (S.playDiag || store.get('playdiag', '')) : 'Último erro ao reproduzir: nenhum desde a instalação (a versão instalada é a 1.69.3)'
+      (S.playDiag || store.get('playdiag', '')) ? 'Último erro ao reproduzir: ' + (S.playDiag || store.get('playdiag', '')) : 'Último erro ao reproduzir: nenhum desde a instalação (a versão instalada é a 1.70.0)'
     ].forEach(function (t) { if (t) { page.appendChild(h('div', { cls: 'swd', style: 'margin:-6px 40px 10px 4px;white-space:normal;word-break:break-word;max-width:1500px', text: t })); } });
     // (1.66.0: opção escondida; vale o padrão do app / o que já estava salvo)
     // (1.66.0: opção escondida; vale o padrão do app / o que já estava salvo)

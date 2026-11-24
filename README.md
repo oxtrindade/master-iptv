@@ -485,3 +485,6 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 
 ## 1.69.3
 - Diagnóstico de reprodução: o aviso de erro aparece mesmo com o player já fechado, e o "Último erro ao reproduzir" fica salvo e sempre visível em Configurações (mostra a versão instalada quando não há erro).
+
+## 1.70.0
+- **VOD na TV (LG)**: se o player nativo não abre o filme/episódio (erro ou 15 s sem começar), o app tenta o mesmo arquivo como HLS (`.m3u8`, que o Xtream serve para filmes/séries) pelo hls.js/HLS nativo, antes de desistir.
