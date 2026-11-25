@@ -140,6 +140,8 @@ var Player = (function () {
     else if (o.live) { add('native', url); add('mpegts', url); }
     else {
       add('native', url);
+      // a 1ª abertura de um arquivo "frio" no provedor pode passar de 25 s; o 1º pedido já o aquece, então uma 2ª tentativa nativa costuma abrir na hora
+      add('native', url);
       // VOD que o player nativo não abre (TV da LG: "timeout" mesmo com o servidor respondendo): o Xtream também serve o mesmo arquivo
       // como HLS (.m3u8), que a TV toca e o hls.js também; entra como 2ª tentativa
       if (/\/(movie|series)\/[^\/]+\/[^\/]+\/[^\/?]+\.(mp4|mkv|avi|mov|ts|m4v)(\?.*)?$/i.test(url)) {
@@ -195,7 +197,7 @@ var Player = (function () {
       var p = v.play();
       if (p && p.catch) { p.catch(function () {}); }
     } catch (e) { next('exception'); return; }
-    startTimer = setTimeout(function () { if (!playing) { next('timeout'); } }, opts.live ? 12000 : (attempts.length > 1 && ai === 0 ? 15000 : 25000));
+    startTimer = setTimeout(function () { if (!playing) { next('timeout'); } }, opts.live ? 12000 : (ai === 0 ? 40000 : 25000));
   }
 
   function next(why) {

@@ -3898,7 +3898,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.70.0']
+      ['Versão do app', '1.70.1']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
@@ -3949,7 +3949,7 @@
       'Diagnóstico do trailer — foco em filmes/séries: ' + PD.foco + ' · agendadas: ' + PD.agendadas + ' · iniciadas: ' + PD.iniciadas + ' · tocando: ' + PD.tocando + (PD.bloqueio ? ' · bloqueio: ' + PD.bloqueio : ''),
       PD.falha ? 'Última falha: ' + PD.falha : '',
       PD.ultima ? 'Interrompida: ' + PD.ultima : '',
-      (S.playDiag || store.get('playdiag', '')) ? 'Último erro ao reproduzir: ' + (S.playDiag || store.get('playdiag', '')) : 'Último erro ao reproduzir: nenhum desde a instalação (a versão instalada é a 1.70.0)'
+      (S.playDiag || store.get('playdiag', '')) ? 'Último erro ao reproduzir: ' + (S.playDiag || store.get('playdiag', '')) : 'Último erro ao reproduzir: nenhum desde a instalação (a versão instalada é a 1.70.1)'
     ].forEach(function (t) { if (t) { page.appendChild(h('div', { cls: 'swd', style: 'margin:-6px 40px 10px 4px;white-space:normal;word-break:break-word;max-width:1500px', text: t })); } });
     // (1.66.0: opção escondida; vale o padrão do app / o que já estava salvo)
     // (1.66.0: opção escondida; vale o padrão do app / o que já estava salvo)
@@ -4357,7 +4357,7 @@
       if (!fromStart && r && r.t > 30 && r.t < r.d - 45) { o.startAt = r.t; }
     }
     c.autoDone = !!o.startAt;
-    c.intro = null; c.seg = null; c.nxtT = null; c.noAuto = false; hideSkip();
+    c.intro = null; c.seg = null; c.nxtT = null; c.noAuto = false; c.warm = -1; hideSkip();
     if (c.kind === 'ep') { loadIntro(c, c.eps[c.idx]); }
     $('buffer').classList.remove('hidden');
     S.prefApplied = {};
@@ -4404,6 +4404,15 @@
       if (S.ctx === c && c.eps[c.idx] === ep) { c.intro = r && r.e !== null && r.e > r.s ? r : null; c.seg = r; }
     }, function () {});
   }
+  /* aquece o próximo episódio no provedor (1º pedido de um arquivo frio demora): pede 1 byte quando o atual passa de 70% */
+  function warmNext(t, d) {
+    var c = S.ctx, nx;
+    if (!c || c.kind !== 'ep' || c.warm === c.idx || !(d > 300) || t < d * 0.7) { return; }
+    nx = c.eps[c.idx + 1];
+    c.warm = c.idx;
+    if (nx && nx.url) { probePlay(nx.url, function () {}); }
+  }
+
   function checkSkip(t, d) {
     var c = S.ctx, bi = $('skipintro'), bn = $('skipnext');
     if (!bi || !bn || !c) { return; }
@@ -5057,6 +5066,7 @@
       onTime: function (t, d) {
         if (!S.ctx || S.ctx.kind === 'live') { return; }
         checkSkip(t, d);
+        warmNext(t, d);
         if (!$('osd').classList.contains('hidden')) { updateBar(t, d); }
         var now = Date.now();
         if (now - S.lastSave > 10000) { S.lastSave = now; saveResume(); }

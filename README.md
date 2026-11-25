@@ -488,3 +488,6 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 
 ## 1.70.0
 - **VOD na TV (LG)**: se o player nativo não abre o filme/episódio (erro ou 15 s sem começar), o app tenta o mesmo arquivo como HLS (`.m3u8`, que o Xtream serve para filmes/séries) pelo hls.js/HLS nativo, antes de desistir.
+
+## 1.70.1
+- VOD na TV: a 1ª tentativa nativa espera até 40 s (arquivo "frio" no provedor demora) e há uma 2ª tentativa nativa antes do HLS; ao passar de 70% de um episódio, o app aquece o próximo no provedor (pede 1 byte), para ele abrir mais rápido.
