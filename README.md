@@ -495,3 +495,6 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 ## 1.71.0
 - **Início**: sempre abas no topo; a escolha "blocos grandes / abas" saiu das Configurações.
 - **Nome dos episódios sem repetição**: "Lanternas - S01E04 - Episódio 4" vira só "T1 · E4"; quando há nome de verdade ("Série - S01E04 - O Retorno") aparece "T1 · E4 — O Retorno". Vale no player, na lista de episódios do player e na tela da série.
+
+## 1.71.1
+- Editor de perfil: avatares maiores (TV 124 px, celular deitado 92 px, em pé 62 px); a tela de escolher perfil não mudou.

@@ -1270,3 +1270,11 @@ body.portrait .spslot .spplay.primary { font-size: 17px; padding: 12px 18px; wid
 /* lista de episódios no player */
 .t-seasons { display: flex; flex-wrap: wrap; margin: 4px 0 14px; }
 .t-seasons .btn { margin: 0 10px 10px 0; min-width: 84px; }
+
+/* editor de perfil: avatares maiores (a seleção de perfil no início não muda) */
+.aicon.art { width: 124px; height: 124px; margin: 8px; border-radius: 22px; }
+body.compact .aicon.art { width: 92px; height: 92px; margin: 6px; border-radius: 16px; }
+body.portrait .aicon.art { width: 62px; height: 62px; margin: 4px; border-radius: 14px; }
+.aicon { width: 96px; height: 96px; font-size: 38px; }
+body.compact .aicon { width: 72px; height: 72px; font-size: 28px; }
+body.portrait .aicon { width: 56px; height: 56px; font-size: 22px; }
