@@ -582,30 +582,10 @@ Promise.all([listen(api), listen(px), startSync()]).then(function () {
       go('settings');
       return waitFor(function () { return $('.settings .sgroup'); }, 'config 4');
     }).then(function () {
-      // estilo da Início: blocos grandes (padrão nas TVs) ou abas (padrão no celular)
-      var btns = function (txt) { return $$('.settings .btn').filter(function (x) { return x.textContent === txt; })[0]; };
-      assert.ok(btns('Abas no topo').classList.contains('primary'), 'aqui o padrão são as abas');
-      btns('Blocos grandes').click();
-      assert.strictEqual(w.localStorage.getItem('iptv.homestyle'), '"blocks"', 'escolha guardada neste aparelho');
-      $('.backbtn').click();
-      return waitFor(function () { return $$('.hubtile').length === 4; }, 'blocos grandes');
-    }).then(function () {
-      assert.deepStrictEqual($$('.hubname').map(function (e) { return e.textContent; }), ['TV ao vivo', 'Filmes', 'Séries', 'Esportes']);
-      assert.ok(!$('.hubtab'), 'sem abas quando o estilo é blocos');
-      $$('.hubtile')[1].click();
-      return waitFor(function () { return $('.sectitle') && /Filmes/.test($('.sectitle').textContent); }, 'abre Filmes pelo bloco');
-    }).then(function () {
-      $('.backbtn').click();
-      return waitFor(function () { return $$('.hubtile').length === 4 && $('.hubtile.focus'); }, 'volta aos blocos');
-    }).then(function () {
-      assert.strictEqual($('.hubtile.focus').getAttribute('data-sec'), 'movie', 'foco volta ao bloco de Filmes');
-      step('estilo da Início: blocos grandes (e opção nas configurações)');
-      $('.menubtn').click(); $('.drawer-settings').click();
-      return waitFor(function () { return $('.settings .sgroup'); }, 'config 5');
-    }).then(function () {
-      $$('.settings .btn').filter(function (x) { return x.textContent === 'Abas no topo'; })[0].click();
-      $('.backbtn').click();
-      return waitFor(function () { return $$('.hubtab').length === 5 && !$('.hubtile'); }, 'abas de novo');
+      // 1.71.0: sempre abas no topo; a escolha de blocos grandes não existe mais
+      assert.ok(!$$('.settings .btn').some(function (x) { return x.textContent === 'Blocos grandes' || x.textContent === 'Abas no topo'; }), 'sem escolha de estilo da Início');
+      assert.ok($$('.hubtab').length === 0 || $$('.hubtab').length === 5, 'abas no topo');
+      step('Início: sempre abas no topo');
     }).then(function () {
       go('settings');
       return waitFor(function () { return $('.settings .sgroup'); }, 'config 6');

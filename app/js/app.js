@@ -2724,6 +2724,15 @@
     }, function () { loading(false); showDetail(it); });
   }
 
+  /* nome do episódio sem a repetição que os provedores colocam: "Série - S01E04 - Episódio 4" → "" ; "Série - S01E04 - O Retorno" → "O Retorno" */
+  function epName(ep, series) {
+    var t = String(ep.title || ''), sn = String(series || '').replace(/\s*\(\d{4}\)\s*$/, '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    if (sn) { t = t.replace(new RegExp('^\\s*' + sn + '(\\s*\\(\\d{4}\\))?\\s*[-–—:|.]*\\s*', 'i'), ''); }
+    t = t.replace(/\bS\d{1,2}\s*E\d{1,3}\b/ig, '').replace(/\b\d{1,2}x\d{1,3}\b/ig, '').replace(/^[\s\-–—:|.]+|[\s\-–—:|.]+$/g, '').replace(/\s{2,}/g, ' ');
+    if (/^(epis[oó]dio|episode|ep\.?|cap[ií]tulo)\s*\d*$/i.test(t)) { return ''; }
+    return t;
+  }
+
   function resumeCont(en) {
     if (en.kind === 'movie') { startPlay({ kind: 'movie', item: en.item }); return; }
     loading(true, 'Abrindo…');
@@ -2744,8 +2753,7 @@
   /* estilo da Início: blocos grandes (padrão nas TVs) ou abas no topo (padrão no celular); escolha por aparelho */
   function isTvDevice() { return document.body.classList.contains('tv') || /Web0S|webOS|SMART-?TV/i.test(navigator.userAgent); }
   function homeStyle() {
-    var v = store.get('homestyle', '');
-    return v === 'blocks' || v === 'tabs' ? v : (isTvDevice() ? 'blocks' : 'tabs');
+    return 'tabs';   // 1.71.0: sempre abas no topo (a escolha "blocos grandes" foi removida)
   }
 
   function hubTile(sec, sub) {
@@ -3898,7 +3906,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.70.1']
+      ['Versão do app', '1.71.0']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
@@ -3940,8 +3948,6 @@
     page.appendChild(verBlock());
     page.appendChild(h('div', { cls: 'sgroup sub', text: 'Aviso de gols (pop-up com o placar, enquanto o app está aberto)' }));
     page.appendChild(goalBlock());
-    page.appendChild(h('div', { cls: 'sgroup sub', text: 'Estilo da tela inicial (neste aparelho)' }));
-    page.appendChild(homeStyleBlock());
     page.appendChild(switchRow('Reproduzir o último conteúdo ao abrir o app', 'Ao iniciar, retoma o último canal, filme ou episódio assistido.', 'autoplay'));
     if (hasBg()) { page.appendChild(switchRow('Continuar tocando com a tela bloqueada', 'O áudio segue tocando ao bloquear o celular ou sair do app (aparece uma notificação enquanto toca).', 'bgplay')); }
     if (isTvDevice()) { wideOn(); page.appendChild(switchRow('Card ampliado ao parar o foco', 'Na TV, o filme/série em foco nas fileiras da Início vira um cartão largo com imagem, nota e sinopse (a prévia de vídeo toca nele, se ligada).', 'widecard')); }
@@ -3949,7 +3955,7 @@
       'Diagnóstico do trailer — foco em filmes/séries: ' + PD.foco + ' · agendadas: ' + PD.agendadas + ' · iniciadas: ' + PD.iniciadas + ' · tocando: ' + PD.tocando + (PD.bloqueio ? ' · bloqueio: ' + PD.bloqueio : ''),
       PD.falha ? 'Última falha: ' + PD.falha : '',
       PD.ultima ? 'Interrompida: ' + PD.ultima : '',
-      (S.playDiag || store.get('playdiag', '')) ? 'Último erro ao reproduzir: ' + (S.playDiag || store.get('playdiag', '')) : 'Último erro ao reproduzir: nenhum desde a instalação (a versão instalada é a 1.70.1)'
+      (S.playDiag || store.get('playdiag', '')) ? 'Último erro ao reproduzir: ' + (S.playDiag || store.get('playdiag', '')) : 'Último erro ao reproduzir: nenhum desde a instalação (a versão instalada é a 1.71.0)'
     ].forEach(function (t) { if (t) { page.appendChild(h('div', { cls: 'swd', style: 'margin:-6px 40px 10px 4px;white-space:normal;word-break:break-word;max-width:1500px', text: t })); } });
     // (1.66.0: opção escondida; vale o padrão do app / o que já estava salvo)
     // (1.66.0: opção escondida; vale o padrão do app / o que já estava salvo)
@@ -4253,7 +4259,7 @@
       }
       D.epsEl.appendChild(h('div', { cls: 'f ep', on: { click: function () { playEpisode(ep); } } }, [
         h('div', { cls: 'en', text: 'E' + ep.num }),
-        h('div', { cls: 'et', text: ep.title }),
+        h('div', { cls: 'et', text: epName(ep, D.item.name) || 'Episódio ' + ep.num }),
         h('div', { cls: 'ed', text: r && r.t > 30 ? 'em andamento · ' + Core.fmtTime(r.t) : (ep.duration || '') }),
         mark
       ]));
@@ -4343,7 +4349,7 @@
       var it = c.item, ep = c.kind === 'ep' ? c.eps[c.idx] : null;
       if (ep) {
         url = ep.url; c.rk = 'e:' + ep.id;
-        title = it.name; sub = 'T' + ep.season + ' · E' + ep.num + ' — ' + ep.title;
+        title = it.name; sub = 'T' + ep.season + ' · E' + ep.num + (epName(ep, it.name) ? ' — ' + epName(ep, it.name) : '');
         S.last[it.id] = { season: ep.season, id: ep.id, at: Date.now() };
         store.set('last', S.last);
       } else {
@@ -4545,7 +4551,7 @@
       host.appendChild(h('button', { cls: 'f topt' + (n === c.idx ? ' on' : ''), type: 'button', 'data-t': 'e' + e.id, on: { click: function () {
         closeTracks();
         if (n !== c.idx) { saveResume(); c.idx = n; S.osdSel = osdDefault(); playCurrent(false); }
-      } } }, [h('span', { cls: 't-lbl', text: 'E' + e.num + ' — ' + e.title + (left ? '  ·  ' + left : '') }), n === c.idx ? icon('check', 30) : h('span', { cls: 't-nochk' })]));
+      } } }, [h('span', { cls: 't-lbl', text: 'E' + e.num + (epName(e, c.item.name) ? ' — ' + epName(e, c.item.name) : '') + (left ? '  ·  ' + left : '') }), n === c.idx ? icon('check', 30) : h('span', { cls: 't-nochk' })]));
     });
     host.appendChild(h('div', { cls: 't-foot', text: 'Cima/Baixo: escolher · Esq./Dir.: temporada · Voltar: fechar' }));
     var el = host.querySelector('[data-t="' + focusId + '"]');

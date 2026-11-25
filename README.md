@@ -491,3 +491,7 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 
 ## 1.70.1
 - VOD na TV: a 1ª tentativa nativa espera até 40 s (arquivo "frio" no provedor demora) e há uma 2ª tentativa nativa antes do HLS; ao passar de 70% de um episódio, o app aquece o próximo no provedor (pede 1 byte), para ele abrir mais rápido.
+
+## 1.71.0
+- **Início**: sempre abas no topo; a escolha "blocos grandes / abas" saiu das Configurações.
+- **Nome dos episódios sem repetição**: "Lanternas - S01E04 - Episódio 4" vira só "T1 · E4"; quando há nome de verdade ("Série - S01E04 - O Retorno") aparece "T1 · E4 — O Retorno". Vale no player, na lista de episódios do player e na tela da série.
