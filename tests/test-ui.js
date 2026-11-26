@@ -586,6 +586,19 @@ Promise.all([listen(api), listen(px), startSync()]).then(function () {
       assert.ok(!$$('.settings .btn').some(function (x) { return x.textContent === 'Blocos grandes' || x.textContent === 'Abas no topo'; }), 'sem escolha de estilo da Início');
       assert.ok($$('.hubtab').length === 0 || $$('.hubtab').length === 5, 'abas no topo');
       step('Início: sempre abas no topo');
+      // proteção de tela: sem mexer, mostra as capas; qualquer tecla só fecha
+      assert.ok($$('.settings .btn').some(function (x) { return x.textContent === '10 min'; }), 'opções da proteção de tela nas configurações');
+      w.localStorage.setItem('iptv.screensaver', '0.02');
+      w.__ssArm();
+      return waitFor(function () { return $('#screensaver .sspo'); }, 'proteção de tela aparece');
+    }).then(function () {
+      assert.ok($('#screensaver .sst').textContent.length > 0, 'mostra o título da capa');
+      var before = w.Nav.current();
+      key(40);
+      assert.ok(!$('#screensaver'), 'uma tecla fecha a proteção de tela');
+      assert.strictEqual(w.Nav.current(), before, 'a tecla não navegou');
+      w.localStorage.setItem('iptv.screensaver', '0');
+      w.__ssArm();
     }).then(function () {
       go('settings');
       return waitFor(function () { return $('.settings .sgroup'); }, 'config 6');

@@ -498,3 +498,6 @@ A varredura de canais (até 160 consultas de programação) trocava o resultado 
 
 ## 1.71.1
 - Editor de perfil: avatares maiores (TV 124 px, celular deitado 92 px, em pé 62 px); a tela de escolher perfil não mudou.
+
+## 1.72.0
+- **Proteção de tela**: depois de um tempo sem mexer (padrão 5 min na TV; desligada no celular; escolha em Configurações: Desligada, 3, 5, 10, 20 min) o app mostra as capas de filmes e séries, uma a cada 9 s, com fundo desfocado, título e relógio que muda de canto. Qualquer tecla/toque só fecha. Não entra com algo tocando; conteúdo adulto fica de fora.

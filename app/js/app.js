@@ -3906,7 +3906,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.71.1']
+      ['Versão do app', '1.72.0']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
@@ -3948,6 +3948,8 @@
     page.appendChild(verBlock());
     page.appendChild(h('div', { cls: 'sgroup sub', text: 'Aviso de gols (pop-up com o placar, enquanto o app está aberto)' }));
     page.appendChild(goalBlock());
+    page.appendChild(h('div', { cls: 'sgroup sub', text: 'Proteção de tela: capas de filmes e séries depois de um tempo sem mexer (neste aparelho)' }));
+    page.appendChild(ssBlock());
     page.appendChild(switchRow('Reproduzir o último conteúdo ao abrir o app', 'Ao iniciar, retoma o último canal, filme ou episódio assistido.', 'autoplay'));
     if (hasBg()) { page.appendChild(switchRow('Continuar tocando com a tela bloqueada', 'O áudio segue tocando ao bloquear o celular ou sair do app (aparece uma notificação enquanto toca).', 'bgplay')); }
     if (isTvDevice()) { wideOn(); page.appendChild(switchRow('Card ampliado ao parar o foco', 'Na TV, o filme/série em foco nas fileiras da Início vira um cartão largo com imagem, nota e sinopse (a prévia de vídeo toca nele, se ligada).', 'widecard')); }
@@ -3955,7 +3957,7 @@
       'Diagnóstico do trailer — foco em filmes/séries: ' + PD.foco + ' · agendadas: ' + PD.agendadas + ' · iniciadas: ' + PD.iniciadas + ' · tocando: ' + PD.tocando + (PD.bloqueio ? ' · bloqueio: ' + PD.bloqueio : ''),
       PD.falha ? 'Última falha: ' + PD.falha : '',
       PD.ultima ? 'Interrompida: ' + PD.ultima : '',
-      (S.playDiag || store.get('playdiag', '')) ? 'Último erro ao reproduzir: ' + (S.playDiag || store.get('playdiag', '')) : 'Último erro ao reproduzir: nenhum desde a instalação (a versão instalada é a 1.71.1)'
+      (S.playDiag || store.get('playdiag', '')) ? 'Último erro ao reproduzir: ' + (S.playDiag || store.get('playdiag', '')) : 'Último erro ao reproduzir: nenhum desde a instalação (a versão instalada é a 1.72.0)'
     ].forEach(function (t) { if (t) { page.appendChild(h('div', { cls: 'swd', style: 'margin:-6px 40px 10px 4px;white-space:normal;word-break:break-word;max-width:1500px', text: t })); } });
     // (1.66.0: opção escondida; vale o padrão do app / o que já estava salvo)
     // (1.66.0: opção escondida; vale o padrão do app / o que já estava salvo)
@@ -5014,8 +5016,105 @@
     exitApp();
   }
 
+  /* ---------- proteção de tela: sem mexer por um tempo, mostra capas de filmes e séries (como no Plex) ---------- */
+  var SS = { timer: null, el: null, tick: null, pool: [], i: 0, front: 0 };
+  function ssMinutes() {
+    var v = store.get('screensaver', null);
+    if (v === null || v === undefined || v === '') { return isTvDevice() ? 5 : 0; }   // padrão: 5 min na TV, desligada no celular
+    return parseFloat(v) || 0;
+  }
+  function ssActive() { return !!SS.el; }
+  function ssArm() {
+    clearTimeout(SS.timer);
+    var m = ssMinutes();
+    if (SS.el || !m) { return; }
+    SS.timer = setTimeout(ssStart, Math.max(1000, m * 60000));
+  }
+  function ssPoolAdd(list) {
+    var have = {};
+    SS.pool.forEach(function (it) { have[it.type + ':' + it.id] = 1; });
+    (list || []).forEach(function (it) {
+      if (it && (it.type === 'movie' || it.type === 'series') && it.logo && it.name && !have[it.type + ':' + it.id] && !isAdultItem(it)) { have[it.type + ':' + it.id] = 1; SS.pool.push(it); }
+    });
+  }
+  function ssShuffle(a) { var i, j, t; for (i = a.length - 1; i > 0; i--) { j = Math.floor(Math.random() * (i + 1)); t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+  function ssStart() {
+    if (SS.el) { return; }
+    // só quando o app está parado na navegação (nada tocando) e conectado
+    if (S.mode !== 'browse' && S.mode !== 'detail' || S.mini || !S.provider || document.hidden) { ssArm(); return; }
+    SS.pool = []; SS.i = 0;
+    ['movie,series', 'movie,series:k'].forEach(function (k) {
+      (store.get('herocache:' + k, null) || []).forEach(function (a) { ssPoolAdd([a.it]); });
+    });
+    try { (S.items || []).forEach(function (it) { ssPoolAdd([it]); }); } catch (e) {}
+    ssPoolAdd(contList().map(function (x) { return x.item; })); ssPoolAdd(favList());
+    var pend = ['movie', 'series'].map(function (sec) {
+      return S.provider.all(sec).then(function (l) { return trendList(sec, l); }, function () { return []; }).then(function (l) { ssPoolAdd(l); });
+    });
+    var launch = function () {
+      if (SS.el || !SS.pool.length) { ssArm(); return; }
+      ssShuffle(SS.pool);
+      var el = h('div', { id: 'screensaver' }), clock = h('div', { cls: 'ssclock' });
+      el.appendChild(h('div', { cls: 'ssl' })); el.appendChild(h('div', { cls: 'ssl' })); el.appendChild(clock);
+      document.body.appendChild(el);
+      SS.el = el; SS.front = 1;
+      ['mousedown', 'touchstart', 'wheel'].forEach(function (ev) { el.addEventListener(ev, function (e) { e.preventDefault(); e.stopPropagation(); ssStop(); }, { passive: false }); });
+      var mx = null, my = null;
+      el.addEventListener('mousemove', function (e) { if (mx === null) { mx = e.clientX; my = e.clientY; } else if (Math.abs(e.clientX - mx) + Math.abs(e.clientY - my) > 60) { ssStop(); } });
+      var paintClock = function () {
+        var d = new Date(), z = function (n) { return (n < 10 ? '0' : '') + n; };
+        clock.textContent = z(d.getHours()) + ':' + z(d.getMinutes());
+        // muda de canto de tempos em tempos (evita marca na tela)
+        clock.style.cssText = ['top:4%;right:3%', 'bottom:4%;right:3%', 'top:4%;left:3%', 'bottom:4%;left:3%'][Math.floor(d.getTime() / 60000) % 4];
+      };
+      paintClock();
+      var next = function () {
+        var it = SS.pool[SS.i % SS.pool.length]; SS.i++;
+        var layers = el.querySelectorAll('.ssl'), nl = layers[SS.front ? 0 : 1], ol = layers[SS.front ? 1 : 0];
+        SS.front = SS.front ? 0 : 1;
+        nl.innerHTML = '';
+        var bg = h('div', { cls: 'ssbg' }), po = h('img', { cls: 'sspo', alt: '' }), cap = h('div', { cls: 'sscap' }, [h('div', { cls: 'sst', text: it.name }), h('div', { cls: 'ssm', text: [it.type === 'movie' ? 'Filme' : 'Série', it.year || '', it.rating ? '★ ' + it.rating : ''].filter(Boolean).join('  ·  ') })]);
+        bg.style.backgroundImage = 'url("' + String(it.logo).replace(/"/g, '%22') + '")';
+        po.src = it.logo;
+        po.onerror = function () { if (SS.el) { po.style.display = 'none'; } };
+        nl.appendChild(bg); nl.appendChild(po); nl.appendChild(cap);
+        void nl.offsetWidth;
+        nl.classList.remove('kb'); void nl.offsetWidth; nl.classList.add('on', 'kb');
+        ol.classList.remove('on');
+        paintClock();
+      };
+      next();
+      SS.tick = setInterval(function () { if (!document.body.contains(el)) { clearInterval(SS.tick); return; } next(); }, 9000);
+    };
+    if (SS.pool.length) { launch(); } else { Promise.all(pend).then(launch, launch); }
+  }
+  function ssStop() {
+    clearInterval(SS.tick); SS.tick = null;
+    if (SS.el && SS.el.parentNode) { SS.el.parentNode.removeChild(SS.el); }
+    SS.el = null;
+    ssArm();
+  }
+  window.__ssArm = ssArm;
+  /* escolha do tempo da proteção de tela (vale para este aparelho) */
+  function ssBlock() {
+    var opts = [['Desligada', 0], ['3 min', 3], ['5 min', 5], ['10 min', 10], ['20 min', 20]], box = h('div', { cls: 'sbtns scales' });
+    function paint() {
+      var cur = ssMinutes();
+      box.innerHTML = '';
+      opts.forEach(function (o) {
+        box.appendChild(h('button', { cls: 'f btn' + (cur === o[1] ? ' primary' : ''), type: 'button', text: o[0], on: { click: function () {
+          store.set('screensaver', o[1]); paint(); ssArm(); toast(o[1] ? 'Proteção de tela: ' + o[0] + ' sem mexer' : 'Proteção de tela desligada', 2200);
+        } } }));
+      });
+    }
+    paint();
+    return box;
+  }
+
   function onKey(e) {
     var k = e.keyCode, a = document.activeElement;
+    if (ssActive()) { try { e.preventDefault(); e.stopPropagation(); } catch (x) {} ssStop(); return; }   // qualquer tecla só fecha a proteção de tela
+    ssArm();
     if (S.mode === 'player') { e.preventDefault(); if (S.pgOpen) { pgKey(k); } else if (S.tracksOpen) { tracksKey(k); } else { playerKey(k); } return; }
     var typing = a && a.tagName === 'INPUT';
     if (typing) {
@@ -5117,6 +5216,8 @@
     });
 
     document.addEventListener('keydown', onKey, true);
+    ['mousedown', 'touchstart', 'wheel'].forEach(function (ev) { document.addEventListener(ev, function () { if (!SS.el) { ssArm(); } }, { passive: true, capture: true }); });
+    ssArm();
     applyBg();
     document.addEventListener('visibilitychange', function () { if (!document.hidden) { cloudSoon(800, true); } });
     var fake = function (code) { return { keyCode: code, preventDefault: function () {} }; };

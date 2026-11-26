@@ -1278,3 +1278,20 @@ body.portrait .aicon.art { width: 62px; height: 62px; margin: 4px; border-radius
 .aicon { width: 96px; height: 96px; font-size: 38px; }
 body.compact .aicon { width: 72px; height: 72px; font-size: 28px; }
 body.portrait .aicon { width: 56px; height: 56px; font-size: 22px; }
+
+/* proteção de tela */
+#screensaver { position: fixed; left: 0; top: 0; right: 0; bottom: 0; z-index: 9999; background: #000; overflow: hidden; }
+#screensaver .ssl { position: absolute; left: 0; top: 0; right: 0; bottom: 0; opacity: 0; transition: opacity 1.4s ease; }
+#screensaver .ssl.on { opacity: 1; }
+#screensaver .ssbg { position: absolute; left: -6%; top: -6%; right: -6%; bottom: -6%; background-size: cover; background-position: center; filter: blur(34px) brightness(.45); }
+#screensaver .sspo { position: absolute; left: 50%; top: 50%; height: 74%; width: auto; max-width: 70%; transform: translate(-50%, -52%) scale(1); border-radius: 14px; box-shadow: 0 20px 80px rgba(0,0,0,.7); }
+#screensaver .ssl.kb .sspo { animation: ssdrift 9.5s linear forwards; }
+@keyframes ssdrift { from { transform: translate(-50%, -52%) scale(1); } to { transform: translate(-50%, -52%) scale(1.07); } }
+#screensaver .sscap { position: absolute; left: 5%; bottom: 7%; right: 5%; text-shadow: 0 2px 12px #000; }
+#screensaver .sst { font-size: 44px; font-weight: 800; color: #fff; }
+#screensaver .ssm { margin-top: 6px; font-size: 24px; color: #cfd8e6; }
+#screensaver .ssclock { position: absolute; font-size: 38px; font-weight: 700; color: rgba(255,255,255,.85); text-shadow: 0 2px 10px #000; }
+body.portrait #screensaver .sspo { height: 62%; max-width: 86%; }
+body.portrait #screensaver .sst { font-size: 26px; }
+body.portrait #screensaver .ssm { font-size: 16px; }
+body.portrait #screensaver .ssclock { font-size: 24px; }
