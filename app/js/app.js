@@ -3906,7 +3906,7 @@
       ['Status', info.status || ''],
       ['Validade', info.exp ? info.exp.toLocaleDateString('pt-BR') : '—'],
       ['Conexões simultâneas', info.maxConn || '—'],
-      ['Versão do app', '1.72.0']
+      ['Versão do app', '1.72.1']
     ];
     page.appendChild(sgroup('Conta'));
     rows.forEach(function (r) {
@@ -3957,7 +3957,7 @@
       'Diagnóstico do trailer — foco em filmes/séries: ' + PD.foco + ' · agendadas: ' + PD.agendadas + ' · iniciadas: ' + PD.iniciadas + ' · tocando: ' + PD.tocando + (PD.bloqueio ? ' · bloqueio: ' + PD.bloqueio : ''),
       PD.falha ? 'Última falha: ' + PD.falha : '',
       PD.ultima ? 'Interrompida: ' + PD.ultima : '',
-      (S.playDiag || store.get('playdiag', '')) ? 'Último erro ao reproduzir: ' + (S.playDiag || store.get('playdiag', '')) : 'Último erro ao reproduzir: nenhum desde a instalação (a versão instalada é a 1.72.0)'
+      (S.playDiag || store.get('playdiag', '')) ? 'Último erro ao reproduzir: ' + (S.playDiag || store.get('playdiag', '')) : 'Último erro ao reproduzir: nenhum desde a instalação (a versão instalada é a 1.72.1)'
     ].forEach(function (t) { if (t) { page.appendChild(h('div', { cls: 'swd', style: 'margin:-6px 40px 10px 4px;white-space:normal;word-break:break-word;max-width:1500px', text: t })); } });
     // (1.66.0: opção escondida; vale o padrão do app / o que já estava salvo)
     // (1.66.0: opção escondida; vale o padrão do app / o que já estava salvo)
@@ -4028,16 +4028,8 @@
       D.seasonsEl, D.epsEl, D.castEl
     ]));
     Nav.setScope(d);
-    var diagEl = h('div', { cls: 'tdiag' });
-    d.appendChild(diagEl);
-    function showDiag(id) {
-      var g = TRD[(dubOn() ? 'd:' : 'a:') + it.type + ':' + it.id];
-      if (!g) { diagEl.textContent = ''; return; }
-      diagEl.textContent = 'Trailer: ' + (g.src || '…') + (id ? ' · ' + id : '') + (g.notes.length ? ' | ' + g.notes.join(' | ') : '');
-    }
     if (!isTvDevice() && pvOn()) {   // celular: o trailer toca no fundo da tela do filme
       trailerFor(it).then(function (id) {
-        showDiag(id);
         if (!id || S.detail !== D || S.mode !== 'detail') { return; }
         var yt = ytEmbed(bg, id, { play: function () { bg.classList.add('pv'); d.classList.add('tplay'); }, fail: function () { yt.off(); d.classList.remove('tplay'); }, end: function () { yt.off(); bg.classList.remove('pv'); d.classList.remove('tplay'); } });
         D.yt = yt;
@@ -4045,7 +4037,7 @@
           if (S.detail !== D || S.mode !== 'detail' || document.hidden) { clearInterval(g); yt.off(); bg.classList.remove('pv'); d.classList.remove('tplay'); }
         }, 600);
       }, function () {});
-    } else if (pvOn()) { trailerFor(it).then(showDiag, function () {}); }   // TV: só o diagnóstico
+    }
     castRow(D);
     if (vars) { renderVariants(D); }
     else {
